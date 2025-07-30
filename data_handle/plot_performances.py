@@ -11,9 +11,10 @@ import os
 import awkward as ak
 import numpy as np
 from matplotlib.patches import Rectangle
+import data_handle.event_performances as ev
 
 
-with open('config_new_emulator.yaml', "r") as afile:
+with open('config_performances.yaml', "r") as afile:
     cfg = yaml.safe_load(afile)["s2emu_config"]
 
 #Plot distributions
@@ -229,6 +230,19 @@ def calcDeltaR(eta_cl, phi_cl, gen):
     return deltaR
 
 
+#Plotting total efficinecy
+
+def compute_total_efficiency(size, event_cl, event_gen, args, att_eta, att_phi, deltaR=0.1):
+    print("For triangle size", size)
+    pair_cluster_matched, pair_gen_masked = ev.apply_matching(event_cl, att_eta, att_phi, event_gen, args, deltaR=deltaR)
+    print("Number of events after matching",len(pair_cluster_matched.pt))
+    print("Number of particles after matching",len(ak.flatten(pair_gen_masked.pt,axis=-1)))
+    print("Total efficiency at particle level:", len(ak.flatten(pair_gen_masked.pt,axis=-1)) / len(ak.flatten(event_gen.genpart_pt, axis=-1)) * 100)
+    print("Total efficiency at event level:", len(pair_gen_masked) / len(event_gen.genpart_pt) * 100)
+    print("\n")
+    return pair_cluster_matched, pair_gen_masked
+
+
 #Plotting the efficiency as a function pt_gen and eta_gen (still testing these functions)
 
 def compute_efficiency(cluster, gen, bin_n, var, att_eta, dr_threshold=0.1):
@@ -288,6 +302,8 @@ def compute_efficiency(cluster, gen, bin_n, var, att_eta, dr_threshold=0.1):
             eff[i] = counts_matched[i] / counts_total[i]
 
     return bin_edges, eff, counts_total, counts_matched
+
+
 
 
 

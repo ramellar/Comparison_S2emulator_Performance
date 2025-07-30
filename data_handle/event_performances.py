@@ -16,7 +16,7 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
     if iteration == total: 
         print()
 
-with open('config_new_emulator.yaml', "r") as afile:
+with open('config_performances.yaml', "r") as afile:
     cfg_particles = yaml.safe_load(afile)["particles"]
 
 def provide_events_performaces(n, particles, PU):
