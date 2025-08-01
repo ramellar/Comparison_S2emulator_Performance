@@ -57,30 +57,33 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
 
 def scale_distribution(events, gen, args, var, bin_n, range_,label, color, legend_handles):
     
-    # pt_dist, eta_dist, phi_dist, pt_gen_dist, eta_gen_dist, phi_gen_dist= flatten(events,gen, att_eta)
     bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
-
+    # print("events",events)
     if var == "pT":
-        flat_pt=ak.to_numpy(ak.flatten(ak.flatten(events.pt,axis=-1),axis=-1))
-        flat_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.pt,axis=-1),axis=-1))
+        # print(events.pt)
+        # print("flattened pt:",ak.flatten(events.pt,axis=-1))
+        flat_pt=ak.to_numpy(ak.flatten(events.pt,axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.pt,axis=-1))
+        # print("flat pt:",flat_pt)
         scale_simul = np.divide(flat_pt, flat_gen)
         plt.hist(scale_simul, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(scale_simul, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
         plt.xlabel(r'$p_{T}^{cluster}/p_{T}^{gen}$')
     if var == "eta":
-        flat_eta=ak.to_numpy(ak.flatten(ak.flatten(events.eta,axis=-1),axis=-1))
-        flat_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.eta,axis=-1),axis=-1))
+        flat_eta=ak.to_numpy(ak.flatten(events.eta, axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.eta, axis=-1))
         scale_simul_eta = np.subtract(flat_eta,flat_gen)
         plt.hist(scale_simul_eta, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(scale_simul_eta, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
         plt.xlabel(r'$\eta^{cluster}-\eta^{gen}$')
     if var == "phi":
-        flat_phi=ak.to_numpy(ak.flatten(ak.flatten(events.phi,axis=-1),axis=-1))
-        flat_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.phi,axis=-1),axis=-1))
+        flat_phi=ak.to_numpy(ak.flatten(events.phi, axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.phi, axis=-1))
         scale_simul_phi = np.subtract(flat_phi, flat_gen)
         plt.hist(scale_simul_phi, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(scale_simul_phi, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
         plt.xlabel(r'$\phi^{cluster}-\phi^{gen}$')
+        # plt.yscale('log')
 
     plt.ylabel('Counts')
     legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
@@ -126,26 +129,97 @@ def flatten(events, gen, att_eta):
 
       return pt_dist, eta_dist, phi_dist, pt_gen_dist, eta_gen_dist, phi_gen_dist
 
-def compute_responses_performance(simul, gen, args, var, bin_n=10, range_=[0,200]):
+def number_of_clusters_per_event(events, gen, att_eta, ax, args, gen_n=1, var="n_cl_pt", bin_n=10, range_=[0,100], label="0.0113", color='blue'):
+    
+    bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
+    event_info = ak.zip({
+        "eta": getattr(events, att_eta),
+        "phi": getattr(events, att_eta.replace("eta", "phi")),
+        "pt": getattr(events, att_eta.replace("eta", "pt")),
+    })
+    genparts = ak.zip({
+        "eta": getattr(gen, 'genpart_exeta'),
+        "phi": getattr(gen, 'genpart_exphi'),
+        "pt": getattr(gen, 'genpart_pt'),
+        "gen_flag": getattr(gen,'genpart_gen'),
+    })
+    n_clusters = ak.count(event_info.pt, axis=-1)
+    number_gen = ak.count(genparts.pt, axis=-1)
+
+    if gen_n ==1:
+        #Number of clusters when there is only 1 gen particle per event
+        mask_clusters_single_gen = number_gen == 1
+        single_gen= genparts[mask_clusters_single_gen]
+        flat_gen_pt = ak.flatten(single_gen.pt, axis=-1)
+        flat_gen_eta = ak.flatten(single_gen.eta, axis=-1)
+        cluster_for_single_gen= event_info[mask_clusters_single_gen]
+        n_clusters= ak.count(cluster_for_single_gen.pt, axis=-1)
+
+    if gen_n ==2:
+        #Number of clusters when there are 2 gen particles per event
+        #This can only be done as a function of pt because 
+        # the eta and the phi of the two gen particles of the event 
+        # are different, and we don't know how many clusters where 
+        # reconstructed for each particle before we do the matching
+        mask_clusters_double_gen = number_gen == 2
+        double_gen= genparts[mask_clusters_double_gen]
+        one_pt_saved= double_gen[:, 0]
+        flat_gen_pt = ak.flatten(one_pt_saved.pt, axis=-1)
+        cluster_for_double_gen= event_info[mask_clusters_double_gen]
+        n_clusters= ak.count(cluster_for_double_gen.pt, axis=-1)
+
+    if var == "n_cl_eta":
+        indices = np.digitize(np.abs(flat_gen_eta), bin_edges) - 1
+
+    if var == "n_cl_pt":
+        indices = np.digitize(flat_gen_pt, bin_edges) - 1
+
+    resp_simul, err_resp_simul, resol_simul, err_resol_simul = {}, {}, {}, {}
+    for index in range(bin_n):
+        bin_idx = np.where(indices == index)[0]
+        resp_bin_simul =[n_clusters[i] for i in bin_idx]
+
+        resp_simul[index]     = np.mean(resp_bin_simul) if len(resp_bin_simul)>0 else 0
+        err_resp_simul[index] = np.std(resp_bin_simul)/np.sqrt(len(resp_bin_simul)) if len(resp_bin_simul)>0 else 0
+
+        resol_simul[index]     = np.std(resp_bin_simul) if len(resp_bin_simul)>1 else 0
+        err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)) if len(resp_bin_simul)>1 else 0
+
+    plt.style.use(mplhep.style.CMS)
+    if args.response:
+        ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resp_simul.values(), 
+                    yerr=np.array(list(zip(err_resp_simul.values(), err_resp_simul.values()))).T,
+                    xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
+        plt.ylabel(r'$<cluster>$')
+    if args.resolution:
+        ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resol_simul.values(), 
+                    yerr=np.array(list(zip(err_resol_simul.values(), err_resol_simul.values()))).T,
+                    xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
+        plt.ylabel(r'$\sigma^{cluster}$')
+    plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='n_cl_pt' else r'$|\eta^{gen}|$')
+    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles+' - '+ str(gen_n)+' gen particles')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    return 
+
+def compute_responses_performance(matched, matched_gen, args, var, events, att_eta, bin_n=10, range_=[0,200]):
 
     bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
 
-    flat_pt=ak.to_numpy(ak.flatten(ak.flatten(simul.pt,axis=-1),axis=-1))
-    flat_pt_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.pt,axis=-1),axis=-1))
+    flat_pt=ak.to_numpy(ak.flatten(matched.pt,axis=-1))
+    flat_pt_gen=ak.to_numpy(ak.flatten(matched_gen.pt,axis=-1))
 
-    flat_eta=ak.to_numpy(ak.flatten(ak.flatten(simul.phi,axis=-1),axis=-1))
-    flat_eta_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.phi,axis=-1),axis=-1))
+    flat_eta=ak.to_numpy(ak.flatten(matched.eta,axis=-1))
+    flat_eta_gen=ak.to_numpy(ak.flatten(matched_gen.eta,axis=-1))
 
-    flat_phi=ak.to_numpy(ak.flatten(ak.flatten(simul.phi,axis=-1),axis=-1))
-    flat_phi_gen=ak.to_numpy(ak.flatten(ak.flatten(gen.phi,axis=-1),axis=-1))
+    flat_phi=ak.to_numpy(ak.flatten(matched.phi,axis=-1))
+    flat_phi_gen=ak.to_numpy(ak.flatten(matched_gen.phi,axis=-1))
 
-    # print("cluster phi",flat_phi)
-    # print("gen phi",flat_phi_gen)
-
-    if var=="pT" or var=="n_cl_pt":
+    if var=="pT":
         indices = np.digitize(flat_pt_gen, bin_edges) - 1
     
-    if var == 'pT_eta' or var=="n_cl_eta":
+    if var == 'pT_eta':
        indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
     
     if var== "phi":
@@ -160,20 +234,19 @@ def compute_responses_performance(simul, gen, args, var, bin_n=10, range_=[0,200
       bin_idx = np.where(indices == index)[0]
       resp_bin_simul =[flat_pt[i]/flat_pt_gen[i] for i in bin_idx] if var=='pT' else \
                       [flat_pt[i]/flat_pt_gen[i]  for i in bin_idx] if var=='pT_eta' else \
-                      [len(flat_pt)[i] for i in bin_idx] if var=='n_cl_pt' or var=='n_cl_eta' else \
                       [flat_eta[i]-flat_eta_gen[i] for i in bin_idx] if var=="eta" else \
                       [flat_phi[i]-flat_phi_gen[i] for i in bin_idx] 
                       
 
       resp_simul[index]     = np.mean(resp_bin_simul) if len(resp_bin_simul)>0 else 0
       err_resp_simul[index] = np.std(resp_bin_simul)/np.sqrt(len(resp_bin_simul)) if len(resp_bin_simul)>0 else 0
-
+ 
 
       if var=="pT" or var=="pT_eta":
          resol_simul[index]     = np.std(resp_bin_simul)/np.abs(np.mean(resp_bin_simul)) if len(resp_bin_simul)>1 else 0
          err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)*np.mean(resp_bin_simul)) if len(resp_bin_simul)>1 else 0
     
-      if var=="eta" or var=="phi" or var=="n_cl_pt" or var=="n_cl_eta":
+      if var=="eta" or var=="phi":
          resol_simul[index]     = np.std(resp_bin_simul) if len(resp_bin_simul)>1 else 0
          err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)) if len(resp_bin_simul)>1 else 0
     
@@ -185,8 +258,8 @@ def compute_responses_performance(simul, gen, args, var, bin_n=10, range_=[0,200
     return resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges
 
 
-def plot_responses(simul, gen, args, var, ax, label, color, bin_n=10, range_=[0,200]):
-    resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges= compute_responses_performance(simul, gen, args, var , bin_n, range_)
+def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_n=10, range_=[0,200]):
+    resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges= compute_responses_performance(simul, gen, args, var , event, att_eta, bin_n, range_)
     if args.response:
         plt.style.use(mplhep.style.CMS)
         ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resp_simul.values(), 
@@ -201,13 +274,17 @@ def plot_responses(simul, gen, args, var, ax, label, color, bin_n=10, range_=[0,
         plt.legend()
         plt.grid()
         plt.tight_layout()
-    if args.resolution:
+    if args.resolution or args.eff_rms:
         plt.style.use(mplhep.style.CMS)
         ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resol_simul.values(), 
                     yerr=np.array(list(zip(err_resol_simul.values(), err_resol_simul.values()))).T,
                     xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
-        plt.ylabel(r'$\sigma^{cluster}$' if var=='phi' else r'$\sigma^{cluster}$' if var=='eta' else \
-                r'$\sigma^{cluster}$' if var=='n_cl_pt' or var=='n_cl_eta' else r'$\sigma^{cluster}/\mu^{cluster}$')
+        if args.eff_rms:
+            plt.ylabel(r'$\sigma^{cluster}$' if var=='phi' else r'$\sigma^{cluster}$' if var=='eta' else \
+                    r'$(\sigma^{cluster}/\mu^{cluster})_{RMS}$')
+        else:
+            plt.ylabel(r'$\sigma^{cluster}$' if var=='phi' else r'$\sigma^{cluster}$' if var=='eta' else \
+                    r'$\sigma^{cluster}/\mu^{cluster}$')
         plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' else r'$\phi^{gen}$' if var=='phi' else r'$|\eta^{gen}|$')
         # legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
         # plt.legend(handles=legend_handles)
@@ -234,6 +311,7 @@ def calcDeltaR(eta_cl, phi_cl, gen):
 
 def compute_total_efficiency(size, event_cl, event_gen, args, att_eta, att_phi, deltaR=0.1):
     print("For triangle size", size)
+    print("Number of clusters before matching", len(ak.flatten(getattr(event_cl,att_eta), axis=-1)))
     pair_cluster_matched, pair_gen_masked = ev.apply_matching(event_cl, att_eta, att_phi, event_gen, args, deltaR=deltaR)
     print("Number of events after matching",len(pair_cluster_matched.pt))
     print("Number of particles after matching",len(ak.flatten(pair_gen_masked.pt,axis=-1)))
@@ -241,6 +319,67 @@ def compute_total_efficiency(size, event_cl, event_gen, args, att_eta, att_phi, 
     print("Total efficiency at event level:", len(pair_gen_masked) / len(event_gen.genpart_pt) * 100)
     print("\n")
     return pair_cluster_matched, pair_gen_masked
+
+
+def differential_efficiency(event_gen, pair_gen_matched, ax, args, label=[], var="pT", bin_n=10, range_=[0,100], color="blue"):
+    bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
+    genparts = ak.zip({
+        "eta": getattr(event_gen, 'genpart_exeta'),
+        "phi": getattr(event_gen, 'genpart_exphi'),
+        "pt": getattr(event_gen, 'genpart_pt'),
+        "gen_flag": getattr(event_gen,'genpart_gen'),
+    })
+
+    flat_total_gen_pt=ak.to_numpy(ak.flatten(genparts.pt,axis=-1))
+    flat_total_gen_eta=ak.to_numpy(ak.flatten(genparts.eta,axis=-1))
+    flat_total_gen_phi=ak.to_numpy(ak.flatten(genparts.gen_flag,axis=-1))
+
+    flat_matched_gen_pt=ak.to_numpy(ak.flatten(pair_gen_matched.pt,axis=-1))
+    flat_matched_gen_eta=ak.to_numpy(ak.flatten(pair_gen_matched.eta,axis=-1))
+    flat_matched_gen_phi=ak.to_numpy(ak.flatten(pair_gen_matched.phi,axis=-1))
+
+    if var=="pT":
+        indices = np.digitize(flat_total_gen_pt, bin_edges) - 1
+        indices_matched = np.digitize(flat_matched_gen_pt, bin_edges) - 1
+        
+    if var== "phi":
+        indices = np.digitize(flat_total_gen_phi, bin_edges) - 1
+        indices_matched = np.digitize(flat_matched_gen_phi, bin_edges) - 1
+
+    if var== "eta":
+        indices = np.digitize(np.abs(flat_total_gen_eta), bin_edges) - 1
+        indices_matched = np.digitize(np.abs(flat_matched_gen_eta), bin_edges) - 1
+
+    # print("matched", len(flat_matched_gen_pt))
+    # print("total", len(flat_total_gen_pt))
+
+    efficiency, error= {}, {}
+    for index in range(bin_n):
+        bin_idx = np.where(indices == index)[0]
+        bin_idx_matched = np.where(indices_matched == index)[0]
+        eff=len(bin_idx_matched)/len(bin_idx)
+        # print(len(bin_idx_matched))
+        # print(len(bin_idx))
+        # print(eff)
+        efficiency[index] = eff
+        error[index] = np.sqrt(eff * (1 - eff) / len(bin_idx))
+
+    # print(efficiency)
+    # print(error)
+
+    ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, efficiency.values(), 
+                    yerr=np.array(list(zip(error.values(), error.values()))).T,
+                    xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
+    plt.ylabel(r'$\epsilon$')
+    plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' else r'$|\eta^{gen}|$')
+    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles)
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    return
+
+    
+
 
 
 #Plotting the efficiency as a function pt_gen and eta_gen (still testing these functions)
@@ -302,9 +441,6 @@ def compute_efficiency(cluster, gen, bin_n, var, att_eta, dr_threshold=0.1):
             eff[i] = counts_matched[i] / counts_total[i]
 
     return bin_edges, eff, counts_total, counts_matched
-
-
-
 
 
 def compute_efficiency_test(cluster, gen, bin_n ,var, att_eta):

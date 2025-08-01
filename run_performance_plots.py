@@ -34,11 +34,12 @@ if __name__ == '__main__':
   #plotting arguments
   parser.add_argument('--eff_rms',     action='store_true', help='Extract mean and std from selecting the shorted interval containing 68& events')
   parser.add_argument('--total_efficiency',     action='store_true', help='Compute the total efficiency for each emulation test')
+  parser.add_argument('--resp',     action='store_true', help='Plot the response and resolution of the emulator')
   parser.add_argument('--resolution',     action='store_true', help='Extract mean and std from selecting the shorted interval containing 68& events')
   parser.add_argument('--response',     action='store_true', help='Extract mean and std from selecting the shorted interval containing 68& events')
   parser.add_argument('--distribution',     action='store_true', help='Plot the distributions')
-  parser.add_argument('--resp',     action='store_true', help='Plot the response and resolution of the emulator')
   parser.add_argument('--scale',     action='store_true', help='Plot the response distribution of the emulator')
+  parser.add_argument('--efficiency',     action='store_true', help='Plot the response distribution of the emulator')
   args = parser.parse_args()
 
 
@@ -65,157 +66,141 @@ if __name__ == '__main__':
     pair_cluster_0p045_matched, pair_gen_masked_0p045 = apply_matching(events_0p045, 'cl3d_p045Tri_eta','cl3d_p045Tri_phi', events_gen, args, deltaR=0.1)
     pair_cluster_Ref_matched, pair_gen_masked_Ref = apply_matching(events_Ref, 'cl3d_Ref_eta','cl3d_Ref_phi', events_gen, args, deltaR=0.1)
 
+  if args.efficiency:
+    bin_eta=10
+    range_eta=[1.6, 2.8]
+    bin_pt=10
+    range_pt=[0,100]
+    #Response and resolution plots for pt, eta and phi
+
+    for var, bin_size, range_var in zip(['pT', 'eta'], [bin_pt, bin_eta], [range_pt, range_eta]):
+      figure,ax=plt.subplots(figsize=(10, 10))
+      plot.differential_efficiency(events_gen, pair_gen_masked_0p0113, ax, args, "0p0113", var, bin_size, range_var, my_cmap(0/(n_colors-1)))
+      plot.differential_efficiency(events_gen, pair_gen_masked_0p016, ax, args, "0p016", var, bin_size, range_var, my_cmap(1/(n_colors-1)))
+      plot.differential_efficiency(events_gen, pair_gen_masked_0p03, ax, args, "0p03", var, bin_size, range_var, my_cmap(2/(n_colors-1)))
+      plot.differential_efficiency(events_gen, pair_gen_masked_0p045, ax, args, "0p045", var, bin_size, range_var, my_cmap(3/(n_colors-1)))
+      plot.differential_efficiency(events_gen, pair_gen_masked_Ref, ax, args, "Ref",var,  bin_size, range_var, my_cmap(4/(n_colors-1)))
+      plt.savefig(f"performance_plots/Eficiency_{var}_differential.png",dpi=300)
+      plt.savefig(f"performance_plots/Eficiency_{var}_differential.pdf")
+      print(f"performance_plots/Eficiency_{var}_differential.png")
+
 
   if args.distribution:
     # print("events", events_0p0113)
-
+    bin_pt = 40
+    range_pt = [0, 100]
+    bin_eta = 40
+    range_eta = [1.6, 2.8]
+    bin_phi = 40
+    range_phi = [0, 2.2]
     legend_handles = []
+    for var, bin_size, range_var in zip(['pT', 'eta', 'phi'], [bin_pt, bin_eta, bin_phi], [range_pt, range_eta, range_phi]):
+      plt.figure(figsize=(10, 10))
+      plot.comparison_histo_performance(events_0p0113, 'cl3d_p0113Tri_eta', args, var, bin_size, range_var, "0.0113", my_cmap(0 / (n_colors - 1)), legend_handles)
+      plot.comparison_histo_performance(events_0p016, 'cl3d_p016Tri_eta', args, var, bin_size, range_var, "0.016", my_cmap(1 / (n_colors - 1)), legend_handles)
+      plot.comparison_histo_performance(events_0p03, 'cl3d_p03Tri_eta', args, var, bin_size, range_var, "0.03", my_cmap(2 / (n_colors - 1)), legend_handles)
+      plot.comparison_histo_performance(events_0p045, 'cl3d_p045Tri_eta', args, var, bin_size, range_var, "0.045", my_cmap(3 / (n_colors - 1)), legend_handles)
+      plot.comparison_histo_performance(events_Ref, 'cl3d_Ref_eta', args, var, bin_size, range_var, "Ref", my_cmap(4 / (n_colors - 1)), legend_handles)
+      plt.tight_layout()
+      plt.savefig(f"performance_plots/Non_matched_{var}_distributions.png", dpi=300)
+      plt.savefig(f"performance_plots/Non_matched_{var}_distributions.pdf")
+      print(f"Saved figure: performance_plots/Non_matched_{var}_distributions.png")
+      legend_handles = []
 
-    #Plotting for pT
-    plt.figure(figsize=(10,10))
-    plot.comparison_histo_performance(events_0p0113, 'cl3d_p0113Tri_eta', args, "pT", 40, [0,100], "0.0113",my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p016, 'cl3d_p016Tri_eta', args, "pT", 40, [0,100], "0.016",my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p03, 'cl3d_p03Tri_eta', args, "pT", 40, [0,100], "0.03",my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p045, 'cl3d_p045Tri_eta', args, "pT", 40, [0,100], "0.045",my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_Ref, 'cl3d_Ref_eta', args, "pT", 40, [0,100], "Ref",my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Non_matched_pt_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Non_matched_pt_distributions.pdf")
-
-    print("Saved figure: performance_plots/Non_matched_pt_distributions.png")
-
-    legend_handles = []
-    #Plotting for eta
-
-    range_eta=[1.6, 2.8]
-    plt.figure(figsize=(10,10))
-    plot.comparison_histo_performance(events_0p0113, 'cl3d_p0113Tri_eta', args, "eta", 40, range_eta, "0.0113",my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p016, 'cl3d_p016Tri_eta', args, "eta", 40, range_eta, "0.016",my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p03, 'cl3d_p03Tri_eta', args, "eta", 40, range_eta, "0.03",my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p045, 'cl3d_p045Tri_eta', args, "eta", 40, range_eta, "0.045",my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_Ref, 'cl3d_Ref_eta', args, "eta", 40, range_eta, "Ref",my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Non_matched_eta_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Non_matched_eta_distributions.pdf")
-
-    print("performance_plots/Non_matched_eta_distributions.png")
-
-    legend_handles = []
-    #Plotting for phi
-    range_phi= [0,2.2]
-    plt.figure(figsize=(10,10))
-    plot.comparison_histo_performance(events_0p0113, 'cl3d_p0113Tri_eta', args, "phi", 40, range_phi, "0.0113", my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p016, 'cl3d_p016Tri_eta', args, "phi", 40,range_phi , "0.016", my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p03, 'cl3d_p03Tri_eta', args, "phi", 40, range_phi, "0.03", my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_0p045, 'cl3d_p045Tri_eta', args, "phi", 40, range_phi, "0.045", my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.comparison_histo_performance(events_Ref, 'cl3d_Ref_eta', args, "phi", 40,range_phi, "Ref", my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Non_matched_phi_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Non_matched_phi_distributions.pdf")
-
-    print("performance_plots/Non_matched_phi_distributions.png")
 
   if args.scale:
     legend_handles = []
     #Plotting for pt
     range_pt= [0.25, 1.25]
     bin_pt=30
-    plt.figure(figsize=(10,10))
-    plot.scale_distribution(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "pT", bin_pt, range_pt, "0.0113", my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "pT", bin_pt, range_pt, "0.016", my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "pT", bin_pt, range_pt, "0.03", my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "pT", bin_pt, range_pt, "0.045", my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "pT", bin_pt, range_pt, "Ref", my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Response_pt_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Response_matched_pt_distributions.pdf")
-    print("performance_plots/Response_pt_distributions.png")
+    range_eta= [-0.05, 0.05]
+    bin_eta=30
+    range_phi= [-0.05, 0.05]
+    bin_phi=30
 
-    #Plotting for phi
-    legend_handles = []
-    range_eta= [-0.03, 0.03]
-    bin_eta=20
-    plt.figure(figsize=(10,10))
-    plot.scale_distribution(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "eta", bin_eta, range_eta, "0.0113", my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "eta", bin_eta, range_eta, "0.016", my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "eta", bin_eta, range_eta, "0.03", my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "eta", bin_eta, range_eta, "0.045", my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "eta", bin_eta, range_eta, "Ref", my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Response_eta_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Response_matched_eta_distributions.pdf")
-    print("performance_plots/Response_eta_distributions.png")
+    for var, bin_size, range_var in zip(['pT', 'eta', 'phi'], [bin_pt, bin_eta, bin_phi], [range_pt, range_eta, range_phi]):
+      plt.figure(figsize=(10, 10))
+      plot.scale_distribution(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, var, bin_size, range_var, "0.0113", my_cmap(0 / (n_colors - 1)), legend_handles)
+      plot.scale_distribution(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, var, bin_size, range_var, "0.016", my_cmap(1 / (n_colors - 1)), legend_handles)
+      plot.scale_distribution(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, var, bin_size, range_var, "0.03", my_cmap(2 / (n_colors - 1)), legend_handles)
+      plot.scale_distribution(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, var, bin_size, range_var, "0.045", my_cmap(3 / (n_colors - 1)), legend_handles)
+      plot.scale_distribution(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, var, bin_size, range_var, "Ref", my_cmap(4 / (n_colors - 1)), legend_handles)
+      plt.tight_layout()
+      plt.savefig(f"performance_plots/Response_{var}_distributions.png", dpi=300)
+      plt.savefig(f"performance_plots/Response_matched_{var}_distributions.pdf")
+      print(f"Saved figure: performance_plots/Response_{var}_distributions.png")
+      legend_handles = []
 
-    #Plotting for phi
-    legend_handles = []
-    range_phi= [-0.03, 0.03]
-    bin_phi=20
-    plt.figure(figsize=(10,10))
-    plot.scale_distribution(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "phi", bin_phi, range_phi, "0.0113", my_cmap(0/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "phi", bin_phi, range_phi, "0.016", my_cmap(1/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "phi", bin_phi, range_phi, "0.03", my_cmap(2/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "phi", bin_phi, range_phi, "0.045", my_cmap(3/ (n_colors - 1)), legend_handles)
-    plot.scale_distribution(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "phi", bin_phi, range_phi, "Ref", my_cmap(4/ (n_colors - 1)), legend_handles)
-    plt.tight_layout
-    plt.savefig("performance_plots/Response_phi_distributions.png",dpi=300)
-    plt.savefig("performance_plots/Response_matched_phi_distributions.pdf")
-    print("performance_plots/Response_phi_distributions.png")
 
   if args.resp:
     legend_handles = []
     range_phi= [-2.2, 2.2]
     bin_phi=10
-    fig, ax = plt.subplots(figsize=(10,10))
-    plot.plot_responses(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "phi", ax, "0p0113", my_cmap(0/ (n_colors - 1)), bin_phi,range_phi)
-    plot.plot_responses(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "phi", ax, "0p016", my_cmap(1/ (n_colors - 1)), bin_phi,range_phi)
-    plot.plot_responses(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "phi", ax, "0p03", my_cmap(2/ (n_colors - 1)), bin_phi,range_phi)
-    plot.plot_responses(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "phi", ax, "0p045", my_cmap(3/ (n_colors - 1)), bin_phi,range_phi)
-    plot.plot_responses(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "phi", ax, "Ref", my_cmap(4/ (n_colors - 1)), bin_phi,range_phi)
-    if args.response:
-      plt.savefig(f"performance_plots/Response_phi_differential_{range_phi}.png",dpi=300)
-      plt.savefig(f"performance_plots/Response_matched_phi_differential_{range_phi}.pdf")
-      print(f"performance_plots/Response_phi_differential_{range_phi}.png")
-    if args.resolution:
-       plt.savefig(f"performance_plots/Resolution_phi_differential_{range_phi}.png",dpi=300)
-       plt.savefig(f"performance_plots/Resolution_matched_phi_differential_{range_phi}.pdf")
-       print(f"performance_plots/Resolution_phi_differential_{range_phi}.png")
-    
-    range_eta=[1.6, 2.8]
     bin_eta=10
-    fig, ax = plt.subplots(figsize=(10,10))
-    plot.plot_responses(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "eta", ax, "0p0113", my_cmap(0/ (n_colors - 1)), bin_eta,range_eta)
-    plot.plot_responses(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "eta", ax, "0p016", my_cmap(1/ (n_colors - 1)), bin_eta,range_eta)
-    plot.plot_responses(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "eta", ax, "0p03", my_cmap(2/ (n_colors - 1)), bin_eta,range_eta)
-    plot.plot_responses(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "eta", ax, "0p045", my_cmap(3/ (n_colors - 1)), bin_eta,range_eta)
-    plot.plot_responses(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "eta", ax, "Ref", my_cmap(4/ (n_colors - 1)), bin_eta,range_eta)
-    if args.response:
-      plt.savefig(f"performance_plots/Response_eta_differential.png",dpi=300)
-      plt.savefig(f"performance_plots/Response_matched_eta_differential.pdf")
-      print(f"performance_plots/Response_eta_differential.png")
-    if args.resolution:
-      plt.savefig(f"performance_plots/Resolution_eta_differential.png",dpi=300)
-      plt.savefig(f"performance_plots/Resolution_matched_eta_differential.pdf")
-      print(f"performance_plots/Resolution_eta_differential.png")
-
-    range_pt=[0,100]
+    range_eta=[1.6, 2.8]
     bin_pt=10
-    fig, ax = plt.subplots(figsize=(10,10))
-    plot.plot_responses(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, "pT", ax, "0p0113", my_cmap(0/ (n_colors - 1)), bin_pt,range_pt)
-    plot.plot_responses(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, "pT", ax, "0p016", my_cmap(1/ (n_colors - 1)), bin_pt,range_pt)
-    plot.plot_responses(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, "pT", ax, "0p03", my_cmap(2/ (n_colors - 1)), bin_pt,range_pt)
-    plot.plot_responses(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, "pT", ax, "0p045", my_cmap(3/ (n_colors - 1)), bin_pt,range_pt)
-    plot.plot_responses(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, "pT", ax, "Ref", my_cmap(4/ (n_colors - 1)), bin_pt,range_pt)
-    if args.response:
-      plt.savefig(f"performance_plots/Response_pt_differential.png",dpi=300)
-      plt.savefig(f"performance_plots/Response_matched_pt_differential.pdf")
-      print(f"performance_plots/Response_pt_differential.png")
-    if args.resolution:
-      plt.savefig(f"performance_plots/Resolution_pt_differential.png",dpi=300)
-      plt.savefig(f"performance_plots/Resolution_matched_pt_differential.pdf")
-      print(f"performance_plots/Resolution_pt_differential.png")
+    range_pt=[0,100]
+    bin_n_cl_pt=10
+    bin_n_cl_eta=10
+    range_n_cl_pt=[0,100]
+    range_n_cl_eta=[1.6, 2.8]
 
+    #Response and resolution plots for pt, eta and phi
 
+    for var, bin_size, range_var in zip(['pT', 'eta', 'phi', 'pT_eta'], [bin_pt, bin_eta, bin_phi, bin_eta], [range_pt, range_eta, range_phi, range_eta]):
+      fig, ax = plt.subplots(figsize=(10,10))
+      plot.plot_responses(pair_cluster_0p0113_matched, pair_gen_masked_0p0113, args, var, ax, "0p0113", events_0p0113, "cl3d_p0113Tri_eta", my_cmap(0/ (n_colors - 1)), bin_size,range_var)
+      plot.plot_responses(pair_cluster_0p016_matched, pair_gen_masked_0p016, args, var, ax, "0p016", events_0p016, "cl3d_p016Tri_eta", my_cmap(1/ (n_colors - 1)), bin_size,range_var)
+      plot.plot_responses(pair_cluster_0p03_matched, pair_gen_masked_0p03, args, var, ax, "0p03", events_0p03, "cl3d_p03Tri_eta", my_cmap(2/ (n_colors - 1)), bin_size,range_var)
+      plot.plot_responses(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, var, ax, "0p045", events_0p045, "cl3d_p045Tri_eta", my_cmap(3/ (n_colors - 1)), bin_size,range_var)
+      plot.plot_responses(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, var, ax, "Ref", events_Ref, "cl3d_Ref_eta", my_cmap(4/ (n_colors - 1)), bin_size,range_var)
+      if args.response:
+        plt.savefig(f"performance_plots/Response_{var}_differential.png",dpi=300)
+        plt.savefig(f"performance_plots/Response_matched_{var}_differential.pdf")
+        print(f"performance_plots/Response_{var}_differential.png")
+      if (var=="pT" or var=="pT_eta") and args.eff_rms:
+        plt.savefig(f"performance_plots/Resolution_{var}_differential_effrms.png",dpi=300)
+        plt.savefig(f"performance_plots/Resolution_matched_{var}_differential_effrms.pdf")
+        print(f"performance_plots/Resolution_{var}_differential_effrms.png")
+      if args.resolution:
+        plt.savefig(f"performance_plots/Resolution_{var}_differential.png",dpi=300)
+        plt.savefig(f"performance_plots/Resolution_matched_{var}_differential.pdf")
+        print(f"performance_plots/Resolution_{var}_differential.png")
+        
+    if not args.eff_rms:
+      #Number of clusters per event plots for pt and eta
+      for var, bin, range in zip(['n_cl_pt', 'n_cl_eta'], [bin_n_cl_pt, bin_n_cl_eta], [range_n_cl_pt, range_n_cl_eta]):
+        figure, ax = plt.subplots(figsize=(10, 10))
+        plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 1,var,bin, range, "0p0113", my_cmap(0 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 1, var,bin, range, "0p016", my_cmap(1 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 1, var, bin, range, "0p03", my_cmap(2 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 1, var,bin, range, "0p045", my_cmap(3 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 1, var, bin, range, "Ref", my_cmap(4 / (n_colors - 1)))
+        if args.response:
+          plt.savefig(f"performance_plots/Response_{var}_differential_{1}.png",dpi=300)
+          plt.savefig(f"performance_plots/Response_{var}_differential_{1}.pdf")
+          print(f"Saved figure: performance_plots/Response_{var}_differential_{1}.png")
+        if args.resolution:
+          plt.savefig(f"performance_plots/Resolution_{var}_differential_{1}.png",dpi=300)
+          plt.savefig(f"performance_plots/Resolution_{var}_differential_{1}.pdf")
+          print(f"Saved figure: performance_plots/Resolution_{var}_differential_{1}.png")
 
+      figure, ax = plt.subplots(figsize=(10, 10))
+      plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p0113", my_cmap(0 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p016", my_cmap(1 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p03", my_cmap(2 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p045", my_cmap(3 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "Ref", my_cmap(4 / (n_colors - 1)))
+      if args.response:
+        plt.savefig(f"performance_plots/Response_n_cl_pt_differential_2.png",dpi=300)
+        plt.savefig(f"performance_plots/Response_matched_n_cl_pt_differential_2.pdf")
+        print(f"Saved figure: performance_plots/Response_n_cl_pt_differential_2.png")
+      if args.resolution:
+        plt.savefig(f"performance_plots/Resolution_n_cl_pt_differential_2.png",dpi=300)
+        plt.savefig(f"performance_plots/Resolution_matched_n_cl_pt_differential_2.pdf")
+        print(f"Saved figure: performance_plots/Resolution_n_cl_pt_differential_2.png")
+
+    
 
 ##############################################################################
 #######If needed to save the awk arrays for plotting into parquet files#######

@@ -87,6 +87,8 @@ def provide_events_performaces(n, particles, PU):
 
     # Mask: Only select particles with flag "gen-particle_gen" different from -1, only keep the gens that reached the EE and only keep the particles whose shower will stay inside the detector
     particle_mask = (data_gen.genpart_gen != -1) & (data_gen.genpart_reachedEE ==2) & (abs(data_gen.genpart_exeta)>1.6) & (abs(data_gen.genpart_exeta)<2.9)
+    # particle_mask = (data_gen.genpart_gen != -1) & (data_gen.genpart_reachedEE ==2) 
+    # particle_mask = (data_gen.genpart_gen != -1) 
     # Filter each field using the mask
     filtered_gen = ak.zip({
         'event': data_gen.event,  
@@ -153,6 +155,9 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
     mask_empty= (ak.num(pair_cluster_masked, axis=2)==1) & (ak.num(pair_gen_masked, axis=2)==1)
     pair_cluster_masked = pair_cluster_masked[mask_empty]
     pair_gen_masked = pair_gen_masked[mask_empty]
+
+    if args.total_efficiency:
+        print("Number of matched clusters:", len(ak.flatten(ak.flatten(pair_cluster_masked, axis=2),axis=-1)))
 
     # Remove non matched events in the list 
     empty_mask = ak.num(pair_cluster_masked) == 0
