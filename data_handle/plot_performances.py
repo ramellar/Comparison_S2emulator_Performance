@@ -29,7 +29,6 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
     event_flat = ak.flatten(event_info, axis=-1)
     bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
     # print(event_flat.pt)
-
     if var == "pT":
         plt.hist(event_flat.pt, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(event_flat.pt, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
@@ -44,14 +43,47 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
         plt.xlabel(r'$|\phi^{cluster}|$')
 
     plt.ylabel('Counts')
-    legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-    plt.legend(handles=legend_handles)
+    if args.pt_cut != 0.0:
+        thr = args.pt_cut
+        legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
+        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
+    else:
+        legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
+        plt.legend(handles=legend_handles)
 
     plt.grid(linestyle=":")
     mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup + ' ' + args.particles)
 
     if args.pileup == 'PU200':
         plt.yscale('log')
+
+def plot_2D_histograms(events, att_eta, args, label, range_=[[-3.0, 3.0], [0, 100]]):
+    plt.figure(figsize=(10, 10))
+    event_info = ak.zip({
+        "eta": getattr(events, att_eta),
+        "phi": getattr(events, att_eta.replace("eta", "phi")),
+        "pt": getattr(events, att_eta.replace("eta", "pt")),
+    })
+    event_flat = ak.flatten(event_info, axis=-1)
+    # bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
+    # print("flatpt",event_flat.pt)
+    plt.hist2d(ak.to_numpy(event_flat.eta), ak.to_numpy(event_flat.pt), bins=40, range=range_, cmap='magma_r')
+    plt.xlabel(r'$\eta^{cluster}$')
+    plt.ylabel(r'$p_T^{cluster}$')
+    plt.colorbar(label="Counts")
+    if args.pt_cut !=0 :
+        if label != "Ref":
+            plt.title(f"Algorithm with triangle size: {label} and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+        else:
+            plt.title(f"CMSSW simulation and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+    else:
+        if label != "Ref":
+            plt.title(f"Algorithm with triangle size: {label}",fontsize=20)
+        else:
+            plt.title(f"CMSSW simulation",fontsize=20)
+    plt.tight_layout()
+    
+
 
 #Plot response and resolution
 
@@ -87,7 +119,10 @@ def scale_distribution(events, gen, args, var, bin_n, range_,label, color, legen
 
     plt.ylabel('Counts')
     legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-    plt.legend(handles=legend_handles)
+    if args.pt_cut != 0:
+        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{cluster}}}} > {args.pt_cut} GeV$")
+    else:
+        plt.legend(handles=legend_handles)
 
     plt.grid(linestyle=":")
     mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup + ' ' + args.particles)
@@ -198,7 +233,10 @@ def number_of_clusters_per_event(events, gen, att_eta, ax, args, gen_n=1, var="n
         plt.ylabel(r'$\sigma^{cluster}$')
     plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='n_cl_pt' else r'$|\eta^{gen}|$')
     mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles+' - '+ str(gen_n)+' gen particles')
-    plt.legend()
+    if args.pt_cut != 0:
+        plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {args.pt_cut}$ GeV", title_fontsize=15, fontsize=17)
+    else:
+        plt.legend()
     plt.grid()
     plt.tight_layout()
     return 
@@ -257,6 +295,8 @@ def compute_responses_performance(matched, matched_gen, args, var, events, att_e
 
     return resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges
 
+def model(x, a, c):
+    return a + c / x
 
 def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_n=10, range_=[0,200]):
     resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges= compute_responses_performance(simul, gen, args, var , event, att_eta, bin_n, range_)
@@ -265,15 +305,25 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
         ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resp_simul.values(), 
                     yerr=np.array(list(zip(err_resp_simul.values(), err_resp_simul.values()))).T,
                     xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
+        # if (label == "0p03" or label == "0p045" or label == "Ref") and var=="pT":
+        #     x_data = (bin_edges[1:] + bin_edges[:-1]) / 2
+        #     y_data = np.array(list(resp_simul.values()))
+        #     y_err  = np.array(list(err_resp_simul.values()))
+        #     popt, pcov = curve_fit(model, x_data, y_data, sigma=y_err, absolute_sigma=True)
+        #     a_fit, c_fit = popt
+        #     err_a, err_c= np.sqrt(np.diag(pcov))
+        #     print(f"Fitted parameters for {label}: a = {a_fit:.3f} + {err_a:.3f} , c = {c_fit:.3f} + {err_c:.3f} ")
+        #     x_fit = np.linspace(min(x_data), max(x_data), 1000)
+        #     y_fit = model(x_fit, a_fit, c_fit)
+        #     ax.plot(x_fit, y_fit, linestyle='--', color=color)
+        #     plt.ylim(0.8,1)
+        # if label == "0p03" and var=="pT":
+        #     x_curve = np.linspace(range_[0] + 1e-3, range_[1], 1000)
+        #     y_curve = 0.95 + 0.5 / x_curve
+        #     ax.plot(x_curve, y_curve, linestyle='--', color='grey', label=f'Fit: 0.95 + 0.5/Pt_gen')
         plt.ylabel(r'$\phi^{cluster}-\phi^{gen}$' if var=='phi' else r'$\eta^{cluster}-\eta^{gen}$' if var=='eta' else \
                 r'$<cluster>$' if var=='n_cl_pt' or var=='n_cl_eta' else r'$p_{T}^{cluster}/p_{T}^{gen}$')
         plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' else r'$\phi^{gen}$' if var=='phi' else r'$|\eta^{gen}|$')
-        # legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-        # plt.legend(handles=legend_handles)
-        mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles+' - '+str(cfg['thresholdMaximaParam_a'][0])+'GeV')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
     if args.resolution or args.eff_rms:
         plt.style.use(mplhep.style.CMS)
         ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resol_simul.values(), 
@@ -286,12 +336,14 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
             plt.ylabel(r'$\sigma^{cluster}$' if var=='phi' else r'$\sigma^{cluster}$' if var=='eta' else \
                     r'$\sigma^{cluster}/\mu^{cluster}$')
         plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' else r'$\phi^{gen}$' if var=='phi' else r'$|\eta^{gen}|$')
-        # legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-        # plt.legend(handles=legend_handles)
-        mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles+' - '+str(cfg['thresholdMaximaParam_a'][0])+'GeV')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
+    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles+' - '+str(cfg['thresholdMaximaParam_a'][0])+'GeV')
+    if args.pt_cut != 0:
+        plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {args.pt_cut}$ GeV", title_fontsize=15, fontsize=17)
+    else:
+        plt.legend(fontsize=18)
+    
+    plt.grid()
+    plt.tight_layout()
 
 
 #Matching function (not used for the moment)
@@ -373,15 +425,15 @@ def differential_efficiency(event_gen, pair_gen_matched, ax, args, label=[], var
     plt.ylabel(r'$\epsilon$')
     plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' else r'$|\eta^{gen}|$')
     mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles)
-    plt.legend()
+    if args.pt_cut != 0:
+       plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {args.pt_cut}$ GeV", title_fontsize=15, fontsize=17)
+    else:
+        plt.legend()
     plt.grid()
     plt.tight_layout()
     return
 
     
-
-
-
 #Plotting the efficiency as a function pt_gen and eta_gen (still testing these functions)
 
 def compute_efficiency(cluster, gen, bin_n, var, att_eta, dr_threshold=0.1):

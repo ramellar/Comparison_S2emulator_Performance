@@ -19,7 +19,7 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
 with open('config_performances.yaml', "r") as afile:
     cfg_particles = yaml.safe_load(afile)["particles"]
 
-def provide_events_performaces(n, particles, PU):
+def provide_events_performaces(n, particles, PU, thr=0.0):
     base_path = cfg_particles['base_path']
     name_tree = cfg_particles[PU][particles]["tree"]
     # filepath  = base_path + cfg_particles[PU][particles]["file"]
@@ -105,7 +105,44 @@ def provide_events_performaces(n, particles, PU):
     data_cl_0p016 = data_cl_0p016[reachedEE_ev_mask]
     data_cl_0p03 = data_cl_0p03[reachedEE_ev_mask]
     data_cl_0p045 = data_cl_0p045[reachedEE_ev_mask]
-    data_cl_Ref = data_cl_Ref[reachedEE_ev_mask]    
+    data_cl_Ref = data_cl_Ref[reachedEE_ev_mask]
+
+    if thr != 0:
+        mask_0p0113= data_cl_0p0113.cl3d_p0113Tri_pt > thr
+        data_cl_0p0113=ak.zip({
+            'event': data_cl_0p0113.event, 
+            'cl3d_p0113Tri_eta': data_cl_0p0113.cl3d_p0113Tri_eta[mask_0p0113], 
+            'cl3d_p0113Tri_phi': data_cl_0p0113.cl3d_p0113Tri_phi[mask_0p0113], 
+            'cl3d_p0113Tri_pt' : data_cl_0p0113.cl3d_p0113Tri_pt[mask_0p0113]
+        })
+        mask_0p016= data_cl_0p016.cl3d_p016Tri_pt > thr
+        data_cl_0p016=ak.zip({
+            'event': data_cl_0p016.event, 
+            'cl3d_p016Tri_eta': data_cl_0p016.cl3d_p016Tri_eta[mask_0p016], 
+            'cl3d_p016Tri_phi': data_cl_0p016.cl3d_p016Tri_phi[mask_0p016], 
+            'cl3d_p016Tri_pt' : data_cl_0p016.cl3d_p016Tri_pt[mask_0p016]
+        })
+        mask_0p03= data_cl_0p03.cl3d_p03Tri_pt > thr
+        data_cl_0p03=ak.zip({
+            'event': data_cl_0p03.event, 
+            'cl3d_p03Tri_eta': data_cl_0p03.cl3d_p03Tri_eta[mask_0p03], 
+            'cl3d_p03Tri_phi': data_cl_0p03.cl3d_p03Tri_phi[mask_0p03], 
+            'cl3d_p03Tri_pt' : data_cl_0p03.cl3d_p03Tri_pt[mask_0p03]
+        })
+        mask_0p045= data_cl_0p045.cl3d_p045Tri_pt > thr
+        data_cl_0p045=ak.zip({
+            'event': data_cl_0p045.event, 
+            'cl3d_p045Tri_eta': data_cl_0p045.cl3d_p045Tri_eta[mask_0p045], 
+            'cl3d_p045Tri_phi': data_cl_0p045.cl3d_p045Tri_phi[mask_0p045], 
+            'cl3d_p045Tri_pt' : data_cl_0p045.cl3d_p045Tri_pt[mask_0p045]
+        })
+        mask_Ref= data_cl_Ref.cl3d_Ref_pt > thr
+        data_cl_Ref=ak.zip({
+            'event': data_cl_Ref.event, 
+            'cl3d_Ref_eta': data_cl_Ref.cl3d_Ref_eta[mask_Ref], 
+            'cl3d_Ref_phi': data_cl_Ref.cl3d_Ref_phi[mask_Ref], 
+            'cl3d_Ref_pt' : data_cl_Ref.cl3d_Ref_pt[mask_Ref]
+        })
 
     return filtered_gen, data_cl_0p0113, data_cl_0p016, data_cl_0p03, data_cl_0p045, data_cl_Ref
 
