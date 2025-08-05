@@ -41,6 +41,7 @@ if __name__ == '__main__':
   parser.add_argument('--distribution',     action='store_true', help='Plot the distributions')
   parser.add_argument('--scale',     action='store_true', help='Plot the response distribution of the emulator')
   parser.add_argument('--efficiency',     action='store_true', help='Plot the response distribution of the emulator')
+  parser.add_argument('--fit',     action='store_true', help='Fit Pt response')
   args = parser.parse_args()
 
   output_dir = f"results_performance_plots_{args.particles}_{args.pileup}"
@@ -112,7 +113,7 @@ if __name__ == '__main__':
 
     for events, att_eta, triangle in zip([events_0p0113,events_0p016,events_0p03,events_0p045,events_Ref],['cl3d_p0113Tri_eta','cl3d_p016Tri_eta','cl3d_p03Tri_eta','cl3d_p045Tri_eta','cl3d_Ref_eta'],["0.0113","0.016","0.03","0.045","Ref"]):
       for range, label in zip([[[-2.9, -1.6], [0, 100]],[[1.6, 2.9], [0, 100]]], ["negative_eta","positive_eta"]):
-        plot.plot_2D_histograms(events_0p0113, 'cl3d_p0113Tri_eta', args, triangle, range)
+        plot.plot_2D_histograms(events, att_eta, args, triangle, range)
         plt.savefig(f"{output_dir}/distributions/2D_distributions_{triangle}_{label}.png", dpi=300)
         plt.savefig(f"{output_dir}/distributions/2D_distributions_{triangle}_{label}.pdf")
         print(f"Saved figure: {output_dir}/distributions/2D_distributions_{triangle}_{label}.png")
@@ -182,9 +183,14 @@ if __name__ == '__main__':
       plot.plot_responses(pair_cluster_0p045_matched, pair_gen_masked_0p045, args, var, ax, "0p045", events_0p045, "cl3d_p045Tri_eta", my_cmap(3/ (n_colors - 1)), bin_size,range_var)
       plot.plot_responses(pair_cluster_Ref_matched, pair_gen_masked_Ref, args, var, ax, "Ref", events_Ref, "cl3d_Ref_eta", my_cmap(4/ (n_colors - 1)), bin_size,range_var)
       if args.response:
-        plt.savefig(f"{output_dir}/responses/Response_{var}_differential.png",dpi=300)
-        plt.savefig(f"{output_dir}/responses/Response_matched_{var}_differential.pdf")
-        print(f"{output_dir}/responses/Response_{var}_differential.png")
+        if args.fit and var=="pT":
+          plt.savefig(f"{output_dir}/responses/Response_{var}_differential_fit.png",dpi=300)
+          plt.savefig(f"{output_dir}/responses/Response_matched_{var}_differential_fit.pdf")
+          print(f"{output_dir}/responses/Response_{var}_differential_fit.png")
+        else:
+          plt.savefig(f"{output_dir}/responses/Response_{var}_differential.png",dpi=300)
+          plt.savefig(f"{output_dir}/responses/Response_matched_{var}_differential.pdf")
+          print(f"{output_dir}/responses/Response_{var}_differential.png")
       if (var=="pT" or var=="pT_eta") and args.eff_rms:
         plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_effrms.png",dpi=300)
         plt.savefig(f"{output_dir}/responses/Resolution_matched_{var}_differential_effrms.pdf")
@@ -194,38 +200,38 @@ if __name__ == '__main__':
         plt.savefig(f"{output_dir}/responses/Resolution_matched_{var}_differential.pdf")
         print(f"{output_dir}/responses/Resolution_{var}_differential.png")
         
-    # if not args.eff_rms:
-      # #Number of clusters per event plots for pt and eta
-      # for var, bin, range in zip(['n_cl_pt', 'n_cl_eta'], [bin_n_cl_pt, bin_n_cl_eta], [range_n_cl_pt, range_n_cl_eta]):
-      #   figure, ax = plt.subplots(figsize=(10, 10))
-      #   plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 1,var,bin, range, "0p0113", my_cmap(0 / (n_colors - 1)))
-      #   plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 1, var,bin, range, "0p016", my_cmap(1 / (n_colors - 1)))
-      #   plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 1, var, bin, range, "0p03", my_cmap(2 / (n_colors - 1)))
-      #   plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 1, var,bin, range, "0p045", my_cmap(3 / (n_colors - 1)))
-      #   plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 1, var, bin, range, "Ref", my_cmap(4 / (n_colors - 1)))
-      #   if args.response:
-      #     plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.png",dpi=300)
-      #     plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.pdf")
-      #     print(f"Saved figure: {output_dir}/responses/Response_{var}_differential_{1}.png")
-      #   if args.resolution:
-      #     plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.png",dpi=300)
-      #     plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.pdf")
-      #     print(f"Saved figure: {output_dir}/responses/Resolution_{var}_differential_{1}.png")
+    if not args.eff_rms:
+      #Number of clusters per event plots for pt and eta
+      for var, bin, range in zip(['n_cl_pt', 'n_cl_eta'], [bin_n_cl_pt, bin_n_cl_eta], [range_n_cl_pt, range_n_cl_eta]):
+        figure, ax = plt.subplots(figsize=(10, 10))
+        plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 1,var,bin, range, "0p0113", my_cmap(0 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 1, var,bin, range, "0p016", my_cmap(1 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 1, var, bin, range, "0p03", my_cmap(2 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 1, var,bin, range, "0p045", my_cmap(3 / (n_colors - 1)))
+        plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 1, var, bin, range, "Ref", my_cmap(4 / (n_colors - 1)))
+        if args.response:
+          plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.png",dpi=300)
+          plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.pdf")
+          print(f"Saved figure: {output_dir}/responses/Response_{var}_differential_{1}.png")
+        if args.resolution:
+          plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.png",dpi=300)
+          plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.pdf")
+          print(f"Saved figure: {output_dir}/responses/Resolution_{var}_differential_{1}.png")
 
-      # figure, ax = plt.subplots(figsize=(10, 10))
-      # plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p0113", my_cmap(0 / (n_colors - 1)))
-      # plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p016", my_cmap(1 / (n_colors - 1)))
-      # plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p03", my_cmap(2 / (n_colors - 1)))
-      # plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p045", my_cmap(3 / (n_colors - 1)))
-      # plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "Ref", my_cmap(4 / (n_colors - 1)))
-      # if args.response:
-      #   plt.savefig(f"{output_dir}/responses/Response_n_cl_pt_differential_2.png",dpi=300)
-      #   plt.savefig(f"{output_dir}/responses/Response_matched_n_cl_pt_differential_2.pdf")
-      #   print(f"Saved figure: {output_dir}/responses/Response_n_cl_pt_differential_2.png")
-      # if args.resolution:
-      #   plt.savefig(f"{output_dir}/responses/Resolution_n_cl_pt_differential_2.png",dpi=300)
-      #   plt.savefig(f"{output_dir}/responses/Resolution_matched_n_cl_pt_differential_2.pdf")
-      #   print(f"Saved figure: {output_dir}/responses/Resolution_n_cl_pt_differential_2.png")
+      figure, ax = plt.subplots(figsize=(10, 10))
+      plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p0113", my_cmap(0 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p016, events_gen, 'cl3d_p016Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p016", my_cmap(1 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p03, events_gen, 'cl3d_p03Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p03", my_cmap(2 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_0p045, events_gen, 'cl3d_p045Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p045", my_cmap(3 / (n_colors - 1)))
+      plot.number_of_clusters_per_event(events_Ref, events_gen, 'cl3d_Ref_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "Ref", my_cmap(4 / (n_colors - 1)))
+      if args.response:
+        plt.savefig(f"{output_dir}/responses/Response_n_cl_pt_differential_2.png",dpi=300)
+        plt.savefig(f"{output_dir}/responses/Response_matched_n_cl_pt_differential_2.pdf")
+        print(f"Saved figure: {output_dir}/responses/Response_n_cl_pt_differential_2.png")
+      if args.resolution:
+        plt.savefig(f"{output_dir}/responses/Resolution_n_cl_pt_differential_2.png",dpi=300)
+        plt.savefig(f"{output_dir}/responses/Resolution_matched_n_cl_pt_differential_2.pdf")
+        print(f"Saved figure: {output_dir}/responses/Resolution_n_cl_pt_differential_2.png")
 
     
 
