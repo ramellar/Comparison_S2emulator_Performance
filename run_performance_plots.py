@@ -187,18 +187,22 @@ if __name__ == '__main__':
           plt.savefig(f"{output_dir}/responses/Response_{var}_differential_fit.png",dpi=300)
           plt.savefig(f"{output_dir}/responses/Response_matched_{var}_differential_fit.pdf")
           print(f"{output_dir}/responses/Response_{var}_differential_fit.png")
+          plt.close(fig)
         else:
           plt.savefig(f"{output_dir}/responses/Response_{var}_differential.png",dpi=300)
           plt.savefig(f"{output_dir}/responses/Response_matched_{var}_differential.pdf")
           print(f"{output_dir}/responses/Response_{var}_differential.png")
+          plt.close(fig)
       if (var=="pT" or var=="pT_eta") and args.eff_rms:
         plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_effrms.png",dpi=300)
         plt.savefig(f"{output_dir}/responses/Resolution_matched_{var}_differential_effrms.pdf")
         print(f"{output_dir}/responses/Resolution_{var}_differential_effrms.png")
+        plt.close(fig)
       if args.resolution:
         plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential.png",dpi=300)
         plt.savefig(f"{output_dir}/responses/Resolution_matched_{var}_differential.pdf")
         print(f"{output_dir}/responses/Resolution_{var}_differential.png")
+        plt.close(fig)
         
     if not args.eff_rms:
       #Number of clusters per event plots for pt and eta
@@ -213,10 +217,12 @@ if __name__ == '__main__':
           plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.png",dpi=300)
           plt.savefig(f"{output_dir}/responses/Response_{var}_differential_{1}.pdf")
           print(f"Saved figure: {output_dir}/responses/Response_{var}_differential_{1}.png")
+          plt.close(fig)
         if args.resolution:
           plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.png",dpi=300)
           plt.savefig(f"{output_dir}/responses/Resolution_{var}_differential_{1}.pdf")
           print(f"Saved figure: {output_dir}/responses/Resolution_{var}_differential_{1}.png")
+          plt.close(fig)
 
       figure, ax = plt.subplots(figsize=(10, 10))
       plot.number_of_clusters_per_event(events_0p0113, events_gen, 'cl3d_p0113Tri_eta', ax, args, 2 ,'n_cl_pt', bin_n_cl_pt, range_n_cl_pt, "0p0113", my_cmap(0 / (n_colors - 1)))
@@ -228,10 +234,12 @@ if __name__ == '__main__':
         plt.savefig(f"{output_dir}/responses/Response_n_cl_pt_differential_2.png",dpi=300)
         plt.savefig(f"{output_dir}/responses/Response_matched_n_cl_pt_differential_2.pdf")
         print(f"Saved figure: {output_dir}/responses/Response_n_cl_pt_differential_2.png")
+        plt.close(fig)
       if args.resolution:
         plt.savefig(f"{output_dir}/responses/Resolution_n_cl_pt_differential_2.png",dpi=300)
         plt.savefig(f"{output_dir}/responses/Resolution_matched_n_cl_pt_differential_2.pdf")
         print(f"Saved figure: {output_dir}/responses/Resolution_n_cl_pt_differential_2.png")
+        plt.close(fig)
 
     
 
