@@ -54,8 +54,19 @@ if __name__ == '__main__':
 
 
   #awkward arrays containing the cluster and gen information
-  events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref =provide_events_performaces(args.n, args.particles, args.pileup, args.pt_cut)
-  # pint(ak.min(ak.flatten(events_0p045.cl3d_p045Tri_pt,axis=-1)))
+  if args.parquet:
+    events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref =provide_events_performaces(args.n, args.particles, args.pileup, args.pt_cut)
+
+    output_dir = "/eos/home-r/ramellar/parquet_files/" + args.particles + "_" + args.pileup
+    os.makedirs(output_dir, exist_ok=True)
+
+    ak.to_parquet(events_gen, os.path.join(output_dir, "events_gen.parquet"))
+    ak.to_parquet(events_0p0113, os.path.join(output_dir, "events_0p0113.parquet"))
+    ak.to_parquet(events_0p016, os.path.join(output_dir, "events_0p016.parquet"))
+    ak.to_parquet(events_0p03, os.path.join(output_dir, "events_0p03.parquet"))
+    ak.to_parquet(events_0p045, os.path.join(output_dir, "events_0p045.parquet"))
+    ak.to_parquet(events_Ref, os.path.join(output_dir, "events_Ref.parquet"))
+
 
   if args.total_efficiency:
     print("------------------------------------------")
@@ -247,45 +258,45 @@ if __name__ == '__main__':
 #######If needed to save the awk arrays for plotting into parquet files#######
 ##############################################################################
 
-if args.parquet:
-      #awkward arrays containing the cluster and gen information
-      events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref =provide_events_performaces(args.n, args.particles, args.pileup)
+# if args.parquet:
+#       #awkward arrays containing the cluster and gen information
+#       events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref =provide_events_performaces(args.n, args.particles, args.pileup)
 
-      # plot.compute_efficiency_test(events_0p0113, events_gen, 5, "pT", 'cl3d_p0113Tri_eta')
+#       # plot.compute_efficiency_test(events_0p0113, events_gen, 5, "pT", 'cl3d_p0113Tri_eta')
       
-      pair_cluster_0p0113_matched, pair_gen_masked_0p0113 = plot.apply_matching(events_0p0113, 'cl3d_p0113Tri_eta','cl3d_p0113Tri_phi', events_gen, deltaR=0.1)
-      pair_cluster_0p016_matched, pair_gen_masked_0p016 = plot.apply_matching(events_0p016, 'cl3d_p016Tri_eta','cl3d_p016Tri_phi', events_gen, deltaR=0.1)
-      pair_cluster_0p03_matched, pair_gen_masked_0p03 = plot.apply_matching(events_0p03, 'cl3d_p03Tri_eta','cl3d_p03Tri_phi', events_gen, deltaR=0.1)
-      pair_cluster_0p045_matched, pair_gen_masked_0p045 = plot.apply_matching(events_0p045, 'cl3d_p045Tri_eta','cl3d_p045Tri_phi', events_gen, deltaR=0.1)
-      pair_cluster_Ref_matched, pair_gen_masked_Ref = plot.apply_matching(events_Ref, 'cl3d_Ref_eta','cl3d_Ref_phi', events_gen, deltaR=0.1)
+#       pair_cluster_0p0113_matched, pair_gen_masked_0p0113 = plot.apply_matching(events_0p0113, 'cl3d_p0113Tri_eta','cl3d_p0113Tri_phi', events_gen, deltaR=0.1)
+#       pair_cluster_0p016_matched, pair_gen_masked_0p016 = plot.apply_matching(events_0p016, 'cl3d_p016Tri_eta','cl3d_p016Tri_phi', events_gen, deltaR=0.1)
+#       pair_cluster_0p03_matched, pair_gen_masked_0p03 = plot.apply_matching(events_0p03, 'cl3d_p03Tri_eta','cl3d_p03Tri_phi', events_gen, deltaR=0.1)
+#       pair_cluster_0p045_matched, pair_gen_masked_0p045 = plot.apply_matching(events_0p045, 'cl3d_p045Tri_eta','cl3d_p045Tri_phi', events_gen, deltaR=0.1)
+#       pair_cluster_Ref_matched, pair_gen_masked_Ref = plot.apply_matching(events_Ref, 'cl3d_Ref_eta','cl3d_Ref_phi', events_gen, deltaR=0.1)
 
-      # Define your directory path
-      output_dir = "parquet_files/" + args.particles + "_" + args.pileup
+#       # Define your directory path
+#       output_dir = "parquet_files/" + args.particles + "_" + args.pileup
 
-      # Create the directory if it doesn't exist
-      os.makedirs(output_dir, exist_ok=True)
+#       # Create the directory if it doesn't exist
+#       os.makedirs(output_dir, exist_ok=True)
 
-      #Save gen info
-      ak.to_parquet(events_gen, os.path.join(output_dir, "events_gen.parquet"))
-      ak.to_parquet(pair_gen_masked_0p0113,os.path.join(output_dir, "pair_gen_masked_0p0113.parquet"))
-      ak.to_parquet(pair_gen_masked_0p016,os.path.join(output_dir, "pair_gen_masked_0p016.parquet"))
-      ak.to_parquet(pair_gen_masked_0p03,os.path.join(output_dir, "pair_gen_masked_0p03.parquet"))
-      ak.to_parquet(pair_gen_masked_0p045,os.path.join(output_dir, "pair_gen_masked_0p045.parquet"))
+#       #Save gen info
+#       ak.to_parquet(events_gen, os.path.join(output_dir, "events_gen.parquet"))
+#       ak.to_parquet(pair_gen_masked_0p0113,os.path.join(output_dir, "pair_gen_masked_0p0113.parquet"))
+#       ak.to_parquet(pair_gen_masked_0p016,os.path.join(output_dir, "pair_gen_masked_0p016.parquet"))
+#       ak.to_parquet(pair_gen_masked_0p03,os.path.join(output_dir, "pair_gen_masked_0p03.parquet"))
+#       ak.to_parquet(pair_gen_masked_0p045,os.path.join(output_dir, "pair_gen_masked_0p045.parquet"))
 
-      #Save cluster reco
-      ak.to_parquet(events_0p0113, os.path.join(output_dir, "events_0p0113.parquet"))
-      ak.to_parquet(pair_cluster_0p0113_matched,os.path.join(output_dir, "pair_cluster_0p0113_matched.parquet"))
-      ak.to_parquet(events_0p016, os.path.join(output_dir, "events_0p016.parquet"))
-      ak.to_parquet(pair_cluster_0p016_matched,os.path.join(output_dir, "pair_cluster_0p016_matched.parquet"))
-      ak.to_parquet(events_0p03, os.path.join(output_dir, "events_0p03.parquet"))
-      ak.to_parquet(pair_cluster_0p03_matched,os.path.join(output_dir, "pair_cluster_0p03_matched.parquet"))
-      ak.to_parquet(events_0p045, os.path.join(output_dir, "events_0p045.parquet"))
-      ak.to_parquet(pair_cluster_0p045_matched,os.path.join(output_dir, "pair_cluster_0p045_matched.parquet"))
-      ak.to_parquet(events_Ref, os.path.join(output_dir, "events_Ref.parquet"))
-      ak.to_parquet(pair_cluster_Ref_matched,os.path.join(output_dir, "pair_cluster_Ref_matched.parquet"))
+#       #Save cluster reco
+#       ak.to_parquet(events_0p0113, os.path.join(output_dir, "events_0p0113.parquet"))
+#       ak.to_parquet(pair_cluster_0p0113_matched,os.path.join(output_dir, "pair_cluster_0p0113_matched.parquet"))
+#       ak.to_parquet(events_0p016, os.path.join(output_dir, "events_0p016.parquet"))
+#       ak.to_parquet(pair_cluster_0p016_matched,os.path.join(output_dir, "pair_cluster_0p016_matched.parquet"))
+#       ak.to_parquet(events_0p03, os.path.join(output_dir, "events_0p03.parquet"))
+#       ak.to_parquet(pair_cluster_0p03_matched,os.path.join(output_dir, "pair_cluster_0p03_matched.parquet"))
+#       ak.to_parquet(events_0p045, os.path.join(output_dir, "events_0p045.parquet"))
+#       ak.to_parquet(pair_cluster_0p045_matched,os.path.join(output_dir, "pair_cluster_0p045_matched.parquet"))
+#       ak.to_parquet(events_Ref, os.path.join(output_dir, "events_Ref.parquet"))
+#       ak.to_parquet(pair_cluster_Ref_matched,os.path.join(output_dir, "pair_cluster_Ref_matched.parquet"))
 
     
-      #To open these arrays:
+#       #To open these arrays:
 
-      events_0p0113 = ak.from_parquet("parquet_files/event_data_0p0113.parquet")
-      pair_cluster_0p0113_matched = ak.from_parquet("parquet_files/pair_cluster_0p0113_matched.parquet")
+#       events_0p0113 = ak.from_parquet("parquet_files/event_data_0p0113.parquet")
+#       pair_cluster_0p0113_matched = ak.from_parquet("parquet_files/pair_cluster_0p0113_matched.parquet")

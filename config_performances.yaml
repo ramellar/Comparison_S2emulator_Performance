@@ -54,8 +54,9 @@ s2emu_config:
 
 
 particles:
-  base_path: /data_CMS/cms/amella/HGCAL_samples/doublePhoton_PU0/
-  PU0:
+#  base_path: /data_CMS/cms/amella/HGCAL_samples/doublePhoton_PU0/
+  base_path: /eos/cms//store/group/dpg_hgcal/comm_hgcal/TPG/stage2_emulator_ntuples_semiemulator_2Passes/doublePhoton_PU200
+  PU200:
     photons:
       tree: l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
       file: ntuple_1.root
