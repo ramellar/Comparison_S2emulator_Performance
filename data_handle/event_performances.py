@@ -85,6 +85,11 @@ def provide_events_performaces(n, particles, PU, thr=0.0):
     data_cl_0p045 = ak.concatenate(all_data_cl_0p045, axis=0)
     data_cl_Ref = ak.concatenate(all_data_Ref, axis=0)
 
+    print("\n")
+    print("len gen events", len(data_gen.genpart_pt))
+    # print(ak.flatten(data_gen.genpart_pt,axis=-1))
+    print("len gen events", len(ak.flatten(data_gen.genpart_pt,axis=-1)))
+
     # Mask: Only select particles with flag "gen-particle_gen" different from -1, only keep the gens that reached the EE and only keep the particles whose shower will stay inside the detector
     particle_mask = (data_gen.genpart_gen != -1) & (data_gen.genpart_reachedEE ==2) & (abs(data_gen.genpart_exeta)>1.6) & (abs(data_gen.genpart_exeta)<2.9)
     # particle_mask = (data_gen.genpart_gen != -1) & (data_gen.genpart_reachedEE ==2) 
@@ -147,14 +152,27 @@ def provide_events_performaces(n, particles, PU, thr=0.0):
     return filtered_gen, data_cl_0p0113, data_cl_0p016, data_cl_0p03, data_cl_0p045, data_cl_Ref
 
 
-def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
+def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.1):
     #Masking events were no clusters are reconstructed
     mask_ev = ak.num(getattr(events, att_eta)) > 0
     filtered_events = events[mask_ev]
     filtered_gen = gen[mask_ev]
+    # print(min(ak.flatten(filtered_gen.genpart_pt, axis=-1)))
+    # print(filtered_gen.genpart_pt)
 
     if args.total_efficiency:
         print("Number of events with clusters", len(filtered_gen))
+
+    if not args.total_efficiency and args.gen_pt_cut !=0:
+        #Adding a cut on the gen particle pt 
+        print("Applying gen pt cut")
+        mask_pt_gen = filtered_gen.genpart_pt > args.gen_pt_cut
+        filtered_pt_gen = filtered_gen[mask_pt_gen]
+        mask_gen = ak.num(filtered_pt_gen.genpart_pt) > 0
+        filtered_gen = filtered_pt_gen[mask_gen]
+        filtered_events = filtered_events[mask_gen]
+        # print(ak.type(filtered_gen))
+        # print(ak.type(filtered_events))
 
     # Building structured arrays
     clusters = ak.zip({
@@ -169,6 +187,29 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
         "gen_flag": getattr(filtered_gen,'genpart_gen'),
     })
 
+    if args.pt_cut !=0 :
+        if args.total_efficiency:
+            print("\n")
+        print("Applying pt cut on clusters of", args.pt_cut, "GeV")
+        #Adding a cut on the cluster pt
+        mask_pt_cluster = clusters.pt > args.pt_cut
+        filtered_pt_cluster = clusters[mask_pt_cluster]
+        # print(min(ak.flatten(filtered_pt_cluster.pt, axis=-1)))
+        # if args.total_efficiency:
+        #     print(f"Number of clusters with gen cut {args.gen_pt_cut} GeV ", len(ak.flatten(clusters.pt,axis=-1)))
+
+        mask_empty_events = ak.num(filtered_pt_cluster.pt) > 0
+        clusters= filtered_pt_cluster[mask_empty_events]
+        # print(min(ak.flatten(filtered_pt_cluster.pt, axis=-1)))
+        genparts = genparts[mask_empty_events]
+        # print(ak.type(clusters))
+        # print(ak.type(genparts))
+        if args.total_efficiency:
+            print(f"Number of events with gen cut {args.gen_pt_cut} GeV and cluster pt cut {args.pt_cut} GeV ", len(clusters))
+            print(f"Number of gen particles after gen cut {args.gen_pt_cut} GeV and cluster pt cut {args.pt_cut} GeV ", len(ak.flatten(genparts.pt,axis=-1)))
+            print(f"Number of clusters with gen cut {args.gen_pt_cut} GeV and cluster pt cut {args.pt_cut} GeV ", len(ak.flatten(clusters.pt,axis=-1)))
+
+
     # Applying the deltaR matching 
     pairs = ak.cartesian([clusters, genparts], axis=1, nested=True)
     delta_eta = np.abs(pairs['0'].eta - pairs['1'].eta)
@@ -181,6 +222,7 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
     pair_cluster_masked=pairs['0'][mask]
     pair_gen_masked=pairs['1'][mask]
 
+
     if ak.any(ak.num(pair_cluster_masked, axis=2) == 2):
         print("2 gen particles matched to the same cluster")
         # raise ValueError("2 gen particles matched to the same cluster")
@@ -192,9 +234,6 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
     mask_empty= (ak.num(pair_cluster_masked, axis=2)==1) & (ak.num(pair_gen_masked, axis=2)==1)
     pair_cluster_masked = pair_cluster_masked[mask_empty]
     pair_gen_masked = pair_gen_masked[mask_empty]
-
-    if args.total_efficiency:
-        print("Number of matched clusters:", len(ak.flatten(ak.flatten(pair_cluster_masked, axis=2),axis=-1)))
 
     # Remove non matched events in the list 
     empty_mask = ak.num(pair_cluster_masked) == 0
@@ -215,12 +254,37 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
 
     # Selecting the matched cluster with the highest pt for each gen particle
     
+    delta_r_flat = ak.values_astype(
+    ak.flatten(delta_r[mask][mask_empty][~empty_mask], axis=2),
+    "float64"
+    )
+
     cluster_matched = ak.zip({
         "eta": flatten_pair_cluster_masked.eta ,
         "phi": flatten_pair_cluster_masked.phi,
         "pt": flatten_pair_cluster_masked.pt,
         "gen_flag": flatten_pair_gen_masked.gen_flag,
+        "delta_r": delta_r_flat,
     })
+
+    # cluster_matched = ak.zip({
+    #     "eta": flatten_pair_cluster_masked.eta ,
+    #     "phi": flatten_pair_cluster_masked.phi,
+    #     "pt": flatten_pair_cluster_masked.pt,
+    #     "gen_flag": flatten_pair_gen_masked.gen_flag,
+    # })
+
+    # print("pt type:", flatten_pair_cluster_masked.pt.type)
+    # print("delta_r type:", (delta_r[mask][mask_empty][~empty_mask]).type)
+    # delta_r_clean = ak.values_astype(delta_r[mask][mask_empty][~empty_mask], "float64")
+    # print("delta_r_clean type:", delta_r_clean.type)
+    # print("delta_r_clean:", delta_r_clean)
+    # print("cluster_matched type:", flatten_pair_cluster_masked.pt)
+    # delta_r_clean = ak.values_astype(
+    # ak.flatten(delta_r[mask][mask_empty][~empty_mask], axis=2),
+    # "float64"
+    # )
+    # print("delta_r_clean type:", delta_r_clean.type)
 
     gen_matched = ak.zip({
         "eta": flatten_pair_gen_masked.eta ,
@@ -243,7 +307,14 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
         'phi': ak.unflatten(best_cluster_one_matched.phi,1),
         'pt': ak.unflatten(best_cluster_one_matched.pt,1),
         'gen_flag': ak.unflatten(best_cluster_one_matched.gen_flag,1),
+        'delta_r': ak.unflatten(best_cluster_one_matched.delta_r,1),
     })
+    # best_cluster_one_matched = ak.zip({
+    #     'eta': ak.unflatten(best_cluster_one_matched.eta,1),
+    #     'phi': ak.unflatten(best_cluster_one_matched.phi,1),
+    #     'pt': ak.unflatten(best_cluster_one_matched.pt,1),
+    #     'gen_flag': ak.unflatten(best_cluster_one_matched.gen_flag,1),
+    # })
 
     best_gen_one_matched = ak.zip({
         'eta': ak.unflatten(best_gen_one_matched.eta, 1),
@@ -286,6 +357,9 @@ def apply_matching(events, att_eta, att_phi, gen, args, deltaR=0.3):
     # print(result1.pt[89])
     # print(result2.pt[89])
 
-    return pair_cluster_masked_highest_pt, pair_gen_masked_highest_pt
+    # print("deltar", delta_r)
+    # print(pair_cluster_masked_highest_pt.delta_r)
+
+    return pair_cluster_masked_highest_pt, pair_gen_masked_highest_pt, clusters, genparts
 
 
