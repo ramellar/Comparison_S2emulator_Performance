@@ -29,19 +29,19 @@ def provide_events_performaces(n, particles, PU, thr=0.0):
         'event', 'genpart_exeta', 'genpart_exphi', 'genpart_pt', 'genpart_gen', 'genpart_reachedEE'
     ]
     branches_cl_0p0113  = [
-        'event', 'cl3d_p0113Tri_eta', 'cl3d_p0113Tri_phi', 'cl3d_p0113Tri_pt'
+        'event', 'cl3d_p0113Tri_eta', 'cl3d_p0113Tri_phi', 'cl3d_p0113Tri_pt', 'cl3d_p0113Tri_layer_pt'
     ]
     branches_cl_0p016  = [
-        'event', 'cl3d_p016Tri_eta', 'cl3d_p016Tri_phi', 'cl3d_p016Tri_pt'
+        'event', 'cl3d_p016Tri_eta', 'cl3d_p016Tri_phi', 'cl3d_p016Tri_pt', 'cl3d_p016Tri_layer_pt'
     ]
     branches_cl_0p03  = [
-        'event', 'cl3d_p03Tri_eta', 'cl3d_p03Tri_phi', 'cl3d_p03Tri_pt'
+        'event', 'cl3d_p03Tri_eta', 'cl3d_p03Tri_phi', 'cl3d_p03Tri_pt', 'cl3d_p03Tri_layer_pt'
     ]
     branches_cl_0p045  = [
-        'event', 'cl3d_p045Tri_eta', 'cl3d_p045Tri_phi', 'cl3d_p045Tri_pt'
+        'event', 'cl3d_p045Tri_eta', 'cl3d_p045Tri_phi', 'cl3d_p045Tri_pt', 'cl3d_p045Tri_layer_pt'
     ]
     branches_cl_Ref  = [
-        'event', 'cl3d_Ref_eta', 'cl3d_Ref_phi', 'cl3d_Ref_pt'
+        'event', 'cl3d_Ref_eta', 'cl3d_Ref_phi', 'cl3d_Ref_pt', 'cl3d_Ref_layer_pt'
     ]
 
     all_data_gen = []
