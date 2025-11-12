@@ -125,21 +125,52 @@ def plot_2D_histograms(events, att_eta, var1, var2, args, label, range_=[[-3.0, 
         plt.xlabel(r'$\eta^{cluster}$')
         plt.ylabel(r'$p_T^{cluster}$')
         plt.colorbar(label="Counts")
+    if var1=="phi" and var2=="pt":
+        plt.hist2d(ak.to_numpy(event_flat.phi), ak.to_numpy(event_flat.pt), bins=40, range=range_, cmap='magma_r')
+        plt.xlabel(r'$\phi^{cluster}$')
+        plt.ylabel(r'$p_T^{cluster}$')
+        plt.colorbar(label="Counts")
     if var1=="eta" and var2=="delta_r":
         plt.hist2d(ak.to_numpy(event_flat.eta), ak.to_numpy(event_flat.delta_r), bins=40, range=range_, cmap='magma_r')
         plt.ylabel(r'$\Delta R (cluster, gen)$')
         plt.xlabel(r'$\eta^{cluster}$')
         plt.colorbar(label="Counts")
-    if args.pt_cut !=0 :
+    if var1=="eta" and var2=="phi":
+        plt.hist2d(ak.to_numpy(event_flat.phi), ak.to_numpy(event_flat.eta), bins=40, range=range_, cmap='magma_r')
+        plt.xlabel(r'$\phi^{cluster}$')
+        plt.ylabel(r'$\eta^{cluster}$')
+        plt.colorbar(label="Counts")
+
+    if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
         if label != "Ref":
-            plt.title(f"Algorithm with triangle size: {label} and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+            plt.title(f"Algorithm with triangle size: {label} and "+r'$p_t^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
         else:
-            plt.title(f"CMSSW simulation and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+            plt.title(f"CMSSW simulation and "+r'$p_t^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+    if args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+        if label != "Ref":
+            plt.title(f"Algorithm with triangle size: {label} and "+r'$p_t^{gen}>$'+f"{args.gen_pt_cut} GeV",fontsize=18)
+        else:
+            plt.title(f"CMSSW simulation and "+r'$p_t^{gen}>$'+f"{args.gen_pt_cut} GeV",fontsize=18)
+    if args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+        if label != "Ref":
+            plt.title(f"Algorithm with triangle size: {label} and "+r'$p_t^{gen}>$'+f"{args.gen_pt_cut} GeV and "+r'$p_t^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=14)
+        else:
+            plt.title(f"CMSSW simulation and "+r'$p_t^{gen}>$'+f"{args.gen_pt_cut} GeV and "+r'$p_t^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=14)
     else:
         if label != "Ref":
             plt.title(f"Algorithm with triangle size: {label}",fontsize=20)
         else:
             plt.title(f"CMSSW simulation",fontsize=20)
+    # if args.pt_cut !=0 :
+    #     if label != "Ref":
+    #         plt.title(f"Algorithm with triangle size: {label} and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+    #     else:
+    #         plt.title(f"CMSSW simulation and "+r'$pt^{cluster}>$'+f"{args.pt_cut} GeV",fontsize=18)
+    # else:
+    #     if label != "Ref":
+    #         plt.title(f"Algorithm with triangle size: {label}",fontsize=20)
+    #     else:
+    #         plt.title(f"CMSSW simulation",fontsize=20)
      
     plt.tight_layout()
     
