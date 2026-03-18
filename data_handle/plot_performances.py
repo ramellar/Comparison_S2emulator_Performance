@@ -11,8 +11,8 @@ import os
 import awkward as ak
 import numpy as np
 from matplotlib.patches import Rectangle
-import data_handle.event_performances as ev
-
+import data_handling.event_performances as ev
+from scipy.optimize import lsq_linear
 
 with open('config_performances.yaml', "r") as afile:
     cfg = yaml.safe_load(afile)["s2emu_config"]
@@ -29,6 +29,7 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
             "phi": events.phi,
             "pt": events.pt,
             "delta_r": events.delta_r,
+            "Ecalib": events.Ecalib,
         })
     else:
         event_info = ak.zip({
@@ -49,6 +50,9 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
         plt.hist(event_flat.pt, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(event_flat.pt, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
         plt.xlabel(r'$p_{T}^{cluster}$ [GeV]')
+    elif var == "Ecalib":
+        plt.hist(np.abs(ak.to_numpy(event_flat.Ecalib)), bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
+        plt.hist(np.abs(ak.to_numpy(event_flat.Ecalib)), bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
     elif var == "eta":
         plt.hist(np.abs(ak.to_numpy(event_flat.eta)), bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(np.abs(ak.to_numpy(event_flat.eta)), bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
@@ -66,19 +70,19 @@ def comparison_histo_performance(events, att_eta, args, var, bin_n, range_,label
 
 
     plt.ylabel('Counts')
-    if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
+    if args.pt_cut != 0.0 and  args.gen_pt_cut == 0.0:
         thr = args.pt_cut
         legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
         plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
-    if args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+    elif args.gen_pt_cut != 0.0 and args.pt_cut == 0.0:
         thr = args.gen_pt_cut
         legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
-    if args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black',title_fontsize=14, fontsize=15)
+    elif args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
         thr = args.gen_pt_cut
         thr2 = args.pt_cut
         legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
-        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$",frameon=True, facecolor='white', edgecolor='black', title_fontsize=14)
+        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$",frameon=True, facecolor='white', edgecolor='black', title_fontsize=10)
     else:
         legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
         plt.legend(handles=legend_handles)
@@ -192,6 +196,33 @@ def scale_distribution(events, gen, args, var, bin_n, range_,label, color, legen
         plt.hist(scale_simul, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
         plt.hist(scale_simul, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
         plt.xlabel(r'$p_{T}^{cluster}/p_{T}^{gen}$')
+    if var == "Ecalib":
+        # print(events.pt)
+        # print("flattened pt:",ak.flatten(events.pt,axis=-1))
+        flat_pt=ak.to_numpy(ak.flatten(events.Ecalib,axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.pt,axis=-1))
+        # print("flat pt:",flat_pt)
+        scale_simul = np.divide(flat_pt, flat_gen)
+        plt.hist(scale_simul, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
+        plt.hist(scale_simul, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
+    if var == "Ecalib_cal_eta":
+        # print(events.pt)
+        # print("flattened pt:",ak.flatten(events.pt,axis=-1))
+        flat_pt=ak.to_numpy(ak.flatten(events.Ecalib_PU_term,axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.pt,axis=-1))
+        # print("flat pt:",flat_pt)
+        scale_simul = np.divide(flat_pt, flat_gen)
+        plt.hist(scale_simul, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
+        plt.hist(scale_simul, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
+    if var == "Ecalib_all_":
+        # print(events.pt)
+        # print("flattened pt:",ak.flatten(events.pt,axis=-1))
+        flat_pt=ak.to_numpy(ak.flatten(events.Ecalib_all_,axis=-1))
+        flat_gen=ak.to_numpy(ak.flatten(gen.pt,axis=-1))
+        # print("flat pt:",flat_pt)
+        scale_simul = np.divide(flat_pt, flat_gen)
+        plt.hist(scale_simul, bins=bin_edges, alpha=0.2, color=color, histtype='stepfilled')
+        plt.hist(scale_simul, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
     if var == "eta":
         flat_eta=ak.to_numpy(ak.flatten(events.eta, axis=-1))
         flat_gen=ak.to_numpy(ak.flatten(gen.eta, axis=-1))
@@ -214,10 +245,10 @@ def scale_distribution(events, gen, args, var, bin_n, range_,label, color, legen
     if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
         thr = args.pt_cut
         plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
-    if args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+    elif args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
         thr = args.gen_pt_cut
-        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
-    if args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+        plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black', loc="best", title_fontsize=15, fontsize=17)
+    elif args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
         thr = args.gen_pt_cut
         thr2 = args.pt_cut
         plt.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$",frameon=True, facecolor='white', edgecolor='black', title_fontsize=14)
@@ -531,6 +562,7 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
         )
 
         flat_pt = ak.to_numpy(ak.flatten(matched_ev.pt, axis=-1))
+        flat_Ecalib = ak.to_numpy(ak.flatten(matched_ev.Ecalib, axis=-1))
         flat_pt_gen = ak.to_numpy(ak.flatten(matched_gen.pt, axis=-1))
         flat_eta = ak.to_numpy(ak.flatten(matched_ev.eta, axis=-1))
         flat_eta_gen = ak.to_numpy(ak.flatten(matched_gen.eta, axis=-1))
@@ -538,7 +570,7 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
         flat_phi_gen = ak.to_numpy(ak.flatten(matched_gen.phi, axis=-1))
 
         results.append((resp_bin_simul, indices, label, color,
-                        flat_pt, flat_pt_gen, flat_eta, flat_eta_gen, flat_phi, flat_phi_gen))
+                        flat_pt, flat_Ecalib, flat_pt_gen, flat_eta, flat_eta_gen, flat_phi, flat_phi_gen))
 
   
     for i in range(bin_n):
@@ -546,11 +578,12 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
         plt.style.use(mplhep.style.CMS)
 
         # Bin label
-        if var == "pT":
+        if var in ["pT","Ecalib"]:
             bin_label = fr"${bin_edges[i]:.1f} < p_T^{{\mathrm{{gen}}}} < {bin_edges[i+1]:.1f}\,\mathrm{{GeV}}$"
-        elif var in ["eta", "pT_eta"]:
+            # bin_nb=[np.min(flat_pt),np.max(flat_pt)]
+        elif var in ["eta", "pT_eta","Ecalib_PU_term"]:
             bin_label = fr"${bin_edges[i]:.2f} < |\eta|^{{\mathrm{{gen}}}} < {bin_edges[i+1]:.2f}$"
-        elif var in ["phi", "pT_phi"]:
+        elif var in ["phi", "pT_phi","Ecalib_phi"]:
             bin_label = fr"${bin_edges[i]:.2f} < \phi^{{\mathrm{{gen}}}} < {bin_edges[i+1]:.2f}$"
         else:
             bin_label = f"Bin {i}"
@@ -558,11 +591,13 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
         legend_handles = []
 
         # Plot for each dataset
-        for resp_bin_simul, indices, label, color, flat_pt, flat_pt_gen, flat_eta, flat_eta_gen, flat_phi, flat_phi_gen in results:
+        for resp_bin_simul, indices, label, color, flat_Ecalib, flat_pt, flat_pt_gen, flat_eta, flat_eta_gen, flat_phi, flat_phi_gen in results:
             bin_idx = np.where(indices == i)[0]
             if len(bin_idx) == 0:
                 continue
 
+            if var in ["Ecalib", "Ecalib_PU_term", "Ecalib_phi"]:
+                ratio = flat_Ecalib[bin_idx] / flat_pt_gen[bin_idx]
             if var in ["pT", "pT_eta", "pT_phi"]:
                 ratio = flat_pt[bin_idx] / flat_pt_gen[bin_idx]
             elif var == "eta":
@@ -578,9 +613,9 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
             #     print("Mean phi response bin (after adjustment):", np.mean(ratio))
             #     print("RMS phi response bin (after adjustment):", np.std(ratio))
 
-            plt.hist(ratio, bins=bin_nb, range=range_nb,
+            plt.hist(ratio, bins=bin_nb,
                      alpha=0.2, color=color, histtype='stepfilled')
-            plt.hist(ratio, bins=bin_nb, range=range_nb,
+            plt.hist(ratio, bins=bin_nb, 
                      histtype='step', linewidth=2.5, color=color, label=label)
 
             legend_handles.append(
@@ -628,96 +663,17 @@ def plot_responses_per_bin(datasets, bin_n, range_, bin_nb, range_nb, var, args,
         legend_handles = []
 
 
-# def plot_responses_per_bin(datasets, events_gen, bin_n, range_, bin_nb, range_nb, var, args, output_dir, gen_n=1):
-#     results = []
-#     for ev, matched_ev, matched_gen, label, color, att in datasets:
-#         resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges, indices, resp_bin_simul= compute_responses_performance(matched_ev, matched_gen, args, var , ev, att, bin_n, range_)
-#         print(resp_bin_simul)
-#         results.append((resp_bin_simul, indices, label, color))
 
-#         bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
-
-#         flat_pt=ak.to_numpy(ak.flatten(matched_ev.pt,axis=-1))
-#         flat_pt_gen=ak.to_numpy(ak.flatten(matched_gen.pt,axis=-1))
-
-#         flat_eta=ak.to_numpy(ak.flatten(matched_ev.eta,axis=-1))
-#         flat_eta_gen=ak.to_numpy(ak.flatten(matched_gen.eta,axis=-1))
-
-#         flat_phi=ak.to_numpy(ak.flatten(matched_ev.phi,axis=-1))
-#         flat_phi_gen=ak.to_numpy(ak.flatten(matched_gen.phi,axis=-1))
-
-#     if var=="pT":
-#         indices = np.digitize(flat_pt_gen, bin_edges) - 1
-    
-#     if var == 'pT_eta':
-#        indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
-    
-#     if var== "pT_phi":
-#         indices = np.digitize(flat_phi_gen, bin_edges) - 1
-
-#     if var== "phi":
-#         indices = np.digitize(flat_phi_gen, bin_edges) - 1
-
-#     if var== "eta":
-#         indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
-
-#     for i in range(bin_n):
-#         plt.figure(figsize=(10, 10))
-#         plt.style.use(mplhep.style.CMS)
-
-#         if var == "pt":
-#             bin_label = fr"${bin_edges[i]:.1f} < p_T < {bin_edges[i+1]:.1f}\,\mathrm{{GeV}}$"
-#         elif var == "eta":
-#             bin_label = fr"${bin_edges[i]:.2f} < |\eta| < {bin_edges[i+1]:.2f}$"
-#         elif var == "phi":
-#             bin_label = fr"${bin_edges[i]:.2f} < |\phi| < {bin_edges[i+1]:.2f}$"
-#         elif var == "pT_eta":
-#             bin_label = fr"${bin_edges[i]:.2f} < |\eta| < {bin_edges[i+1]:.2f}$"
-#         elif var == "pT_phi":
-#             bin_label = fr"${bin_edges[i]:.2f} < |\phi| < {bin_edges[i+1]:.2f}$"
-#         else:
-#             bin_label = f"Bin {i}"
-
-#         legend_handles = []
-#         for indices, label, color in results:
-#             bin_idx = np.where(indices == i)[0]
-#             if len(bin_idx) == 0:
-#                 continue
-#             plt.hist(flat_pt[bin_idx]/flat_pt_gen[bin_idx], bins=bin_nb, range= range_nb, alpha=0.2, color=color, histtype='stepfilled')
-#             plt.hist(flat_pt[bin_idx]/flat_pt_gen[bin_idx], bins=bin_nb, range= range_nb, histtype='step', linewidth=2.5, color=color, label=label)
-
-#             legend_handles.append(
-#                 Rectangle((0, 0), 1, 1,
-#                         facecolor=color, edgecolor=color,
-#                         linewidth=4, alpha=0.2, label=label)
-#             )
-
-#         plt.xlabel(r"$N_{clusters}$")
-#         plt.ylabel("Counts")
-#         plt.yscale("log")
-#         mplhep.cms.label("Preliminary", data=True,
-#                         rlabel=args.pileup + " " + args.particles + f" - {gen_n} gen particle")
-
-#         plt.legend(handles=legend_handles,
-#                 title=bin_label,
-#                 frameon=True, facecolor="white", edgecolor="black")
-#         plt.grid()
-#         plt.tight_layout()
-
-#         plt.savefig(f"{output_dir}/distributions/Distribution_Nclusters_bin{i}_{var}.png", dpi=300)
-#         plt.savefig(f"{output_dir}/distributions/Distribution_Nclusters_bin{i}_{var}.pdf")
-#         print(f"Saved figure: {output_dir}/distributions/Distribution_Nclusters_bin{i}_{var}.png")
-#         plt.close()
-#         legend_handles = []
-
-#     return
-
-
-def compute_responses_performance(matched, matched_gen, args, var, events, att_eta, bin_n=10, range_=[0,200]):
-
+def compute_responses_performance(matched, matched_gen, args, var, bin_n=10, range_=[0,200],name=""):
     bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
 
     flat_pt=ak.to_numpy(ak.flatten(matched.pt,axis=-1))
+    if  "Ecalib" in var:
+        flat_Ecalib=ak.to_numpy(ak.flatten(getattr(matched, f'Ecalib_{name}'),axis=-1))
+    else:
+        flat_Ecalib = None
+    # flat_Ecalib_PU_term=ak.to_numpy(ak.flatten(matched.Ecalib_PU_term,axis=-1))
+    # flat_Ecalib_all=ak.to_numpy(ak.flatten(getattr(matched, f'Ecalib_all_{name}'),axis=-1))
     flat_pt_gen=ak.to_numpy(ak.flatten(matched_gen.pt,axis=-1))
 
     flat_eta=ak.to_numpy(ak.flatten(matched.eta,axis=-1))
@@ -726,31 +682,69 @@ def compute_responses_performance(matched, matched_gen, args, var, events, att_e
     flat_phi=ak.to_numpy(ak.flatten(matched.phi,axis=-1))
     flat_phi_gen=ak.to_numpy(ak.flatten(matched_gen.phi,axis=-1))
 
-    if var=="pT":
-        indices = np.digitize(flat_pt_gen, bin_edges) - 1
-    
-    if var == 'pT_eta':
-       indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
-    
-    if var== "pT_phi":
-        indices = np.digitize(flat_phi_gen, bin_edges) - 1
+    # if var in ["pT", "Ecalib", "Ecalib_cal_eta", f'Ecalib_all_{name}']:
+    #     print("got in")
+    #     indices = np.digitize(flat_pt_gen, bin_edges) - 1
 
-    if var== "phi":
-        indices = np.digitize(flat_phi_gen, bin_edges) - 1
+    # if var in ['pT_eta', 'Ecalib_PU_term', 'Ecalib_PU_term_eta',f'Ecalib_all_eta_{name}']:
+    #    indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
+    
+    # if var in ['pT_phi', 'Ecalib_phi', 'Ecalib_PU_term_phi',f'Ecalib_all_phi_{name}']:
+    #     indices = np.digitize(flat_phi_gen, bin_edges) - 1
 
-    if var== "eta":
+    # if var== "phi":
+    #     indices = np.digitize(flat_phi_gen, bin_edges) - 1
+
+    # if var== "eta":
+    #     indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
+
+    # Generic, robust way
+    print("var", var)
+    if "eta" in var:
+        # print("Hi")
         indices = np.digitize(np.abs(flat_eta_gen), bin_edges) - 1
+    elif "phi" in var:
+        # print("Hi2")
+        indices = np.digitize(flat_phi_gen, bin_edges) - 1
+    else:
+        indices = np.digitize(flat_pt_gen, bin_edges) - 1
+
+    print("range_:", range_)
+    print("bin_edges:", bin_edges)
+    print("flat_pt_gen min/max:", flat_pt_gen.min(), flat_pt_gen.max())
+    # print("flat_Ecalib_all length:", len(flat_Ecalib_all))
+    print("indices unique:", indices)
 
     resp_simul, err_resp_simul, resol_simul, err_resol_simul = {}, {}, {}, {}
     for index in range(bin_n):
       bin_idx = np.where(indices == index)[0]
+      print(f"index {index}: bin_idx length = {len(bin_idx)}")
+    #   resp_bin_simul =flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT' else \
+    #                   flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT_eta' else \
+    #                   flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT_phi' else \
+    #                   flat_Ecalib[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib' else \
+    #                   flat_Ecalib[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_eta' else \
+    #                   flat_Ecalib[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_phi' else \
+    #                   flat_Ecalib_PU_term[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_PU_term_' else \
+    #                   flat_Ecalib_PU_term[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_PU_term_eta' else \
+    #                   flat_Ecalib_PU_term[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_PU_term_phi' else \
+    #                   flat_Ecalib_all[bin_idx]/flat_pt_gen[bin_idx] if 'Ecalib_all_' in var  else \
+    #                   flat_Ecalib_all[bin_idx]/flat_pt_gen[bin_idx] if 'Ecalib_all_eta_' in var else \
+    #                   flat_Ecalib_all[bin_idx]/flat_pt_gen[bin_idx] if 'Ecalib_all_phi_' in var else \
+    #                   flat_eta[bin_idx]-flat_eta_gen[bin_idx] if var=="eta" else \
+    #                   flat_phi[bin_idx]-flat_phi_gen[bin_idx] 
+    #   resp_bin_simul =flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT' else \
+    #                   flat_Ecalib[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib' else \
+    #                   flat_Ecalib_PU_term[bin_idx]/flat_pt_gen[bin_idx] if var=='Ecalib_PU_term_' else \
+    #                   flat_Ecalib_all[bin_idx]/flat_pt_gen[bin_idx] if 'Ecalib_all_' in var  else \
+    #                   flat_eta[bin_idx]-flat_eta_gen[bin_idx] if "eta" in var else \
+    #                   flat_phi[bin_idx]-flat_phi_gen[bin_idx] 
       resp_bin_simul =flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT' else \
-                      flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT_eta' else \
-                      flat_pt[bin_idx]/flat_pt_gen[bin_idx] if var=='pT_phi' else \
-                      flat_eta[bin_idx]-flat_eta_gen[bin_idx] if var=="eta" else \
+                      flat_Ecalib[bin_idx]/flat_pt_gen[bin_idx] if var==f'Ecalib_{name}' else \
+                      flat_eta[bin_idx]-flat_eta_gen[bin_idx] if "eta" in var else \
                       flat_phi[bin_idx]-flat_phi_gen[bin_idx] 
                       
-
+    #   print(resp_bin_simul)
       resp_simul[index]     = np.mean(resp_bin_simul) if len(resp_bin_simul)>0 else 0
       err_resp_simul[index] = np.std(resp_bin_simul)/np.sqrt(len(resp_bin_simul)) if len(resp_bin_simul)>0 else 0
       if var=="phi":
@@ -760,14 +754,13 @@ def compute_responses_performance(matched, matched_gen, args, var, events, att_e
           resol_simul[index]     = np.std(resp_bin_simul) if len(resp_bin_simul)>1 else 0
           err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)) if len(resp_bin_simul)>1 else 0
 
-      if var=="pT" or var=="pT_eta" or var=="pT_phi":
+      if var in ["pT", "Ecalib", "Ecalib_cal_eta", f"Ecalib_all_{name}", 'pT_eta', 'Ecalib_PU_term', 'Ecalib_PU_term_eta', f'Ecalib_all_eta_{name}','pT_phi', 'Ecalib_phi', 'Ecalib_PU_term_phi', f'Ecalib_all_phi_{name}']:
          resol_simul[index]     = np.std(resp_bin_simul)/np.abs(np.mean(resp_bin_simul)) if len(resp_bin_simul)>1 else 0
          err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)*np.mean(resp_bin_simul)) if len(resp_bin_simul)>1 else 0
     
       if var=="eta":
          resol_simul[index]     = np.std(resp_bin_simul) if len(resp_bin_simul)>1 else 0
          err_resol_simul[index] = np.std(resp_bin_simul)/(np.sqrt(2*len(resp_bin_simul)-2)) if len(resp_bin_simul)>1 else 0
-    
 
       if args.eff_rms and (var == 'pT' or var == 'pT_eta' or var == 'pT_phi'):
         eff_rms = effrms(resp_bin_simul) if len(resp_bin_simul)>1 else [0]
@@ -780,8 +773,9 @@ def compute_responses_performance(matched, matched_gen, args, var, events, att_e
 def model(x, a, c):
     return a + c / x
 
-def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_n=10, range_=[0,200]):
-    resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges, indices, resp_bin_simul= compute_responses_performance(simul, gen, args, var , event, att_eta, bin_n, range_)
+def plot_responses(simul, gen, args, var, ax, label, color, bin_n=10, range_=[0,200],name=""):
+    resp_simul, err_resp_simul, resol_simul, err_resol_simul, bin_edges, indices, resp_bin_simul= compute_responses_performance(simul, gen, args, var , bin_n, range_, name)
+    # print(resp_simul)
     if args.response:
         plt.style.use(mplhep.style.CMS)
         ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, resp_simul.values(), 
@@ -807,7 +801,7 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
                 ax.plot(x_curve, y_curve, linestyle='--', color='grey', label=f'Fit: 0.95 + 0.5/Pt_gen')
         plt.ylabel(r'$<\phi^{cluster}-\phi^{gen}>$' if var=='phi' else r'$<\eta^{cluster}-\eta^{gen}>$' if var=='eta' else \
                 r'$<cluster>$' if var=='n_cl_pt' or var=='n_cl_eta' else r'$<p_{T}^{cluster}/p_{T}^{gen}>$')
-        plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' else r'$\phi^{gen}$' if var=='phi' or var=='pT_phi' else r'$|\eta^{gen}|$')
+        plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' or var==f'Ecalib_{name}' or var==f'Ecalib_PU_term{name}' or var==f'Ecalib_all_{name}'  else r'$\phi^{gen}$' if var=='phi' or var=='pT_phi' or var=='Ecalib_phi' or var=='Ecalib_PU_term_phi' or var==f'Ecalib_all_phi_{name}'  else r'$|\eta^{gen}|$')
         # if var == "pT":
             # plt.ylim(0.8,1.0)
         # if var == "pT_eta":
@@ -827,7 +821,7 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
         else:
             plt.ylabel(r'$\sigma^{cluster}$' if var=='phi' else r'$\sigma^{cluster}$' if var=='eta' else \
                     r'$\sigma^{cluster}/\mu^{cluster}$')
-        plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' else r'$\phi^{gen}$' if var=='phi' or var=='pT_phi' else r'$|\eta^{gen}|$')
+        plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' or var=='n_cl_pt' or var=='Ecalib' or var=='Ecalib_PU_term' or var==f'Ecalib_all_{name}' else r'$\phi^{gen}$' if var=='phi' or var=='pT_phi' or var=='Ecalib_phi' or var=='Ecalib_PU_term_phi' or var==f'Ecalib_all_phi_{name}' else r'$|\eta^{gen}|$')
         # if var == "pT":
         #     plt.ylim(0.02,0.14)
         # if var == "pT" and args.eff_rms:
@@ -845,10 +839,10 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
     if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
         thr = args.pt_cut
         plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$", title_fontsize=15, fontsize=17)
-    if args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+    elif args.gen_pt_cut != 0.0 and args.pt_cut == 0.0:
         thr = args.gen_pt_cut
         plt.legend(title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$", title_fontsize=15, fontsize=17)
-    if args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+    elif args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
         thr = args.gen_pt_cut
         thr2 = args.pt_cut
         plt.legend(title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$", title_fontsize=15, fontsize=17)
@@ -859,7 +853,7 @@ def plot_responses(simul, gen, args, var, ax, label, event, att_eta, color, bin_
     # else:
     #     plt.legend(fontsize=18)
     
-    plt.grid()
+    plt.grid(linestyle=":")
     plt.tight_layout()
 
 
@@ -876,232 +870,455 @@ def calcDeltaR(eta_cl, phi_cl, gen):
     return deltaR
 
 
-#Plotting total efficinecy
-
-def compute_total_efficiency(size, event_cl, event_gen, args, att_eta, att_phi, deltaR=0.1):
-    print("-------------------")
-    print("For triangle size", size)
-    print("Number of clusters before matching", len(ak.flatten(getattr(event_cl,att_eta), axis=-1)))
-    if args.gen_pt_cut != 0:
-        mask_ev = ak.num(getattr(event_cl, att_eta)) > 0
-        filtered_events = event_cl[mask_ev]
-        filtered_gen = event_gen[mask_ev]
-        print("Number of events with clusters", len(filtered_gen))
-        print("\n")
-        print("Applying pt cut on gen particles of", args.gen_pt_cut, "GeV")
-        mask_gen_pt = filtered_gen.genpart_pt > args.gen_pt_cut
-        event_gen_pt_cut = filtered_gen[mask_gen_pt]
-        mask_gen = ak.num(event_gen_pt_cut.genpart_pt, axis=-1) > 0
-        event_gen = event_gen_pt_cut[mask_gen]
-        event_cl = filtered_events[mask_gen]
-        print(f"Number of gen particles after gen pt cut {args.gen_pt_cut} GeV", len(ak.flatten(getattr(event_gen,'genpart_pt'), axis=-1)))
-        print(f"Number of events after gen pt cut {args.gen_pt_cut} GeV", len(event_gen))
-        print(f"Number of clusters after gen pt cut {args.gen_pt_cut} GeV", len(ak.flatten(getattr(event_cl,att_eta), axis=-1)))
-    pair_cluster_matched, pair_gen_masked, clusters_filtered, gen_filtered = ev.apply_matching(event_cl, att_eta, att_phi, event_gen, args, deltaR=deltaR)
-    print("Number of events after matching",len(pair_cluster_matched.pt))
-    print("Number of matched clusters:", len(ak.flatten(pair_cluster_matched.pt,axis=-1)))
-    print("Number of particles after matching",len(ak.flatten(pair_gen_masked.pt,axis=-1)))
-    if args.gen_pt_cut != 0 and args.pt_cut != 0:
-        print("Denominator is the number of particle after the gen cut only:", len(ak.flatten(event_gen.genpart_pt, axis=-1)))
-    print("Total efficiency at particle level:", len(ak.flatten(pair_gen_masked.pt,axis=-1)) / len(ak.flatten(event_gen.genpart_pt, axis=-1)) * 100)
-    print("Total efficiency at event level:", len(pair_gen_masked) / len(event_gen.genpart_pt) * 100)
-    print("\n")
-    return pair_cluster_matched, pair_gen_masked
 
 
-def differential_efficiency(event_gen, pair_gen_matched, ax, args, label=[], var="pT", bin_n=10, range_=[0,100], color="blue"):
-    bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
-    # genparts = ak.zip({
-    #     "eta": getattr(event_gen, 'genpart_exeta'),
-    #     "phi": getattr(event_gen, 'genpart_exphi'),
-    #     "pt": getattr(event_gen, 'genpart_pt'),
-    #     "gen_flag": getattr(event_gen,'genpart_gen'),
-    # })
+def derive_calibration (cluster, gen, args, lower_bound=-np.inf, upper_bound=np.inf, name=""):
+    # The information of the pT per layer is given in 34 trigger layer
+    # We are only interested in the CE-E layers because we are calibrating EM objects, which in trigger layers translates as taking 1 every 2 detector layers
+    # There are 26 electromagnetic detector layers, corresponding to 26/2=13 first trigger layers
+    if args.PU0calibration:
+        cluster_flat= ak.flatten(cluster.layer_pt, axis=1)[:,1:13]
+        gen_flat= ak.flatten(gen.pt,axis=-1)
+        cluster_np = np.asarray(cluster_flat)
+        gen_np = np.asarray(gen_flat)
+        regression = lsq_linear(cluster_np, gen_np, bounds=(lower_bound, upper_bound), lsmr_tol='auto', method='bvls')
+        weight = regression.x
+    if args.PU200calibration:
+        cluster_flat= ak.flatten(cluster.layer_pt, axis=1)[:,:13]
+        cluster_eta= ak.flatten(cluster.eta, axis=1)
+        gen_flat= ak.flatten(gen.pt,axis=-1)
+        cluster_np = np.asarray(cluster_flat)
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta))
+        N = cluster_np.shape[0]
+        A = np.hstack([
+            cluster_np,
+            cluster_eta_np[:, None],     
+            -1*np.ones((N, 1))            
+        ])
+        gen_np = np.asarray(gen_flat)
+        regression = lsq_linear(A, gen_np, bounds=(lower_bound, upper_bound), lsmr_tol='auto', method='bvls')
+        weight = regression.x
+    if args.PileUpcalibration:
+        # Defining Target vector
+        cluster_flat_Ecorr= ak.flatten(getattr(cluster, f"Ecalib_{name}"),axis=-1)
+        gen_flat_E= ak.flatten(gen.pt,axis=-1)
+        cluster_np = np.asarray(cluster_flat_Ecorr)
+        gen_np = np.asarray(gen_flat_E)
+        residual= gen_np - cluster_np
 
-    flat_total_gen_pt=ak.to_numpy(ak.flatten(event_gen.pt,axis=-1))
-    flat_total_gen_eta=ak.to_numpy(ak.flatten(event_gen.eta,axis=-1))
-    flat_total_gen_phi=ak.to_numpy(ak.flatten(event_gen.gen_flag,axis=-1))
+        #defining matrix
+        cluster_eta= ak.flatten(cluster.eta, axis=1)
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta))
+        N = cluster_eta_np.shape[0]
+        A = np.hstack([
+            cluster_eta_np[:, None],     
+            -1*np.ones((N, 1))            
+        ])
+        regression = lsq_linear(A, residual, bounds=(lower_bound, upper_bound), lsmr_tol='auto', method='bvls')
+        weight = regression.x
 
-    flat_matched_gen_pt=ak.to_numpy(ak.flatten(pair_gen_matched.pt,axis=-1))
-    flat_matched_gen_eta=ak.to_numpy(ak.flatten(pair_gen_matched.eta,axis=-1))
-    flat_matched_gen_phi=ak.to_numpy(ak.flatten(pair_gen_matched.phi,axis=-1))
+    if args.PileUpcalibrationFinal:
+        # Defining Target vector
+        cluster_flat_Ecorr= ak.flatten(getattr(cluster, f"Ecalib_{name}"),axis=-1)
+        gen_flat_E= ak.flatten(gen.pt,axis=-1)
+        cluster_np = np.asarray(cluster_flat_Ecorr)
+        gen_np = np.asarray(gen_flat_E)
+        residual= gen_np - cluster_np
 
-    if var=="pT":
-        indices = np.digitize(flat_total_gen_pt, bin_edges) - 1
-        indices_matched = np.digitize(flat_matched_gen_pt, bin_edges) - 1
+        #defining matrix
+        cluster_eta= ak.flatten(cluster.eta, axis=1)
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta))
+        N = cluster_eta_np.shape[0]
+        A = np.hstack([
+            cluster_eta_np[:, None],     
+            -1*np.ones((N, 1))            
+        ])
+        regression = lsq_linear(A, residual, bounds=(lower_bound, upper_bound), lsmr_tol='auto', method='bvls')
+        weight = regression.x
+    return weight
+
+def apply_calibration(cluster, weights,name=""):
+    num_cluster = ak.num(cluster.layer_pt,axis=1)
+    flat = ak.flatten(cluster.layer_pt,axis=1)
+    flat_numpy=ak.to_numpy(flat)[:,:13]
+    # Weight array per layer (length 34 for example)
+    weights = np.array(weights)  
+    if len(weights) == 12:
+        flat_numpy=ak.to_numpy(flat)[:,1:13]
+        Ecalib=ak.unflatten(ak.sum(flat_numpy*weights, axis=1) ,num_cluster)
+    else:
+        Ecalib=ak.unflatten(ak.sum(flat_numpy*weights, axis=1),num_cluster)
+    # Ecalib=ak.unflatten(ak.sum(flat_numpy*weights[:12], axis=1) - np.abs(flat_eta_numpy)*weights[12:13] + weights[13] ,num_cluster)
+    # print(getattr(cluster, f"Ecalib_all_{name}"))
+
+    cluster= ak.with_field(cluster, Ecalib, f"Ecalib_{name}")
+    # print(f"Ecalib_{name}",weights)
+    return cluster
+
+def apply_calibration_eta(cluster, weights, name="", name1=""):
+    num_cluster = ak.num(getattr(cluster, f"Ecalib_{name}"),axis=-1)
+    # print("num_cluster", num_cluster)
+    flat_Ecalib = ak.flatten(getattr(cluster, f"Ecalib_{name}"),axis=1)
+    # print("flat_Ecalib", flat_Ecalib)
+    flat_eta = ak.flatten(cluster.eta,axis=1)
+    # print("flat_eta", flat_eta)
+    flat_Ecalib_numpy=ak.to_numpy(flat_Ecalib)
+    flat_eta_numpy=ak.to_numpy(flat_eta)
+    flat_weights_numpy=ak.to_numpy(ak.flatten(weights,axis=-1))
+    print(flat_weights_numpy)
+    # Weight array per layer (length 34 for example)
+    weights = np.array(weights)  
+    Ecalib_PU_term=ak.unflatten(flat_Ecalib_numpy - np.abs(flat_eta_numpy)*flat_weights_numpy[0] - flat_weights_numpy[1],num_cluster)
+    cluster= ak.with_field(cluster, Ecalib_PU_term, f"Ecalib_PU_term_{name1}")
+    return cluster
         
-    if var== "phi":
-        indices = np.digitize(flat_total_gen_phi, bin_edges) - 1
-        indices_matched = np.digitize(flat_matched_gen_phi, bin_edges) - 1
+def apply_calibration_all_weights(cluster, weights, name=""):
+    num_cluster = ak.num(cluster.layer_pt,axis=1)
+    flat = ak.flatten(cluster.layer_pt,axis=1)
+    flat_eta = ak.flatten(cluster.eta,axis=1)
+    flat_numpy=ak.to_numpy(flat)[:,:13]
+    flat_eta_numpy=ak.to_numpy(flat_eta)
+    # Weight array per layer (length 34 for example)
+    # print(len(weights))
+    flat_eta_numpy=ak.to_numpy(flat_eta)
+    if len(weights) == 14:
+        flat_numpy=ak.to_numpy(flat)[:,1:13]
+        Ecalib=ak.unflatten(ak.sum(flat_numpy*weights[:12], axis=1) - np.abs(flat_eta_numpy)*weights[12] - weights[13] ,num_cluster)
+    else:
+        Ecalib=ak.unflatten(ak.sum(flat_numpy*weights[:13], axis=1) - np.abs(flat_eta_numpy)*weights[13] - weights[14] ,num_cluster)
+    # Ecalib=ak.unflatten(ak.sum(flat_numpy*weights[:12], axis=1) - np.abs(flat_eta_numpy)*weights[12:13] + weights[13] ,num_cluster)
+    cluster= ak.with_field(cluster, Ecalib, f"Ecalib_all_{name}")
+    # print(getattr(cluster, f"Ecalib_all_{name}"))
+    
+    return cluster
 
-    if var== "eta":
-        indices = np.digitize(np.abs(flat_total_gen_eta), bin_edges) - 1
-        indices_matched = np.digitize(np.abs(flat_matched_gen_eta), bin_edges) - 1
+def compute_response_calib(
+    matched,
+    matched_gen,
+    args,
+    response_variable="pt",   # pt, eta, phi
+    bin_variable="pt",        # pt, eta, phi
+    quantity="raw",
+    calib_name=None,
+    bin_n=10,
+    range_=(0, 200),
+):
 
-    # print("matched", len(flat_matched_gen_pt))
-    # print("total", len(flat_total_gen_pt))
+    bin_edges = np.linspace(range_[0], range_[1], bin_n + 1)
+    bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
-    efficiency, error= {}, {}
-    for index in range(bin_n):
-        bin_idx = np.where(indices == index)[0]
-        bin_idx_matched = np.where(indices_matched == index)[0]
-        eff=len(bin_idx_matched)/len(bin_idx)
-        # print(len(bin_idx_matched))
-        # print(len(bin_idx))
-        # print(eff)
-        efficiency[index] = eff
-        error[index] = np.sqrt(eff * (1 - eff) / len(bin_idx))
+    # -------------------------
+    # Flatten
+    # -------------------------
+    pt      = ak.to_numpy(ak.flatten(matched.pt, axis=-1))
+    pt_gen  = ak.to_numpy(ak.flatten(matched_gen.pt, axis=-1))
 
-    # print(efficiency)
-    # print(error)
+    eta     = ak.to_numpy(ak.flatten(matched.eta, axis=-1))
+    eta_gen = ak.to_numpy(ak.flatten(matched_gen.eta, axis=-1))
 
-    ax.errorbar((bin_edges[1:] + bin_edges[:-1])/2, efficiency.values(), 
-                    yerr=np.array(list(zip(error.values(), error.values()))).T,
-                    xerr=(bin_edges[1] - bin_edges[0])/2, ls='None', lw=2, marker='s', label=label, color=color)
-    plt.ylabel(r'$\epsilon$')
-    plt.xlabel(r'$p_{T}^{gen}$ [GeV]' if var=='pT' else r'$|\eta^{gen}|$')
-    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup+' '+args.particles)
+    phi     = ak.to_numpy(ak.flatten(matched.phi, axis=-1))
+    phi_gen = ak.to_numpy(ak.flatten(matched_gen.phi, axis=-1))
+
+    if quantity == "calibPU0":
+        energy = ak.to_numpy(
+            ak.flatten(getattr(matched, f"Ecalib_{calib_name}"))
+        )
+    elif quantity == "calibPU200":
+        energy = ak.to_numpy(
+            ak.flatten(getattr(matched, f"Ecalib_all_{calib_name}"))
+        )
+    elif quantity == "calibPUterm":
+        energy = ak.to_numpy(
+            ak.flatten(getattr(matched, f"Ecalib_PU_term_{calib_name}"))
+        )
+    else:
+        energy = pt
+
+    # -------------------------
+    # Choose binning variable
+    # -------------------------
+    if bin_variable == "pt":
+        x_for_binning = pt_gen
+    elif bin_variable == "eta":
+        x_for_binning = np.abs(eta_gen)
+    elif bin_variable == "phi":
+        x_for_binning = phi_gen
+    else:
+        raise ValueError("Invalid bin_variable")
+
+    indices = np.digitize(x_for_binning, bin_edges) - 1
+
+    # -------------------------
+    # Prepare outputs
+    # -------------------------
+    response     = np.zeros(bin_n)
+    response_err = np.zeros(bin_n)
+    resolution   = np.zeros(bin_n)
+    resolution_err = np.zeros(bin_n)
+
+    # -------------------------
+    # Loop over bins
+    # -------------------------
+    for i in range(bin_n):
+
+        mask = indices == i
+        if not np.any(mask):
+            continue
+
+        # ===== RESPONSE VARIABLE =====
+        # print(response_variable)
+        if response_variable == "pt":
+            resp = energy[mask] / pt_gen[mask]
+
+        elif response_variable == "eta":
+            resp = eta[mask] - eta_gen[mask]
+
+        elif response_variable == "phi":
+            resp = phi[mask] - phi_gen[mask]
+            resp = (resp + np.pi) % (2*np.pi) - np.pi
+
+        else:
+            raise ValueError("Invalid response_variable")
+
+        # ---- Mean
+        response[i] = np.mean(resp)
+        response_err[i] = np.std(resp) / np.sqrt(len(resp))
+
+        # ---- Resolution
+        if response_variable == "pt":
+            # sigma = effrms(resp) if args.eff_rms else np.std(resp)
+            sigma= np.std(resp)
+            resolution[i] = sigma / np.abs(np.mean(resp))
+            resolution_err[i] = sigma / np.sqrt(2*len(resp)-2)
+        else:
+            sigma = np.std(resp)
+            resolution[i] = sigma
+            resolution_err[i] = sigma / np.sqrt(2*len(resp)-2)
+
+    return bin_centers, response, response_err, resolution, resolution_err
+
+    
+    
+def plot_response_calib(
+    matched,
+    matched_gen,
+    args,
+    ax,
+    label,
+    color,
+    response_variable="pt",
+    bin_variable="pt", 
+    quantity="raw",
+    calib_name=None,
+    bin_n=10,
+    range_=(0, 200),
+):
+
+    (x,response,response_err,resolution,resolution_err,) = compute_response_calib( matched, matched_gen,
+                                                                                    args,response_variable,bin_variable,
+                                                                                    quantity, calib_name, bin_n, range_,
+                                                                                    )
+
+    plt.style.use(mplhep.style.CMS)
+
+    # -------------------------------------------------
+    # Response plot
+    # -------------------------------------------------
+    if args.response:
+        ax.errorbar(
+            x,
+            response,
+            yerr=response_err,
+            xerr=(x[1] - x[0]) / 2,
+            marker="s",
+            ls="None",
+            label=label,
+            color=color,
+        )
+
+        ax.set_ylabel(
+            r"$\langle p_T^{cluster}/p_T^{gen} \rangle$"
+            if response_variable == "pt"
+            else r"$\langle \eta^{cluster} - \eta^{gen} \rangle$"
+            if response_variable == "eta"
+            else r"$\langle \phi^{cluster} - \phi^{gen} \rangle$"
+        )
+
+    # -------------------------------------------------
+    # Resolution plot
+    # -------------------------------------------------
+    if args.resolution:
+        ax.errorbar(
+            x,
+            resolution,
+            yerr=resolution_err,
+            xerr=(x[1] - x[0]) / 2,
+            marker="s",
+            ls="None",
+            label=label,
+            color=color,
+        )
+
+        if response_variable == "pt":
+            ax.set_ylabel(
+                # r"$(\sigma/\mu)_{eff}$"
+                # if args.eff_rms
+                # else r"$\sigma/\mu$"
+                r'$\sigma^{cluster}/\mu^{cluster}$'
+            )
+        else:
+            ax.set_ylabel(r"$\sigma^{cluster}$")
+
+    # -------------------------------------------------
+    # X label
+    # -------------------------------------------------
+    ax.set_xlabel(
+        r"$p_T^{gen}$ [GeV]"
+        if bin_variable == "pt"
+        else r"$|\eta^{gen}|$"
+        if bin_variable == "eta"
+        else r"$\phi^{gen}$"
+    )
+
+    mplhep.cms.label("Preliminary", data=True,
+                     rlabel=args.pileup + " " + args.particles)
+
+    ax.legend(fontsize=15)
+    ax.grid(linestyle=":")
+
+def scale_distribution_calib(events, gen, args, field, bin_n, range_, label, color, legend_handles, ax):
+
+    bin_edges = np.linspace(range_[0], range_[1], num=bin_n+1)
+    plt.style.use(mplhep.style.CMS)
+
+    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup + ' ' + args.particles)
+
+
+    if field == "pT":
+        numerator = events.pt
+        denominator = gen.pt
+        xlabel = r'$p_T^{cluster}/p_T^{gen}$'
+
+    elif field == "eta":
+        numerator = events.eta
+        denominator = gen.eta
+        xlabel = r'$\eta^{cluster}-\eta^{gen}$'
+
+    else:
+        numerator = ak.flatten(getattr(events, field),axis=-1)
+        denominator = ak.flatten(gen.pt,axis=-1)
+        xlabel = r'$E^{calib}/p_T^{gen}$'
+
+    flat_num = ak.to_numpy(ak.flatten(numerator, axis=-1))
+    flat_den = ak.to_numpy(ak.flatten(denominator, axis=-1))
+
+
+    mask = flat_den != 0
+    flat_num = flat_num[mask]
+    flat_den = flat_den[mask]
+
+    if field == "eta" or field == "phi":
+        values = flat_num - flat_den
+    else:
+        values = np.divide(flat_num, flat_den)
+
+    ax.hist(
+        values, 
+        bins=bin_edges, 
+        alpha=0.2, 
+        color=color, 
+        histtype='stepfilled')
+    ax.hist(
+        values,
+        bins=bin_edges,
+        histtype='step',
+        linewidth=2.5,
+        color=color,
+        label=label
+    )
+
+    legend_handles.append(Rectangle((0, 0), 1, 1, facecolor=color, edgecolor=color, linewidth=4, alpha=0.2, label=label))
 
     if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
         thr = args.pt_cut
-        plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {args.pt_cut}$ GeV", title_fontsize=15, fontsize=17, frameon=True, facecolor='white', edgecolor='black')
-    if args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+        ax.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
+    elif args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
         thr = args.gen_pt_cut
-        plt.legend(title=fr"$p_T^{{\mathrm{{gen}}}} > {args.gen_pt_cut}$ GeV", title_fontsize=15, fontsize=17, frameon=True, facecolor='white', edgecolor='black')
-    if args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
-        thr_gen = args.gen_pt_cut
-        thr = args.pt_cut
-        plt.legend(title=fr"$p_T^{{\mathrm{{gen}}}} > {thr_gen} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr} GeV$", title_fontsize=15, fontsize=17, frameon=True, facecolor='white', edgecolor='black')
+        ax.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black', loc="best", title_fontsize=15, fontsize=17)
+    elif args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+        thr = args.gen_pt_cut
+        thr2 = args.pt_cut
+        ax.legend(handles=legend_handles, title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$",frameon=True, facecolor='white', edgecolor='black', title_fontsize=14)
     else:
-        plt.legend()
+        ax.legend(handles=legend_handles)
     
-    plt.grid()
-    plt.tight_layout()
-    return
+    # plt.hist(values, bins=bin_edges, histtype='step', linewidth=2.5, color=color, label=label)
+    ax.set_xlabel(xlabel)
+    ax.set_yscale('log')
+    ax.grid(linestyle=":")
 
+def plot_weight_val(weights, tri, color, calib_name, calib_idx,args):
+    markers = ['o','s','^','D','x','*','v']
+    marker = markers[calib_idx]
+    mplhep.cms.label('Preliminary', data=True, rlabel=args.pileup + ' ' + args.particles)
+
+    w = ak.to_numpy(weights[calib_name][tri])
+    n = len(w)
+
+    if n == 15:
+        x = np.arange(1, 16)
+    elif n == 14:
+        x = np.arange(1, n+1) + 1   
+    elif n == 13:
+        x = np.arange(1, 14)
+    elif n ==12:
+        x = np.arange(1, n+1) + 1   
+    else:
+        x = np.arange(1, 3) 
+
+
+    plt.scatter(
+        x,
+        w,
+        marker=marker,
+        color=color,
+        label=f"{tri}-{calib_name}"
+    )
+
+
+    plt.xlabel("Weight index")
+    plt.ylabel("Weight value")
+
+    if args.pt_cut != 0.0 and not args.gen_pt_cut != 0.0:
+        thr = args.pt_cut
+        plt.legend(title=fr"$p_T^{{\mathrm{{cluster}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black')
+    elif args.gen_pt_cut != 0.0 and not args.pt_cut != 0.0:
+        thr = args.gen_pt_cut
+        plt.legend( title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$",frameon=True, facecolor='white', edgecolor='black', loc="best", title_fontsize=15, fontsize=17)
+    elif args.pt_cut != 0.0 and args.gen_pt_cut != 0.0:
+        thr = args.gen_pt_cut
+        thr2 = args.pt_cut
+        plt.legend( title=fr"$p_T^{{\mathrm{{gen}}}} > {thr} GeV$" + "\n" + f"and $p_T^{{\mathrm{{cluster}}}} > {thr2} GeV$",frameon=True, facecolor='white', edgecolor='black', title_fontsize=14)
+    else:
+       plt.legend()
+
+    plt.grid(":")
+
+def plot_eta(cluster, weights, color, tri="", name="", idx_0=0, idx_1=1):
+
+    print("weights")
+    print(weights)
+    weights= ak.flatten(weights, axis =-1)
+    print(weights[idx_0])
+    print(len(weights))
+  
+    cluster_eta= ak.flatten(cluster.eta, axis=1)
+    cluster_eta_np = np.abs(np.asarray(cluster_eta))
+    plt.plot(np.abs(cluster_eta_np), np.abs(cluster_eta_np) * weights[idx_0] + weights[idx_1], color=color, label=f"For {tri} with {name}")
+    plt.legend()
+    plt.grid(":")
+    plt.xlabel(r"$|\eta$|")
+    plt.ylabel(r"$\alpha |\eta| + \beta$")
+    plt.title("Linear function of eta")
     
-#Plotting the efficiency as a function pt_gen and eta_gen (still testing these functions)
-
-def compute_efficiency(cluster, gen, bin_n, var, att_eta, dr_threshold=0.1):
-    clusters = ak.zip({
-        "eta": getattr(cluster, att_eta),
-        "phi": getattr(cluster, att_eta.replace("eta", "phi")),
-        "pt": getattr(cluster, att_eta.replace("eta", "pt")),
-    })
-
-    genparts = ak.zip({
-        "eta": getattr(gen, 'genpart_exeta'),
-        "phi": getattr(gen, 'genpart_exphi'),
-        "pt": getattr(gen, 'genpart_pt'),
-        "gen_flag": getattr(gen, 'genpart_gen'),
-    })
-
-    # Cartesian product of clusters and gen particles per event
-    pairs = ak.cartesian([clusters, genparts], axis=1, nested=True)
-
-    # Compute deltaR for each cluster-gen pair
-    delta_eta = pairs['0'].eta - pairs['1'].eta
-    delta_phi = np.abs(pairs['0'].phi - pairs['1'].phi)
-    delta_phi = ak.where(delta_phi > np.pi, 2 * np.pi - delta_phi, delta_phi)
-    delta_r = np.sqrt(delta_eta**2 + delta_phi**2)
-    print("delta_R", delta_r)
-    # Find matches: gen matched if ANY cluster in event is close enough
-    matched = ak.any(delta_r < dr_threshold, axis=1)  # shape: (n_events, n_gen_per_event)
-
-    print("Matched", matched)
-
-    # Mask gen array to get matched status per gen particle
-    gen_mask = delta_r < dr_threshold
-    print("gen_mask", gen_mask)
-    gen_matched = ak.any(gen_mask, axis=1)  # one per gen particle
-
-    print("gen_matched", gen_matched)
-    # Flatten to bin by pt
-    gen_flat = ak.flatten(genparts)
-    matched_flat = ak.flatten(gen_matched)
-
-    print("matched_flat",matched_flat)
-
-    # Bin edges (linear or log)
-    bin_edges = np.linspace(0, 200, num=bin_n + 1) 
-    bin_indices = np.digitize(gen_flat.pt, bin_edges) - 1  
-
-    # Initialize efficiency arrays
-    eff = np.zeros(bin_n)
-    counts_total = np.zeros(bin_n)
-    counts_matched = np.zeros(bin_n)
-
-    for i in range(bin_n):
-        in_bin = bin_indices == i
-        counts_total[i] = np.sum(in_bin)
-        counts_matched[i] = np.sum(matched_flat[in_bin])
-        if counts_total[i] > 0:
-            eff[i] = counts_matched[i] / counts_total[i]
-
-    return bin_edges, eff, counts_total, counts_matched
-
-
-def compute_efficiency_test(cluster, gen, bin_n ,var, att_eta):
-
-    print(gen.genpart_pt)
-
-    clusters = ak.zip({
-        "eta": getattr(cluster, att_eta),
-        "phi": getattr(cluster, att_eta.replace("eta", "phi")),
-        "pt": getattr(cluster, att_eta.replace("eta", "pt")),
-    })
-
-    # print("clusters pt", clusters.pt[0])
-    # print("clusters eta", clusters.eta[0])
-
-    genparts = ak.zip({
-        "eta": getattr(gen, 'genpart_exeta'),
-        "phi": getattr(gen, 'genpart_exphi'),
-        "pt": getattr(gen, 'genpart_pt'),
-        "gen_flag": getattr(gen,'genpart_gen'),
-    })
-    
-    genparts_flat= ak.flatten(genparts, axis=-1)
-    clusters_flat=ak.flatten(clusters, axis=-1)
-
-    # print(genparts.eta)
-    # print(clusters.eta)
-    
-    if var=="pT":
-        bin_edges = np.linspace(min(genparts_flat.pt), max(genparts_flat.pt),num=bin_n+1)
-        indices = np.digitize(genparts_flat.pt, bin_edges) - 1
-    
-        for index in range(bin_n+1):
-            gen_mask = indices == index
-            # gen_pt_bin = [genparts_flat.pt[i] for i in bin_indices]
-            # gen_eta_bin = [genparts_flat.eta[i] for i in bin_indices]
-            # gen_phi_bin = [genparts_flat.phi[i] for i in bin_indices]
-            # cluster_eta_bin = [clusters_flat.eta[i] for i in bin_indices]
-
-            gen_bin = genparts_flat[gen_mask]
-
-            # print("gen_bin",gen_bin)
-
-            # #MATCHING
-            # pairs = ak.cartesian([clusters, genparts], axis=1, nested=True)
-            # # print("pairs[0]", pairs['0'].eta[0])
-            # # print("pairs[1]", pairs['1'].eta[0])
-            # delta_eta = np.abs(pairs['0'].eta - pairs['1'].eta)
-            # # print("delta_eta", delta_eta[0])
-            # delta_phi = np.abs(pairs['0'].phi - pairs['1'].phi)
-            # delta_phi = ak.where(delta_phi > np.pi, 2 * np.pi - delta_phi, delta_phi)
-
-            # delta_r = np.sqrt(delta_eta**2 + delta_phi**2)
-
-            # # print("delta_r", delta_r[0])
-            # mask = delta_r < deltaR
-
-
-            # print(gen_pt_bin)
-
-    if var=="eta":
-        bin_edges = np.linspace(min(gen.genpart_eta), max(gen.genpart_eta),num=bin_n+1)
-        indices = np.digitize(gen.genpart_eta, bin_edges) - 1
-        
-
 

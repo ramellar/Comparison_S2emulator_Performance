@@ -32,7 +32,7 @@ Then to faclitate the plotting we will first load the events as a parquet file b
 ```
 python run_performance_plots.py -n 19000 --pileup PU0 --particles photons --parquet
 ```
-It might take a while to laod all the events, eventually a way to submit this to condor might be added. Once we have the events on the parquet file, we can proceed to plotting the distributions of the variables, efficiencies, responses etc. This can be done using the follwoing argumtes
+It might take a while to load all the events, eventually a way to submit this to condor might be added. Once we have the events on the parquet file, we can proceed to plotting the distributions of the variables, efficiencies, responses etc. This can be done using the follwoing argumtes
 
 ```
 # Only loading the data
@@ -46,6 +46,17 @@ python run_performance_plots.py -n 1000 --pileup PU0 --particles photons --total
  
 # Plotting the response 
  python run_performance_plots.py -n 1000 --pileup PU0 --particles photons --resp --resolution
+
+# A cut on the gen pt can be added 
+python run_performance_plots.py  --pileup PU200 --particles photons   --resp --response --gen_pt_cut 20 
+
+# A cut on the cluster pt can be added 
+python run_performance_plots.py  --pileup PU200 --particles photons   --resp --response --pt_cut 20
+
+# A cut on both the gen and the cluster pt can be added 
+python run_performance_plots.py  --pileup PU200 --particles photons   --resp --response --gen_pt_cut 20 --pt_cut 20
+
+
 ```
 
 To display other options use `python run_performance_plots.py --help`.

@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *.so
 *.pyc
+*.png
+*.pdf
 
 #Plots
 *results*
