@@ -1,0 +1,22 @@
+universe = vanilla
+executable = run_load_data.sh
+
+# We manually set Process to 0 and 1 here
+arguments = $(ProxyPath) -n 291824 --particles Photon --pileup PU200 --job_id $(JobID) --n_jobs 10
+
+transfer_input_files = scripts/, data_handling/, configs/
+request_memory = 8G
+request_cpus = 1
+
+T3Queue = short
+WNTag = el9
+include : /opt/exp_soft/cms/t3/t3queue |
+
+ProxyPath = /home/llr/cms/amella/.globus/user_proxy.pem
+
+output = logs/load_Photon_PU200_$(JobID).out
+error  = logs/load_Photon_PU200_$(JobID).err
+log    = logs/load_Photon_PU200_$(JobID).log
+
+# Just queue the two missing IDs
+queue JobID in (6, 7)

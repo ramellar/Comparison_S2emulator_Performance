@@ -55,3 +55,41 @@ class PerformancePlotter:
         self._apply_cms_style(var_name)
         plt.legend(handles=self.legend_handles)
         plt.grid(linestyle=":")
+    def compute_efficiency(self, matched_gen, all_gen, x_var, bins, range_):
+        """
+        Calculates efficiency: Count(matched) / Count(all_gen)
+        """
+        bin_edges = np.linspace(range_[0], range_[1], bins + 1)
+        bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+
+        def get_x(data):
+            # Helper to get the correct branch and flatten
+            branch = data.pt if x_var == 'pt' else np.abs(data.eta) if x_var == 'eta' else data.phi
+            return ak.to_numpy(ak.flatten(branch, axis=-1))
+
+        x_matched = get_x(matched_gen)
+        x_all = get_x(all_gen)
+
+        n_matched, _ = np.histogram(x_matched, bins=bin_edges)
+        n_all, _ = np.histogram(x_all, bins=bin_edges)
+
+        # Efficiency calculation with error bars (Clopper-Pearson or simple Poisson)
+        eff = np.divide(n_matched, n_all, out=np.zeros_like(n_matched, dtype=float), where=n_all!=0)
+        eff_err = np.sqrt(eff * (1 - eff) / n_all, out=np.zeros_like(eff), where=n_all!=0)
+
+        return bin_centers, eff, eff_err
+
+    def plot_efficiency(self, datasets, x_var, bins, range_, filename):
+        fig, ax = plt.subplots(figsize=(10, 10))
+        x_label = r"$p_T^{gen}$ [GeV]" if x_var == 'pt' else r"$|\eta^{gen}|$"
+        
+        for ds in datasets:
+            x, eff, err = self.compute_efficiency(ds['matched_gen'], ds['all_gen'], x_var, bins, range_)
+            ax.errorbar(x, eff, yerr=err, xerr=(x[1]-x[0])/2, marker="o", ls="None", 
+                        label=ds['label'], color=ds['color'])
+
+        ax.set_ylabel("Efficiency")
+        ax.set_xlabel(x_label)
+        ax.set_ylim(0, 1.1)
+        self._apply_cms_decor(ax)
+        self._save_fig(filename)

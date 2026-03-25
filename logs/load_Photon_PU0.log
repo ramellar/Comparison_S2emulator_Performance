@@ -1,0 +1,599 @@
+000 (775650.000.000) 2026-03-23 17:50:50 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+000 (775650.001.000) 2026-03-23 17:50:50 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775650.000.000) 2026-03-23 17:50:56 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_4_1147689_79a7_4637>
+...
+040 (775650.001.000) 2026-03-23 17:50:56 Started transferring input files
+	Transferring to host: <134.158.132.112:9618?addrs=134.158.132.112-9618&alias=llrgrwn039.in2p3.fr&noUDP&sock=slot1_14_538272_117a_5040>
+...
+040 (775650.001.000) 2026-03-23 17:50:57 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:50:57 Finished transferring input files
+...
+040 (775650.001.000) 2026-03-23 17:50:58 Started transferring output files
+...
+040 (775650.000.000) 2026-03-23 17:50:58 Started transferring output files
+...
+022 (775650.001.000) 2026-03-23 17:50:58 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_14@llrgrwn039.in2p3.fr <134.158.132.112:9618?addrs=134.158.132.112-9618&alias=llrgrwn039.in2p3.fr&noUDP&sock=startd_532268_2781>
+...
+022 (775650.000.000) 2026-03-23 17:50:58 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_4@llrgrwn031.in2p3.fr <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+...
+024 (775650.001.000) 2026-03-23 17:50:58 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_14@llrgrwn039.in2p3.fr, rescheduling job
+...
+004 (775650.001.000) 2026-03-23 17:50:58 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       11      100      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775650.000.000) 2026-03-23 17:50:59 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_4@llrgrwn031.in2p3.fr, rescheduling job
+...
+004 (775650.000.000) 2026-03-23 17:50:59 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       11      100      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+000 (775651.000.000) 2026-03-23 17:51:39 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775650.000.000) 2026-03-23 17:51:40 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_4_1147689_79a7_4638>
+...
+040 (775650.001.000) 2026-03-23 17:51:40 Started transferring input files
+	Transferring to host: <134.158.132.97:9618?addrs=134.158.132.97-9618&alias=llrgrwn035.in2p3.fr&noUDP&sock=slot1_16_559289_7230_5064>
+...
+040 (775650.000.000) 2026-03-23 17:51:41 Finished transferring input files
+...
+040 (775651.000.000) 2026-03-23 17:51:41 Started transferring input files
+	Transferring to host: <134.158.132.114:9618?addrs=134.158.132.114-9618&alias=llrgrwn041.in2p3.fr&noUDP&sock=slot1_16_657300_0fe2_5074>
+...
+040 (775650.001.000) 2026-03-23 17:51:41 Finished transferring input files
+...
+040 (775651.000.000) 2026-03-23 17:51:41 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:51:42 Started transferring output files
+...
+040 (775650.001.000) 2026-03-23 17:51:42 Started transferring output files
+...
+040 (775651.000.000) 2026-03-23 17:51:42 Started transferring output files
+...
+022 (775650.000.000) 2026-03-23 17:51:42 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_4@llrgrwn031.in2p3.fr <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+...
+022 (775650.001.000) 2026-03-23 17:51:42 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_16@llrgrwn035.in2p3.fr <134.158.132.97:9618?addrs=134.158.132.97-9618&alias=llrgrwn035.in2p3.fr&noUDP&sock=startd_548248_1aec>
+...
+022 (775651.000.000) 2026-03-23 17:51:42 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_16@llrgrwn041.in2p3.fr <134.158.132.114:9618?addrs=134.158.132.114-9618&alias=llrgrwn041.in2p3.fr&noUDP&sock=startd_650941_f626>
+...
+024 (775650.000.000) 2026-03-23 17:51:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_4@llrgrwn031.in2p3.fr, rescheduling job
+...
+004 (775650.000.000) 2026-03-23 17:51:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       12       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775650.001.000) 2026-03-23 17:51:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_16@llrgrwn035.in2p3.fr, rescheduling job
+...
+004 (775650.001.000) 2026-03-23 17:51:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       12       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775651.000.000) 2026-03-23 17:51:44 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_16@llrgrwn041.in2p3.fr, rescheduling job
+...
+004 (775651.000.000) 2026-03-23 17:51:44 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       17      100      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+040 (775650.001.000) 2026-03-23 17:57:41 Started transferring input files
+	Transferring to host: <134.158.132.178:9618?addrs=134.158.132.178-9618&alias=llrgrwn054.in2p3.fr&noUDP&sock=slot1_12_1135607_9cfc_5082>
+...
+040 (775651.000.000) 2026-03-23 17:57:41 Started transferring input files
+	Transferring to host: <134.158.132.179:9618?addrs=134.158.132.179-9618&alias=llrgrwn055.in2p3.fr&noUDP&sock=slot1_11_1227270_7d2c_5110>
+...
+040 (775650.001.000) 2026-03-23 17:57:42 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:57:42 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_13_1147689_79a7_4644>
+...
+040 (775651.000.000) 2026-03-23 17:57:42 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:57:42 Finished transferring input files
+...
+040 (775650.001.000) 2026-03-23 17:57:43 Started transferring output files
+...
+040 (775651.000.000) 2026-03-23 17:57:43 Started transferring output files
+...
+022 (775650.001.000) 2026-03-23 17:57:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_12@llrgrwn054.in2p3.fr <134.158.132.178:9618?addrs=134.158.132.178-9618&alias=llrgrwn054.in2p3.fr&noUDP&sock=startd_1135571_d4ec>
+...
+022 (775651.000.000) 2026-03-23 17:57:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_11@llrgrwn055.in2p3.fr <134.158.132.179:9618?addrs=134.158.132.179-9618&alias=llrgrwn055.in2p3.fr&noUDP&sock=startd_1227233_56f0>
+...
+040 (775650.000.000) 2026-03-23 17:57:43 Started transferring output files
+...
+024 (775650.001.000) 2026-03-23 17:57:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_12@llrgrwn054.in2p3.fr, rescheduling job
+...
+004 (775650.001.000) 2026-03-23 17:57:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :                 8         8 
+	   Disk (KB)            :       12       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775651.000.000) 2026-03-23 17:57:44 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_11@llrgrwn055.in2p3.fr, rescheduling job
+...
+004 (775651.000.000) 2026-03-23 17:57:44 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       12       17      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+022 (775650.000.000) 2026-03-23 17:57:44 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_13@llrgrwn031.in2p3.fr <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+...
+024 (775650.000.000) 2026-03-23 17:57:45 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_13@llrgrwn031.in2p3.fr, rescheduling job
+...
+004 (775650.000.000) 2026-03-23 17:57:45 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       18       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+040 (775650.000.000) 2026-03-23 17:58:40 Started transferring input files
+	Transferring to host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=slot1_8_1163540_f04c_4587>
+...
+040 (775650.001.000) 2026-03-23 17:58:41 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_8_1147689_79a7_4645>
+...
+040 (775651.000.000) 2026-03-23 17:58:41 Started transferring input files
+	Transferring to host: <134.158.132.97:9618?addrs=134.158.132.97-9618&alias=llrgrwn035.in2p3.fr&noUDP&sock=slot1_15_559289_7230_5071>
+...
+040 (775650.000.000) 2026-03-23 17:58:41 Finished transferring input files
+...
+040 (775650.001.000) 2026-03-23 17:58:41 Finished transferring input files
+...
+040 (775651.000.000) 2026-03-23 17:58:41 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:58:42 Started transferring output files
+...
+040 (775650.001.000) 2026-03-23 17:58:42 Started transferring output files
+...
+040 (775651.000.000) 2026-03-23 17:58:42 Started transferring output files
+...
+022 (775650.000.000) 2026-03-23 17:58:42 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_8@llrgrwn026.in2p3.fr <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=startd_1148272_a94b>
+...
+022 (775650.001.000) 2026-03-23 17:58:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_8@llrgrwn031.in2p3.fr <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+...
+022 (775651.000.000) 2026-03-23 17:58:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_15@llrgrwn035.in2p3.fr <134.158.132.97:9618?addrs=134.158.132.97-9618&alias=llrgrwn035.in2p3.fr&noUDP&sock=startd_548248_1aec>
+...
+024 (775650.000.000) 2026-03-23 17:58:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_8@llrgrwn026.in2p3.fr, rescheduling job
+...
+004 (775650.000.000) 2026-03-23 17:58:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       18       20      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775650.001.000) 2026-03-23 17:58:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_8@llrgrwn031.in2p3.fr, rescheduling job
+...
+004 (775650.001.000) 2026-03-23 17:58:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       18       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775651.000.000) 2026-03-23 17:58:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_15@llrgrwn035.in2p3.fr, rescheduling job
+...
+004 (775651.000.000) 2026-03-23 17:58:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       12       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+040 (775650.000.000) 2026-03-23 17:59:41 Started transferring input files
+	Transferring to host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=slot1_8_1163540_f04c_4588>
+...
+040 (775650.001.000) 2026-03-23 17:59:41 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_8_1147689_79a7_4646>
+...
+040 (775651.000.000) 2026-03-23 17:59:41 Started transferring input files
+	Transferring to host: <134.158.132.171:9618?addrs=134.158.132.171-9618&alias=llrgrwn048.in2p3.fr&noUDP&sock=slot1_7_1136473_c9df_5081>
+...
+040 (775651.000.000) 2026-03-23 17:59:41 Finished transferring input files
+...
+040 (775650.001.000) 2026-03-23 17:59:41 Finished transferring input files
+...
+040 (775650.000.000) 2026-03-23 17:59:41 Finished transferring input files
+...
+040 (775651.000.000) 2026-03-23 17:59:42 Started transferring output files
+...
+022 (775651.000.000) 2026-03-23 17:59:42 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_7@llrgrwn048.in2p3.fr <134.158.132.171:9618?addrs=134.158.132.171-9618&alias=llrgrwn048.in2p3.fr&noUDP&sock=startd_1136438_8588>
+...
+040 (775650.000.000) 2026-03-23 17:59:42 Started transferring output files
+...
+040 (775650.001.000) 2026-03-23 17:59:42 Started transferring output files
+...
+022 (775650.000.000) 2026-03-23 17:59:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_8@llrgrwn026.in2p3.fr <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=startd_1148272_a94b>
+...
+024 (775651.000.000) 2026-03-23 17:59:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_7@llrgrwn048.in2p3.fr, rescheduling job
+...
+022 (775650.001.000) 2026-03-23 17:59:43 Job disconnected, attempting to reconnect
+    Socket between submit and execute hosts closed unexpectedly
+    Trying to reconnect to slot1_8@llrgrwn031.in2p3.fr <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+...
+004 (775651.000.000) 2026-03-23 17:59:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       12       12      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775650.000.000) 2026-03-23 17:59:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_8@llrgrwn026.in2p3.fr, rescheduling job
+...
+004 (775650.000.000) 2026-03-23 17:59:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       12       20      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+024 (775650.001.000) 2026-03-23 17:59:43 Job reconnection failed
+    Job not found at execution machine
+    Can not reconnect to slot1_8@llrgrwn031.in2p3.fr, rescheduling job
+...
+004 (775650.001.000) 2026-03-23 17:59:43 Job was evicted.
+	(0) CPU times
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Job not found at execution machine
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :       12       20      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :             30720     30720 
+...
+009 (775650.000.000) 2026-03-23 18:00:07 Job was aborted.
+	via condor_rm (by user amella)
+...
+009 (775650.001.000) 2026-03-23 18:00:07 Job was aborted.
+	via condor_rm (by user amella)
+...
+009 (775651.000.000) 2026-03-23 18:00:07 Job was aborted.
+	via condor_rm (by user amella)
+...
+000 (775652.000.000) 2026-03-23 18:02:21 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775652.000.000) 2026-03-23 18:02:22 Started transferring input files
+	Transferring to host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=slot1_14_1163540_f04c_4591>
+...
+040 (775652.000.000) 2026-03-23 18:02:23 Finished transferring input files
+...
+001 (775652.000.000) 2026-03-23 18:02:24 Job executing on host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=startd_1148272_a94b>
+	SlotName: slot1_14@llrgrwn026.in2p3.fr
+	CondorScratchDir = "/var/lib/condor/execute/dir_1795107"
+	Cpus = 8
+	Disk = 2048
+	GPUs = 0
+	Memory = 30720
+...
+006 (775652.000.000) 2026-03-23 18:02:27 Image size of job updated: 100
+	0  -  MemoryUsage of job (MB)
+	0  -  ResidentSetSize of job (KB)
+...
+040 (775652.000.000) 2026-03-23 18:02:27 Started transferring output files
+...
+040 (775652.000.000) 2026-03-23 18:02:27 Finished transferring output files
+...
+005 (775652.000.000) 2026-03-23 18:02:27 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	259  -  Run Bytes Sent By Job
+	98903  -  Run Bytes Received By Job
+	259  -  Total Bytes Sent By Job
+	98903  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :      114      100      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        0    30720     30720 
+	   TimeExecute (s)      :        3                    
+	   TimeSlotBusy (s)     :        5                    
+
+	Job terminated of its own accord at 2026-03-23T17:02:27Z with exit-code 1.
+...
+000 (775653.000.000) 2026-03-23 18:06:35 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775653.000.000) 2026-03-23 18:06:43 Started transferring input files
+	Transferring to host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=slot1_15_1163540_f04c_4596>
+...
+040 (775653.000.000) 2026-03-23 18:06:43 Finished transferring input files
+...
+001 (775653.000.000) 2026-03-23 18:06:44 Job executing on host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=startd_1148272_a94b>
+	SlotName: slot1_15@llrgrwn026.in2p3.fr
+	CondorScratchDir = "/var/lib/condor/execute/dir_1796759"
+	Cpus = 8
+	Disk = 3072
+	GPUs = 0
+	Memory = 30720
+...
+006 (775653.000.000) 2026-03-23 18:06:53 Image size of job updated: 1500
+	1  -  MemoryUsage of job (MB)
+	372  -  ResidentSetSize of job (KB)
+...
+006 (775653.000.000) 2026-03-23 18:06:55 Image size of job updated: 2036
+	2  -  MemoryUsage of job (MB)
+	2036  -  ResidentSetSize of job (KB)
+...
+006 (775653.000.000) 2026-03-23 18:12:31 Image size of job updated: 2036
+	4  -  MemoryUsage of job (MB)
+	3652  -  ResidentSetSize of job (KB)
+...
+040 (775653.000.000) 2026-03-23 18:12:31 Started transferring output files
+...
+040 (775653.000.000) 2026-03-23 18:12:31 Finished transferring output files
+...
+005 (775653.000.000) 2026-03-23 18:12:31 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:00:01, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:01, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	193  -  Run Bytes Sent By Job
+	98903  -  Run Bytes Received By Job
+	193  -  Total Bytes Sent By Job
+	98903  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :      128     1500      3072 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        4    30720     30720 
+	   TimeExecute (s)      :      347                    
+	   TimeSlotBusy (s)     :      348                    
+
+	Job terminated of its own accord at 2026-03-23T17:06:55Z with signal 15.
+...
+000 (775654.000.000) 2026-03-23 18:12:34 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775654.000.000) 2026-03-23 18:12:34 Started transferring input files
+	Transferring to host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=slot1_11_1147689_79a7_4660>
+...
+040 (775654.000.000) 2026-03-23 18:12:34 Finished transferring input files
+...
+001 (775654.000.000) 2026-03-23 18:12:36 Job executing on host: <134.158.132.92:9618?addrs=134.158.132.92-9618&alias=llrgrwn031.in2p3.fr&noUDP&sock=startd_1138928_745a>
+	SlotName: slot1_11@llrgrwn031.in2p3.fr
+	CondorScratchDir = "/var/lib/condor/execute/dir_1784343"
+	Cpus = 8
+	Disk = 3072
+	GPUs = 0
+	Memory = 30720
+...
+006 (775654.000.000) 2026-03-23 18:12:44 Image size of job updated: 1500
+	1  -  MemoryUsage of job (MB)
+	364  -  ResidentSetSize of job (KB)
+...
+006 (775654.000.000) 2026-03-23 18:12:49 Image size of job updated: 2012
+	2  -  MemoryUsage of job (MB)
+	2012  -  ResidentSetSize of job (KB)
+...
+006 (775654.000.000) 2026-03-23 18:15:32 Image size of job updated: 2012
+	4  -  MemoryUsage of job (MB)
+	3656  -  ResidentSetSize of job (KB)
+...
+040 (775654.000.000) 2026-03-23 18:15:32 Started transferring output files
+...
+040 (775654.000.000) 2026-03-23 18:15:32 Finished transferring output files
+...
+005 (775654.000.000) 2026-03-23 18:15:32 Job terminated.
+	(1) Normal termination (return value 255)
+		Usr 0 00:00:02, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:02, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	180  -  Run Bytes Sent By Job
+	98959  -  Run Bytes Received By Job
+	180  -  Total Bytes Sent By Job
+	98959  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :      114     1500      3072 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        4    30720     30720 
+	   TimeExecute (s)      :      177                    
+	   TimeSlotBusy (s)     :      178                    
+
+	Job terminated of its own accord at 2026-03-23T17:12:49Z with signal 15.
+...
+000 (775655.000.000) 2026-03-23 18:15:43 Job submitted from host: <134.158.133.27:9618?addrs=134.158.133.27-9618&alias=llrt3condor.in2p3.fr&noUDP&sock=schedd_33061_acb1>
+...
+040 (775655.000.000) 2026-03-23 18:15:55 Started transferring input files
+	Transferring to host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=slot1_8_1163540_f04c_4606>
+...
+040 (775655.000.000) 2026-03-23 18:15:55 Finished transferring input files
+...
+001 (775655.000.000) 2026-03-23 18:15:56 Job executing on host: <134.158.132.87:9618?addrs=134.158.132.87-9618&alias=llrgrwn026.in2p3.fr&noUDP&sock=startd_1148272_a94b>
+	SlotName: slot1_8@llrgrwn026.in2p3.fr
+	CondorScratchDir = "/var/lib/condor/execute/dir_1800021"
+	Cpus = 8
+	Disk = 2048
+	GPUs = 0
+	Memory = 30720
+...
+006 (775655.000.000) 2026-03-23 18:16:04 Image size of job updated: 76984
+	76  -  MemoryUsage of job (MB)
+	76984  -  ResidentSetSize of job (KB)
+...
+006 (775655.000.000) 2026-03-23 18:17:44 Image size of job updated: 156832
+	76  -  MemoryUsage of job (MB)
+	76984  -  ResidentSetSize of job (KB)
+...
+040 (775655.000.000) 2026-03-23 18:24:12 Started transferring output files
+...
+040 (775655.000.000) 2026-03-23 18:24:12 Finished transferring output files
+...
+005 (775655.000.000) 2026-03-23 18:24:13 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:01:27, Sys 0 00:00:03  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:01:27, Sys 0 00:00:03  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	1814  -  Run Bytes Sent By Job
+	98959  -  Run Bytes Received By Job
+	1814  -  Total Bytes Sent By Job
+	98959  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        8         8 
+	   Disk (KB)            :      129      100      2048 
+	   GPUs                 :                           0 
+	   Memory (MB)          :       76    30720     30720 
+	   TimeExecute (s)      :      496                    
+	   TimeSlotBusy (s)     :      497                    
+
+	Job terminated of its own accord at 2026-03-23T17:17:44Z with exit-code 0.
+...

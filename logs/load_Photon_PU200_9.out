@@ -1,0 +1,10 @@
+Running: python3 scripts.load_data -n 291824 --particles Photon --pileup PU200 --job_id 9 --n_jobs 10
+root://eoscms.cern.ch//store/group/dpg_hgcal/comm_hgcal/TPG/stage2_emulator_ntuples_semiemulator_2Passes/double
+--- Job 9/10 starting: Processing 98 files ---
+Number of events: 29435
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Saved chunk 9 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/

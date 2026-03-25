@@ -84,3 +84,73 @@ class PlotManager:
 
         ylabel = "Response" if y_mode == 'response' else "Resolution"
         self._finalize_plot(ax, x_var, ylabel, "", filename)
+
+import matplotlib.pyplot as plt
+import mplhep as hep
+import os
+
+class BasePlotter:
+    def __init__(self, args, output_dir):
+        self.args = args
+        self.output_dir = output_dir
+        os.makedirs(output_dir, exist_ok=True)
+        hep.style.use(hep.style.CMS)
+
+    def _apply_decorations(self, ax, xlabel, ylabel, is_log=False, title=None):
+        hep.cms.label("Preliminary", data=True, 
+                      rlabel=f"{self.args.pileup} {self.args.particles}", ax=ax)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if is_log: ax.set_yscale('log')
+        ax.grid(linestyle=":", alpha=0.6)
+        
+        # Legend with automatic Title
+        legend_title = title if title else ""
+        if self.args.gen_pt_cut > 0: 
+            legend_title += f"\n$p_T^{{gen}} > {self.args.gen_pt_cut}$ GeV"
+        
+        ax.legend(title=legend_title, frameon=True, facecolor='white', edgecolor='black')
+        plt.tight_layout()
+
+    def save(self, filename):
+        for ext in ['png', 'pdf']:
+            plt.savefig(os.path.join(self.output_dir, f"{filename}.{ext}"), dpi=300)
+        plt.close()
+
+
+class DistributionPlotter(BasePlotter):
+    def _get_flat_data(self, dataset, var_name):
+        """
+        Internal helper to find the correct field and flatten it.
+        """
+        # 1. Determine which field to look for
+        if "qty" in dataset and dataset["qty"] == "calib":
+            # Look for the Ecalib field created by your CalibrationManager
+            field = f"Ecalib_{dataset['calib_name']}"
+            data = dataset["matched"][field]
+        else:
+            # Fallback to standard pt, eta, phi
+            data = dataset["matched"][var_name]
+
+        # 2. Flatten from (Events, Clusters) -> (Total Clusters)
+        # axis=-1 ensures we flatten the inner nested dimension
+        return ak.to_numpy(ak.flatten(data, axis=-1))
+
+    def plot_comparison(self, datasets, var_name, bins, range_, filename, xlabel, title=""):
+        """
+        datasets: list of dicts [{'matched': ak_array, 'label': str, 'color': str, ...}]
+        """
+        fig, ax = plt.subplots(figsize=(10, 10))
+        
+        for ds in datasets:
+            # The class now handles the flattening logic!
+            flat_array = self._get_flat_data(ds, var_name)
+            
+            # Draw the histogram
+            ax.hist(flat_array, bins=bins, range=range_, color=ds['color'], 
+                    alpha=0.15, histtype='stepfilled')
+            ax.hist(flat_array, bins=bins, range=range_, color=ds['color'], 
+                    label=ds['label'], histtype='step', linewidth=2.5)
+
+        self._apply_decorations(ax, xlabel, "Counts", is_log=True, title=title)
+        self.save(filename)

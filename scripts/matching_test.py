@@ -1,7 +1,6 @@
 import os
 import argparse
 import awkward as ak
-import data_handle.plot_performances as plot
 from   data_handling.event_performances import apply_matching
 from data_handling.utils import build_parquet_dir
 from configs.config import PARQUET_BASE, EMU_CONFIG

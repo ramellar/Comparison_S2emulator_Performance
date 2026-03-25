@@ -153,9 +153,8 @@ def save_weights(weight, base_dir, filename):
 
 class CalibrationManager:
 
-    def __init__(self, results_PU0, results_PU200, output_dir, configs, args):
-        self.results_PU0 = results_PU0
-        self.results_PU200 = results_PU200
+    def __init__(self, results, output_dir, configs, args):
+        self.results = results
         self.output_dir = output_dir
         self.configs = configs
 
@@ -228,21 +227,9 @@ class CalibrationManager:
                 name=name
             )
 
-    # -----------------------
-    # Get dataset
-    # -----------------------
-    # def get_data(self, strategy, key):
-
-    #     if strategy == "PU0":
-    #         return self.results_PU0[key]
-    #     else:
-    #         return self.results_PU200[key]
 
     def get_data(self, args, key):
-      if args.pileup == "PU0":
-        return self.results_PU0[key]
-      elif args.pileup == "PU200":
-        return self.results_PU200[key]
+        return self.results[key]
 
 
     def get_calibrated_cluster(self, strategy, config_name, key, args, name="test"):

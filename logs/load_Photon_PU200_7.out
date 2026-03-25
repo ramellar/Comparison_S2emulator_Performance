@@ -1,0 +1,3 @@
+Running: python3 scripts.load_data -n 291824 --particles Photon --pileup PU200 --job_id 7 --n_jobs 10
+root://eoscms.cern.ch//store/group/dpg_hgcal/comm_hgcal/TPG/stage2_emulator_ntuples_semiemulator_2Passes/double
+--- Job 7/10 starting: Processing 97 files ---

@@ -50,3 +50,16 @@ def load_matching_results(parquet_dir):
         }
 
     return results
+
+def load_filtered_events(parquet_dir):
+
+    results = {}
+
+    for key in EMU_CONFIG:
+
+        results[key] = {
+            "events_cluster_filtered": ak.from_parquet(parquet_dir + f"events_{key}_filtered.parquet"),
+            "events_gen_filtered": ak.from_parquet(parquet_dir + f"events_gen_filtered_{key}.parquet"),
+        }
+
+    return results

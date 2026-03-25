@@ -2,11 +2,8 @@
 import numpy as np
 import awkward as ak
 import uproot
-import math
-import yaml
-import cppyy
-import os
-import glob
+from tqdm import tqdm
+
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
@@ -16,20 +13,23 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
     if iteration == total: 
         print()
 
-import uproot
-import awkward as ak
-from tqdm import tqdm
 
+def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , thr=0.0, job_id=0, n_jobs=1, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"):
+    full_base_path = f"{base_path}{particle}_{pileup}"
 
-def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , thr=0.0,name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"):
+    all_indices = list(range(int(n_files)))
+    avg = len(all_indices) / float(n_jobs)
+    chunks = []
+    last = 0.0
+    while last < len(all_indices):
+        chunks.append(all_indices[int(last):int(last + avg)])
+        last += avg
+     
+    my_file_indices = chunks[job_id]
+    files = [f"{full_base_path}/ntuple_{i}.root:{name_tree}" for i in my_file_indices]
 
-    # n_files = 976
-    base_path = f"{base_path}{particle}_{pileup}"
-    name_tree = name_tree
-
-    # Generate the full list on the fly
-    files = [f"{base_path}/ntuple_{i}.root:{name_tree}" for i in range(n_files)]
-
+    print(f"--- Job {job_id}/{n_jobs} starting: Processing {len(files)} files ---")
+   
     branches = [
         "event",
         "genpart_exeta",
@@ -67,17 +67,19 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     batches = []
     total = 0
 
-    for batch in tqdm(
-            uproot.iterate(files, branches, library="ak", step_size="50 MB"),
-            desc="Reading events",
-    ):
+    xrootd_options = {
+    "timeout": 180,      # 3 minutes per request
+    "max_retries": 100,    # Retry if a chunk fails
+    }
 
+    for batch in tqdm(uproot.iterate(files, branches, library="ak", step_size="50 MB", 
+                                     options=xrootd_options, allow_missing=True)):
         batches.append(batch)
-
         total += len(batch["event"])
+        if total >= n: break
 
-        if total >= n:
-            break
+    if not batches:
+        raise RuntimeError(f"Job {job_id} could not read any data. Check your Proxy!")
 
     data = ak.concatenate(batches)[:n]
 
