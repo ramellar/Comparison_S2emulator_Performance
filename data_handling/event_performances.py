@@ -3,6 +3,7 @@ import numpy as np
 import awkward as ak
 import uproot
 from tqdm import tqdm
+import subprocess
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -67,12 +68,34 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     batches = []
     total = 0
 
+    my_file_indices = chunks[job_id]
+    raw_files = [f"{full_base_path}/ntuple_{i}.root" for i in my_file_indices]
+    
+    valid_files = []
+    print(f"Checking existence of {len(raw_files)} files...")
+    
+    for f_path in raw_files:
+        # Use xrdfs to check if the file exists (stat)
+        # We strip 'root://eoscms.cern.ch/' for the xrdfs command
+        eos_path = f_path.replace("root://eoscms.cern.ch/", "/")
+        check = subprocess.run(
+            ["xrdfs", "root://eoscms.cern.ch", "stat", eos_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        
+        if check.returncode == 0:
+            # File exists, add it to our list with the tree name
+            valid_files.append(f"{f_path}:{name_tree}")
+        else:
+            print(f"Skipping missing file: {f_path}")
+
     xrootd_options = {
     "timeout": 180,      # 3 minutes per request
     "max_retries": 100,    # Retry if a chunk fails
     }
 
-    for batch in tqdm(uproot.iterate(files, branches, library="ak", step_size="50 MB", 
+    for batch in tqdm(uproot.iterate(valid_files, branches, library="ak", step_size="50 MB", 
                                      options=xrootd_options, allow_missing=True)):
         batches.append(batch)
         total += len(batch["event"])
