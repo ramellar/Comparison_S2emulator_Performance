@@ -3,13 +3,12 @@ universe = vanilla
 executable = run_load_data.sh
 
 # Arguments: ProxyPath, then the rest of the python flags
-arguments = $(ProxyPath) -n 291824 --particles $(Part) --pileup $(PU) --job_id $(Process) --n_jobs 10
+arguments = $(ProxyPath) -n 72000 --particles $(Part) --pileup $(PU) --job_id $(Process) --n_jobs 20 --n_files 240
 
 # Transfer everything needed
 transfer_input_files = scripts/, data_handling/, configs/
 
 # Resource Requests (Adjusted for LLR T3)
-# Note: memory is heavy because 291k events in PU200 is massive
 request_memory = 8G
 request_cpus = 1
 
@@ -26,6 +25,6 @@ error  = logs/load_$(Part)_$(PU)_$(Process).err
 log    = logs/load_$(Part)_$(PU)_$(Process).log
 
 # The Queue
-queue 10 Part,PU from (
-  Photon, PU200
+queue 20 Part,PU from (
+  Electron, PU200
 )

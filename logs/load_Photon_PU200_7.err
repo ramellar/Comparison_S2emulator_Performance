@@ -1,50 +1,1 @@
-0it [00:00, ?it/s]1it [00:17, 17.73s/it]2it [00:24, 11.49s/it]3it [00:31,  9.13s/it]5it [00:39,  6.21s/it]7it [00:45,  4.76s/it]9it [00:51,  4.25s/it]10it [00:52,  3.38s/it]11it [01:02,  4.94s/it]13it [01:08,  4.13s/it]15it [01:14,  3.80s/it]16it [01:20,  4.24s/it]18it [01:29,  4.35s/it]20it [01:38,  4.40s/it]21it [01:44,  4.64s/it]23it [02:03,  6.43s/it]24it [02:12,  6.91s/it]26it [02:17,  5.43s/it]28it [02:24,  4.73s/it]29it [02:24,  3.84s/it]30it [02:37,  5.80s/it]32it [02:41,  4.31s/it]33it [02:53,  5.88s/it]34it [02:54,  4.87s/it]35it [03:00,  5.14s/it]36it [03:08,  5.94s/it]38it [03:14,  4.72s/it]40it [03:26,  5.13s/it]42it [03:32,  4.45s/it]44it [03:41,  4.31s/it]45it [03:48,  5.01s/it]47it [04:34, 11.28s/it]49it [04:40,  8.57s/it]51it [04:47,  6.88s/it]52it [04:55,  7.15s/it]53it [05:01,  6.78s/it]54it [05:08,  6.99s/it]55it [05:14,  6.71s/it]57it [05:20,  5.20s/it]59it [05:49,  8.67s/it]60it [05:57,  8.47s/it]61it [05:57,  6.57s/it]62it [06:04,  6.65s/it]63it [06:11,  6.70s/it]65it [06:22,  6.26s/it]66it [06:29,  6.40s/it]68it [06:36,  5.08s/it]70it [06:43,  4.60s/it]72it [07:01,  6.12s/it]74it [07:11,  5.80s/it]76it [07:19,  5.18s/it]78it [07:25,  4.55s/it]79it [07:48,  7.92s/it]80it [07:55,  7.72s/it]81it [08:04,  7.96s/it]82it [08:11,  7.76s/it]84it [08:18,  5.90s/it]86it [08:42,  8.26s/it]87it [08:48,  7.69s/it]88it [09:06, 10.18s/it]89it [09:07,  7.72s/it]90it [09:13,  7.42s/it]91it [09:13,  5.47s/it]92it [09:22,  6.36s/it]94it [09:30,  5.22s/it]96it [09:36,  4.45s/it]98it [09:43,  4.12s/it]99it [09:53,  5.20s/it]100it [10:00,  5.63s/it]101it [10:05,  5.57s/it]103it [10:12,  4.73s/it]104it [10:19,  5.24s/it]105it [10:26,  5.72s/it]107it [10:40,  6.11s/it]109it [10:49,  5.59s/it]110it [10:55,  5.72s/it]112it [11:03,  5.10s/it]113it [11:22,  7.86s/it]114it [11:33,  8.76s/it]116it [11:48,  8.22s/it]117it [11:58,  8.61s/it]119it [12:07,  6.90s/it]120it [12:13,  6.77s/it]122it [12:30,  7.39s/it]123it [12:34,  6.83s/it]124it [12:50,  8.85s/it]125it [12:56,  8.12s/it]127it [13:02,  6.10s/it]128it [13:59,  6.56s/it]
-Traceback (most recent call last):
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/runpy.py", line 193, in _run_module_as_main
-    "__main__", mod_spec)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/runpy.py", line 85, in _run_code
-    exec(code, run_globals)
-  File "/grid_mnt/vol_home/llr/cms/amella/Comparison_S2emulator_Performance/scripts/load_data.py", line 25, in <module>
-    events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref =provide_events_performaces(args.n, args.base_path, args.particles, args.pileup, args.n_files, args.pt_cut, args.job_id, args.n_jobs)
-  File "/grid_mnt/vol_home/llr/cms/amella/Comparison_S2emulator_Performance/data_handling/event_performances.py", line 76, in provide_events_performaces
-    options=xrootd_options, allow_missing=True)):
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/tqdm/std.py", line 1181, in __iter__
-    for obj in iterable:
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/behaviors/TBranch.py", line 209, in iterate
-    report=report,
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/behaviors/TBranch.py", line 1095, in iterate
-    interp_options,
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/behaviors/TBranch.py", line 3147, in _ranges_or_baskets_to_arrays
-    uproot.source.futures.delayed_raise(*obj)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 36, in delayed_raise
-    raise exception_value.with_traceback(traceback)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/behaviors/TBranch.py", line 3066, in chunk_to_basket
-    branch,
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/model.py", line 858, in read
-    self.read_members(chunk, cursor, context, file)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/models/TBasket.py", line 228, in read_members
-    ) = cursor.fields(chunk, _tbasket_format1, context)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/cursor.py", line 194, in fields
-    return format.unpack(chunk.get(start, stop, self, context))
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/chunk.py", line 410, in get
-    self.wait(insist=stop)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/chunk.py", line 354, in wait
-    self._raw_data = numpy.frombuffer(self._future.result(), dtype=self._dtype)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 115, in result
-    delayed_raise(*self._excinfo)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 36, in delayed_raise
-    raise exception_value.with_traceback(traceback)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 277, in _run
-    self._result = self._task(resource)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/xrootd.py", line 222, in task
-    return partfutures[0].result()
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 115, in result
-    delayed_raise(*self._excinfo)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/futures.py", line 36, in delayed_raise
-    raise exception_value.with_traceback(traceback)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/xrootd.py", line 240, in callback
-    self._xrd_error(status)
-  File "/home/llr/cms/amella/bin/miniconda3/envs/s2_emulator/lib/python3.7/site-packages/uproot/source/xrootd.py", line 126, in _xrd_error
-    in file {self._file_path}"""
-OSError: XRootD error: [ERROR] Operation expired
-in file root://eoscms.cern.ch//store/group/dpg_hgcal/comm_hgcal/TPG/stage2_emulator_ntuples_semiemulator_2Passes/doublePhoton_PU200/ntuple_763.root
+0it [00:00, ?it/s]1it [00:05,  5.63s/it]3it [00:10,  3.28s/it]4it [00:16,  4.33s/it]6it [00:21,  3.21s/it]7it [00:26,  3.71s/it]8it [00:30,  3.87s/it]10it [00:36,  3.48s/it]12it [00:41,  3.15s/it]13it [00:45,  3.27s/it]14it [00:50,  3.74s/it]15it [00:55,  4.00s/it]17it [00:59,  3.24s/it]18it [01:04,  3.52s/it]20it [01:08,  2.94s/it]22it [01:14,  2.95s/it]23it [01:26,  4.80s/it]25it [01:31,  3.97s/it]27it [01:38,  3.77s/it]28it [01:43,  4.02s/it]30it [01:47,  3.28s/it]31it [02:01,  5.65s/it]33it [02:07,  4.65s/it]35it [02:22,  5.51s/it]37it [02:28,  4.70s/it]37it [02:28,  4.01s/it]

@@ -71,12 +71,12 @@ STRATEGIES = ["PU0", "PU200", "PU200_seq"]
 #----------------------------
 
 PLOT_VARS = {
-    "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 100],"is_log": True},
-    "eta": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 40,"range": [-2.9, 2.9], "is_log": False},
-    "abs_eta": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": False},
-    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": False},
+    "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 200],"is_log": True},
+    "eta": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 40,"range": [-2.9, 2.9], "is_log": True},
+    "abs_eta": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": True},
+    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": True},
     "delta_r": {"branch": "delta_r","label": r"$\Delta R$(cluster,gen)","bins": 40,"range": [0,0.1],"is_log": True},
-    "n_clusters": {"branch": "pt","label": r"$N_{clusters}$", "bins": 15, "range": [0, 15], "is_log": True},
+    "n_clusters": {"branch": "pt","label": r"$N_{clusters}$", "bins": 20, "range": [0, 20], "is_log": True},
 
     "pt_calib": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 100],"is_log": True},
     "eta_calib": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 40,"range": [-2.9, 2.9], "is_log": False},
@@ -84,16 +84,16 @@ PLOT_VARS = {
     "phi_calib": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": False},
 
     "pt_response": {"branch": "pt","label": r"$p_T^{cluster}$/$p_T^{gen}$","bins": 30,"range": [0.25, 1.25],"is_log": False},
-    "eta_response": {"branch": "eta","label": r"$\eta^{cluster}-\eta^{gen}$","bins": 20,"range": [-0.05, 0.05], "is_log": False},
-    "phi_response": {"branch": "phi","label": r"$\phi^{cluster}-\phi^{gen}$","bins": 20,"range": [-0.05, 0.05],"is_log": False},
+    "eta_response": {"branch": "eta","label": r"$\eta^{cluster}-\eta^{gen}$","bins": 30,"range": [-0.05, 0.05], "is_log": False},
+    "phi_response": {"branch": "phi","label": r"$\phi^{cluster}-\phi^{gen}$","bins": 30,"range": [-0.05, 0.05],"is_log": False},
 
     "pt_gen": {"branch": "pt", "label": r"$p_T^{gen}$ [GeV]", "bins": 10, "range": [0, 100], "is_log": False},
-    "eta_gen": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 10,"range": [-2.9, 2.9], "is_log": False},
-    "abs_eta_gen": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 10,"range": [1.6, 2.9], "is_log": False},
-    "phi_gen": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 10,"range": [-np.pi, np.pi],"is_log": False},
+    "eta_gen": {"branch": "eta","label": r"$\eta^{gen}$","bins": 10,"range": [-2.9, 2.9], "is_log": False},
+    "abs_eta_gen": {"branch": "eta","label": r"|$\eta^{gen}$|","bins": 10,"range": [1.6, 2.9], "is_log": False},
+    "phi_gen": {"branch": "phi","label": r"$\phi^{gen}$","bins": 10,"range": [-3.14, 3.14],"is_log": False},
 
     "pt_eff": {"branch": "pt", "label": r"$p_T^{gen}$ [GeV]", "bins": 10,  "range":[0, 100], "is_log": False},
     "eta_eff": {"branch": "eta","label": r"$\eta^{gen}$", "bins": 10, "range": [-2.9, 2.9], "is_log": False},
     "abs_eta_eff": {"branch": "eta","label": r"|$\eta^{gen}$|", "bins": 10, "range": [1.6, 2.9], "is_log": False},
-    "abs_phi_eff": {"branch": "phi","label": r"$\phi^{gen}$", "bins": 10, "range": [-np.pi, np.pi], "is_log": False}
+    "phi_eff": {"branch": "phi","label": r"$\phi^{gen}$", "bins": 10, "range": [-3.14, 3.14], "is_log": False}
 }

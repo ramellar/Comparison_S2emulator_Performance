@@ -46,8 +46,10 @@ if __name__ == '__main__':
             "resp": ["pt_response", "eta_response", "phi_response"],
             "corr": [("pt_gen", "pt"), ("eta", "phi"),("pt", "eta"), ("delta_r", "eta") ],
             "dif_resp": [("pt_gen", "pt"), ("eta_gen", "pt"),("phi_gen", "pt"),  ("eta_gen", "eta")],
-            "eff":  ["pt_eff", "eta_eff", "abs_eta_eff"]
+            "eff":  ["pt_eff", "eta_eff", "abs_eta_eff"],
+            "binned_resp": [("pt_gen", "pt_response"), ("eta_gen", "pt_response"), ("phi_gen", "pt_response"), ("eta_gen", "eta_response"), ("phi_gen", "phi_response")]
             }
+        
     if args.events:
         events, events_gen= f.load_events(parquet_dir_bare_events)
         TASKS = {
@@ -69,12 +71,14 @@ if __name__ == '__main__':
     # Initialize Plotter
     plotter = PerformancePlotter(args, output_dir=output_dir)
 
+    #set title based on pt cuts
+
     if args.gen_pt_cut !=0 and args.pt_cut ==0:
-        title= r"p_T^{gen} >" + f"{args.gen_pt_cut}"
+        title= r"$p_T^{gen} >$" + f"{args.gen_pt_cut} GeV"
     elif args.pt_cut !=0 and args.gen_pt_cut ==0:
-        title= r"p_T^{cluster} >" + f"{args.pt_cut}"
+        title= r"$p_T^{cluster} >$" + f"{args.pt_cut} GeV"
     elif args.pt_cut !=0 and args.gen_pt_cut !=0:
-        title= r"p_T^{cluster} >" + f"{args.pt_cut} and " + r"p_T^{gen} >"+ f"{args.gen_pt_cut}"
+        title= r"$p_T^{cluster} >$" + f"{args.pt_cut} GeV and " + r"$p_T^{gen} >$"+ f"{args.gen_pt_cut} GeV"
     else:
         title=""
 
@@ -121,22 +125,23 @@ if __name__ == '__main__':
         # Define the 'X' axes (The generator truth we bin by)
         # Note: Using 'abs_eta_gen' will trigger our new absolute value logic
         x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
+        x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
 
         # Define the 'Y' axes (The performance metrics we want to see)
-        y_variables = ["pt_response", "eta_response", "phi_response"]
+        # y_variables = ["pt_response", "eta_response", "phi_response"]
+        y_variables = ["phi_response"]
 
         for x_var in x_variables:
             for y_var in y_variables:
                 plotter.plot_profile(data, x_var, y_var, 
                                     filename=f"Profile_{y_var}_vs_{x_var}", 
-                                    mode='mean')
+                                    mode='mean', title=title)
                 plotter.plot_profile(data, x_var, y_var, 
                                     filename=f"Profile_{y_var}_vs_{x_var}", 
-                                    mode='resolution')
-                
+                                    mode='resolution', title=title)
                 plotter.plot_profile(data, x_var, y_var, 
                                     filename=f"Profile_{y_var}_vs_{x_var}", 
-                                    mode='rms')
+                                    mode='rms', title=title)
                                     
 
         
@@ -144,60 +149,47 @@ if __name__ == '__main__':
         eff_data = get_triangle_comparison(matched_events, total_gen=events_gen)
         plotter.plot_efficiency(eff_data, PLOT_VARS["pt_eff"])
         plotter.plot_efficiency(eff_data, PLOT_VARS["abs_eta_eff"])
-        plotter.plot_efficiency(eff_data, PLOT_VARS["abs_phi_eff"])
+        plotter.plot_efficiency(eff_data, PLOT_VARS["phi_eff"])
 
     if args.binned_distributions:
         data = get_triangle_comparison(matched_events)
 
-        plotter.plot_distributions_per_bin(
-            datasets=data, 
-            var_key="pt_response", 
-            binning_var_key="pt_gen", 
-            filename="Dist_Response"
-        )
-    
-    if args.n_clusters_plots:
-        # 1. Calculate how many Gen particles were in each event
-        # This is done once on the global events_gen array
-        gen_multiplicity = ak.num(events_gen.pt, axis=-1)
-        print(events_gen.pt)
-        print(ak.num(events_gen.pt, axis=-1))
-
-        # 2. Create Masks
-        mask_1gen = (gen_multiplicity == 1)
-        mask_2gen = (gen_multiplicity == 2)
-
-        # 3. Build Bundles for each scenario
-        bundle_1gen = []
-        bundle_2gen = []
-
-        for tri_key in EMU_CONFIG.keys():
-            # Scenario: 1 Gen particle
-            bundle_1gen.append({
-                'label': f"Tri {tri_key}",
-                'data': events[tri_key][mask_1gen],
-                'gen': events_gen[mask_1gen][:, 0] # The only gen particle
-            })
+        for var in TASKS["binned_resp"]:
+            plotter.plot_distributions_per_bin(
+                datasets=data, 
+                var_key=var[1], 
+                binning_var_key=var[0], 
+                filename="Dist_Response",
+                title=title
+                )
             
-            # Scenario: 2 Gen particles
-            bundle_2gen.append({
-                'label': f"Tri {tri_key}",
-                'data': events[tri_key][mask_2gen],
-                # For 2-gen events, we usually use the leading Pt for the X-axis
-                'gen': events_gen[mask_2gen][:, 0] 
-            })
 
-            # 4. Plot them separately so the comparison is "Fair"
-            # --- Single Gen Plots ---
-            plotter.plot_multi_distribution(bundle_1gen, "n_clusters", "1Gen_Comparison", 
-                                        title="Events with 1 Gen Particle")
-            plotter.plot_profile(bundle_1gen, "pt_gen", "n_clusters", 
-                                filename="NClusters_vs_Pt_1Gen", mode='mean',
-                                title="Mean Clusters (1 Gen Particle)")
+    if args.n_clusters_plots:
+        # 1. Prepare the data bundle as you were doing
+        if args.matched:
+            data = get_triangle_comparison(matched_events)
+        elif args.events:
+            data = get_triangle_comparison(events, events_gen)
 
-            # --- Double Gen Plots ---
-            plotter.plot_multi_distribution(bundle_2gen, "n_clusters", "2Gen_Comparison",
-                                        title="Events with 2 Gen Particles")
-            plotter.plot_profile(bundle_2gen, "pt_gen", "n_clusters", 
-                                filename="NClusters_vs_Pt_2Gen", mode='mean',
-                                title="Mean Clusters (2 Gen Particles)")
+        # --- Global Distribution (Total clusters in event) ---
+        # This shows the detector activity for all events, including those with 1 or 2 gen particles in theinitial state
+        plotter.plot_1d(data, "n_clusters", filename="Dist_NClusters_Global", 
+                        title=title, gen_n=None)
+
+        # --- Single Particle Distribution ---
+        # This shows the "splitting" behavior for clean 1-gen events
+        plotter.plot_1d(data, "n_clusters", filename="Dist_NClusters_Gen1", title=title, gen_n=1)
+
+        # --- Distribution per pT Bin (for Gen=1) ---
+        # This creates a plot for each pT bin to see if splitting changes with energy
+        plotter.plot_nclusters_per_bin(data, "pt_gen", gen_n=1, title=title)
+
+        # --- SCENARIO 4: The Profile Plot (Mean N_clusters vs Pt) ---
+        # This is the "summary" plot showing the average splitting vs energy
+        plotter.plot_profile(data, "pt_gen", "n_clusters", "N_clusters_pt_gen", mode='mean', gen_n=1, title=title)
+        plotter.plot_profile(data, "pt_gen", "n_clusters", "N_clusters_pt_gen", mode='resolution', gen_n=1, title=title)
+
+        # --- SCENARIO 5: Profile for Eta ---
+        # Useful to see if detector geometry (Endcaps vs Barrel) affects splitting
+        plotter.plot_profile(data, "abs_eta_gen", "n_clusters", "N_clusters_abs_eta_gen", mode='mean', gen_n=1, title=title)
+        plotter.plot_profile(data, "abs_eta_gen", "n_clusters", "N_clusters_abs_eta_gen", mode='resolution', gen_n=1, title=title)
