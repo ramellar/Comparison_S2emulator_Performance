@@ -8,9 +8,9 @@ EMU_CONFIG = {
     "Ref": "cl3d_Ref",
 }
 
-PARQUET_BASE = "/data_CMS/cms/amella/HGCAL_samples/parquet_files_final/"
+PARQUET_BASE = "/data_CMS/cms/pivato/HGCAL_samples/parquet_files_final/"
 
-EVENT_NAMES = ["events_gen", "events_0p0113", "events_0p016", "events_0p03", "events_0p045", "events_Ref"]
+EVENT_NAMES = ["events_gen", "tau_vis", "events_0p0113", "events_0p016", "events_0p03", "events_0p045", "events_Ref"]
 CLUSTER_MATCHED_EVENTS_NAMES=["pair_cluster_0p0113_matched", "pair_cluster_0p016_matched", "pair_cluster_0p03_matched", "pair_cluster_0p045_matched", "pair_cluster_Ref_matched"]
 GEN_MATCHED_EVENTS_NAMES=["pair_gen_masked_0p0113.parquet", "pair_gen_masked_0p016.parquet", "pair_gen_masked_0p03.parquet", "pair_gen_masked_0p045.parquet", "pair_gen_masked_Ref.parquet"]
 FILTERED_CL_EVENTS_NAMES=["events_0p0113_filtered", "events_0p016_filtered", "events_0p03_filtered", "events_0p045_filtered", "events_Ref_filtered"]

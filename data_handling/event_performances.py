@@ -3,7 +3,10 @@ import numpy as np
 import awkward as ak
 import uproot
 from tqdm import tqdm
+from data_handling.taureco import taureco_function
+from data_handling.taureco import vis_filter_function
 import subprocess
+import os
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -15,7 +18,7 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
         print()
 
 
-def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , thr=0.0, job_id=0, n_jobs=1, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"):
+def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , thr=0.0, job_id=0, n_jobs=10, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple", tau=False):
     full_base_path = f"{base_path}{particle}_{pileup}"
 
     all_indices = list(range(int(n_files)))
@@ -63,6 +66,43 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
         "cl3d_Ref_phi",
         "cl3d_Ref_pt",
         'cl3d_Ref_layer_pt',
+        
+        
+        #Taus collection of all particles
+        "gen_eta",
+        "gen_phi",
+        "gen_pt",
+        "gen_energy",
+        "gen_charge",   # xxx
+        "gen_pdgid",
+        "gen_status",
+        "gen_daughters",
+        
+        #gentau collection
+        "gentau_pt",
+        "gentau_eta",
+        "gentau_phi",
+        "gentau_energy",
+        "gentau_mass",
+        "gentau_decayMode",
+        "gentau_totNproducts",  
+        "gentau_totNgamma",       
+        "gentau_totNpiZero",      
+        "gentau_totNcharged",     
+        
+        #gentau products/vis collections
+        "gentau_products_pt",
+        "gentau_products_eta",
+        "gentau_products_phi",
+        "gentau_products_energy",
+        "gentau_products_mass",
+        "gentau_products_id",
+        
+        "gentau_vis_pt",
+        "gentau_vis_eta",
+        "gentau_vis_phi",
+        "gentau_vis_energy",
+        "gentau_vis_mass",
     ]
 
     batches = []
@@ -75,28 +115,15 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     print(f"Checking existence of {len(raw_files)} files...")
     
     for f_path in raw_files:
-        # Use xrdfs to check if the file exists (stat)
-        # We strip 'root://eoscms.cern.ch/' for the xrdfs command
-        eos_path = f_path.replace("root://eoscms.cern.ch/", "/")
-        check = subprocess.run(
-            ["xrdfs", "root://eoscms.cern.ch", "stat", eos_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        
-        if check.returncode == 0:
+        if os.path.exists(f_path):
             # File exists, add it to our list with the tree name
             valid_files.append(f"{f_path}:{name_tree}")
         else:
             print(f"Skipping missing file: {f_path}")
 
-    xrootd_options = {
-    "timeout": 180,      # 3 minutes per request
-    "max_retries": 100,    # Retry if a chunk fails
-    }
 
     for batch in tqdm(uproot.iterate(valid_files, branches, library="ak", step_size="50 MB", 
-                                     options=xrootd_options, allow_missing=True)):
+                                    allow_missing=True)):
         batches.append(batch)
         total += len(batch["event"])
         if total >= n: break
@@ -114,26 +141,59 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     #       only keep the gens that reached the EE and 
     #       only keep the particles whose shower will stay inside the detector
     # -----------------------
+    
+    if tau: 
+        
+        m_reco, best_match_idx, mask_clean = taureco_function(data.gen_pt, data.gen_eta, data.gen_phi, data.gen_energy, data.gen_id, data.gen_status, data.gen_daughters, data.gentau_pt, data.gentau_eta, data.gentau_phi, data.gentau_energy, data.gentau_mass)
+        flag_vis_prod, flag_pp, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass = vis_filter_function(0.0005, 0.0005, m_reco, best_match_idx, mask_clean, data.gentau_vis_pt, data.gentau_vis_eta, data.gentau_vis_phi, data.gentau_vis_energy, data.gentau_vis_mass, data.gentau_products_pt, data.gentau_products_eta, data.gentau_products_phi, data.gentau_products_energy)
+            
+        eta_mask = ((abs(gvis_eta) > 1.5) & (abs(gvis_eta) < 3.0))
+        
+        filtered_tau_vis = ak.zip({                      
+            "flag_vis_prod": flag_vis_prod[eta_mask],      #flag for all the events where m_vis =! m_products
+            "flag_pp": flag_pp[eta_mask],      #flag for all the events with pair production                          
+            "pt": gvis_pt[eta_mask],      # filtered gentau_vis_pt
+            "eta": gvis_eta[eta_mask],      # filtered gentau_vis_eta
+            "phi": gvis_phi[eta_mask],      # filtered gentau_vis_phi
+            "energy": gvis_energy[eta_mask],      # filtered gentau_vis_energy
+            "mass": gvis_mass[eta_mask],      # filtered gentau_vis_mass
+        })
+        
+        event_mask = ak.num(filtered_tau_vis.pt) > 0
+        filtered_tau_vis = filtered_tau_vis[event_mask]   
+            
+        #I would like to add the "event" branch also to filtered_tau_vis but it has already been used (I'm not sure they are the same ones)
+        
+        #If I want to remove the events with pair production I can just set a mask on flag_pp (0 -> events with no pp; 1 -> events with pp)
+        
+        #flag_vis_prod is an array that flags all the events where the reconstructed invariant mass from gentau_products_*
+        #collection differs from the one from gentau_vis_* more than a fixed parameter
+        
+        
+        
+    else:
+        
+        particle_mask = (
+            (data.genpart_gen != -1)
+            & (data.genpart_reachedEE == 2)
+            & (abs(data.genpart_exeta) > 1.6)
+            & (abs(data.genpart_exeta) < 2.9)
+        )
+        
 
-    particle_mask = (
-        (data.genpart_gen != -1)
-        & (data.genpart_reachedEE == 2)
-        & (abs(data.genpart_exeta) > 1.6)
-        & (abs(data.genpart_exeta) < 2.9)
-    )
+        filtered_gen = ak.zip({
+            "event": data.event,
+            "eta": data.genpart_exeta[particle_mask],
+            "phi": data.genpart_exphi[particle_mask],
+            "pt": data.genpart_pt[particle_mask],
+            "genpart_gen": data.genpart_gen[particle_mask],
+            "genpart_reachedEE": data.genpart_reachedEE[particle_mask],
+        })
 
-    filtered_gen = ak.zip({
-        "event": data.event,
-        "eta": data.genpart_exeta[particle_mask],
-        "phi": data.genpart_exphi[particle_mask],
-        "pt": data.genpart_pt[particle_mask],
-        "genpart_gen": data.genpart_gen[particle_mask],
-        "genpart_reachedEE": data.genpart_reachedEE[particle_mask],
-    })
+        event_mask = ak.num(filtered_gen.pt) > 0
 
-    event_mask = ak.num(filtered_gen.pt) > 0
-
-    filtered_gen = filtered_gen[event_mask]
+        filtered_gen = filtered_gen[event_mask]
+        
 
     # clusters
     def build_clusters(prefix):
@@ -170,9 +230,8 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     # print(cl_0p0113.layer_pt)
     # print(len(cl_0p0113.eta))
     # print(len(cl_0p0113.layer_pt))
-
-    return filtered_gen, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
-
+ 
+    return filtered_gen, filtered_tau_vis, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
 
 
 def apply_matching(events, gen, args, deltaR=0.1):
@@ -200,7 +259,7 @@ def apply_matching(events, gen, args, deltaR=0.1):
         "pt": getattr(filtered_events, "pt"),
     })
 
-    layer_pt=getattr(filtered_events, "layer_pt")
+    layer_pt = getattr(filtered_events, "layer_pt")
     clusters = ak.with_field(clusters, layer_pt, "layer_pt")
 
     genparts = ak.zip({
@@ -364,7 +423,3 @@ def apply_matching(events, gen, args, deltaR=0.1):
     # print((ak.type(pair_cluster_masked_highest_pt.layer_pt)))
     # print((pair_cluster_masked_highest_pt.pt[0]))
     return pair_cluster_masked_highest_pt, pair_gen_masked_highest_pt, clusters, genparts
-
-
-
-

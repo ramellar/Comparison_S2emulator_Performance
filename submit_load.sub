@@ -3,7 +3,7 @@ universe = vanilla
 executable = run_load_data.sh
 
 # Arguments: ProxyPath, then the rest of the python flags
-arguments = $(ProxyPath) -n 72000 --particles $(Part) --pileup $(PU) --job_id $(Process) --n_jobs 20 --n_files 240
+arguments = -n 3000 --particles $(Part) --pileup $(PU) --job_id $(Process) --n_jobs 1 --n_files 10 --tau
 
 # Transfer everything needed
 transfer_input_files = scripts/, data_handling/, configs/
@@ -17,14 +17,12 @@ T3Queue = short
 WNTag = el9
 include : /opt/exp_soft/cms/t3/t3queue |
 
-ProxyPath = /home/llr/cms/amella/.globus/user_proxy.pem
-
 # Logging
 output = logs/load_$(Part)_$(PU)_$(Process).out
 error  = logs/load_$(Part)_$(PU)_$(Process).err
 log    = logs/load_$(Part)_$(PU)_$(Process).log
 
 # The Queue
-queue 20 Part,PU from (
-  Electron, PU200
+queue 1 Part,PU from (
+  TauTau, PU200
 )
