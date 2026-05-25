@@ -40,7 +40,7 @@ CALIB_CONFIGS = {
 }
 
 # Choose the PU0 config to be used to derive the eta correction factors
-# If "None" then the same method will be applied to PU0 and PU200
+# If "None" then the same method type will be applied to PU0 and PU200
 # If fixed string, then that method will be applied for the layer weights
 
 # PU0_CONFIG_FOR_SEQ=None
@@ -65,6 +65,7 @@ COMPARISONS = {
 }
 
 STRATEGIES = ["PU0", "PU200", "PU200_seq"]
+# STRATEGIES = ["PU0"]
 
 #----------------------------
 # PLOTTING

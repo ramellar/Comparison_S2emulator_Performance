@@ -18,7 +18,7 @@ def derive_calibration(cluster, gen, mode,
 
     layer_pt = ak.flatten(cluster.layer_pt, axis=1)
 
-    if remove_layer1:
+    if remove_layer1==True:
         layer_pt = layer_pt[:, 1:13]
     else:
         layer_pt = layer_pt[:, :13]
