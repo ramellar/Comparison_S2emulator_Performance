@@ -46,7 +46,7 @@ def derive_calibration(cluster, gen, mode,
     elif mode == "PU200":
 
         cluster_eta = ak.flatten(cluster.eta, axis=1)
-        cluster_eta_np = -np.abs(np.asarray(cluster_eta))
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) +1.5
 
         N = cluster_np.shape[0]
 
@@ -76,7 +76,7 @@ def derive_calibration(cluster, gen, mode,
         residual = np.asarray(gen_flat) - np.asarray(cluster_flat)
 
         cluster_eta = ak.flatten(cluster.eta, axis=1)
-        cluster_eta_np = -np.abs(np.asarray(cluster_eta))
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) + 1.5
 
         N = cluster_eta_np.shape[0]
 
@@ -135,7 +135,7 @@ def apply_calibration(cluster,
         w_eta = weights_eta[0]
         bias = weights_eta[1]
 
-        E = E - np.abs(eta_np) * w_eta - bias
+        E = E - (np.abs(eta_np) -1.5 )* w_eta - bias
 
     E = ak.unflatten(E, num_cluster)
 
@@ -166,7 +166,7 @@ class CalibrationManager:
         return ak.to_numpy(ak.from_parquet(path))
     
 
-    def load(self, strategy, config_name, key):
+    def load(self, strategy, config_name, key, layer_name=PU0_CONFIG_FOR_SEQ):
 
         if strategy == "PU0":
             wl = self.load_weight(f"PU0_wl_{config_name}_{key}.parquet")
@@ -181,7 +181,7 @@ class CalibrationManager:
                 PU0_cfg_name = config_name
             else:
                 PU0_cfg_name = PU0_CONFIG_FOR_SEQ
-            wl = self.load_weight(f"PU0_wl_{config_name}_{key}.parquet")
+            wl = self.load_weight(f"PU0_wl_{layer_name}_{key}.parquet")
             ab = self.load_weight(f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}.parquet")
             return {"layer": wl, "eta": ab}
 
@@ -233,7 +233,7 @@ class CalibrationManager:
 
 
     def get_calibrated_cluster(self, strategy, config_name, key, args, name="test"):
-
+        print("config_name", config_name)
         cfg = self.configs[config_name]
 
         weights = self.load(strategy, config_name, key)

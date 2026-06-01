@@ -46,26 +46,53 @@ CALIB_CONFIGS = {
 # PU0_CONFIG_FOR_SEQ=None
 PU0_CONFIG_FOR_SEQ="bounds_0_20"
 
+# COMPARISONS = {
+#     "PU0_bounds": {
+#         "strategy": "PU0",
+#         "wl": "bounds",
+#     },
+
+#     "PU200_seq_mixed": {
+#         "strategy": "PU200_seq_b_nb",
+#         "wl": "bounds",
+#         "eta": "no_bounds",
+#     },
+
+#     "PU200_bounds": {
+#         "strategy": "PU200",
+#         "all": "bounds",
+#     },
+# }
+# COMPARISONS = {
+#     # PU0 only
+#     "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
+#     "PU0_no_bounds":         {"strategy": "PU0",       "wl": "no_bounds"},
+
+#     # PU200 sequential: PU0 layer weights + PU200 eta correction
+#     "PU200_seq_b_nb":        {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds"},
+#     "PU200_seq_b_b":         {"strategy": "PU200_seq", "wl": "bounds", "eta": "bounds_0_20"},
+
+#     # PU200 joint
+#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
+#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
+# }
 COMPARISONS = {
-    "PU0_bounds": {
-        "strategy": "PU0",
-        "wl": "bounds",
-    },
-
-    "PU200_seq_mixed": {
-        "strategy": "PU200_seq",
-        "wl": "bounds",
-        "eta": "no_bounds",
-    },
-
-    "PU200_bounds": {
-        "strategy": "PU200",
-        "all": "bounds",
-    },
+    "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
+    "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
+    "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1"},
+    "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1"},  
 }
+# COMPARISONS = {
+#     # "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
+#     # "PU0_no_bounds":         {"strategy": "PU0",       "wl": "no_bounds"},
+#     # "PU0_bounds_0_20_no_layer1": {"strategy": "PU0",     "wl": "bounds_0_20_no_layer1"},
+#     # "PU0_no_bounds_no_layer1":  {"strategy": "PU0",     "wl": "no_bounds_no_layer1"},  
+#     "PU200_seq_b_nb":       {"strategy": "PU200_seq",     "wl": "bounds", "eta": "no_bounds"},
+#     "PU200_seq_b_b":          {"strategy": "PU200_seq",     "wl": "bounds", "eta": "bounds_0_20"},
+# }
 
 STRATEGIES = ["PU0", "PU200", "PU200_seq"]
-# STRATEGIES = ["PU0"]
+# STRATEGIES = ["PU0","PU200_seq"]
 
 #----------------------------
 # PLOTTING
@@ -84,7 +111,7 @@ PLOT_VARS = {
     "abs_eta_calib": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": False},
     "phi_calib": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": False},
 
-    "pt_response": {"branch": "pt","label": r"$p_T^{cluster}$/$p_T^{gen}$","bins": 30,"range": [0.25, 1.25],"is_log": False},
+    "pt_response": {"branch": "pt","label": r"$p_T^{cluster}$/$p_T^{gen}$","bins": 30,"range": [0.25, 2],"is_log": True},
     "eta_response": {"branch": "eta","label": r"$\eta^{cluster}-\eta^{gen}$","bins": 30,"range": [-0.05, 0.05], "is_log": False},
     "phi_response": {"branch": "phi","label": r"$\phi^{cluster}-\phi^{gen}$","bins": 30,"range": [-0.05, 0.05],"is_log": False},
 

@@ -135,9 +135,8 @@ if __name__ == '__main__':
                         f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}.parquet"
                     )
 
-    manager = calib.CalibrationManager(
-    results_PU0,
-    # results_PU200,
+    manager = calib.CalibrationManager( 
+    results_PU200,
     output_dir,
     CALIB_CONFIGS,
     args

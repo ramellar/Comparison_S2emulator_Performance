@@ -6,6 +6,9 @@ __pycache__/
 *.png
 *.pdf
 logs/
+plots*/
+logs/
+
 
 #Plots
 *results*
