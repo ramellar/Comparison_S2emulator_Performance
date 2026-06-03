@@ -76,12 +76,12 @@ PU0_CONFIG_FOR_SEQ="bounds_0_20"
 #     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
 #     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
 # }
-COMPARISONS = {
-    "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
-    "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
-    "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1"},
-    "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1"},  
-}
+# COMPARISONS = {
+#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
+#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
+#     "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1"},
+#     "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1"},  
+# }
 # COMPARISONS = {
 #     # "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
 #     # "PU0_no_bounds":         {"strategy": "PU0",       "wl": "no_bounds"},
@@ -91,12 +91,39 @@ COMPARISONS = {
 #     "PU200_seq_b_b":          {"strategy": "PU200_seq",     "wl": "bounds", "eta": "bounds_0_20"},
 # }
 
+
+#Final configuration for photons
+
+COMPARISONS = {
+    "PU200_seq_b_nb":           {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds", "offset": 0},
+    "PU200_bounds_offset2p4":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.4},
+    # "PU200_bounds_no_offset":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 0},
+    # "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 0},
+    # "PU200_all_no_bounds_no_layer1_offset2p4":          {"strategy": "PU200",     "all": "no_bounds_no_layer1","offset": 2.4}
+}
+
+#only used in derive_calibrations
 STRATEGIES = ["PU0", "PU200", "PU200_seq"]
 # STRATEGIES = ["PU0","PU200_seq"]
 
 #----------------------------
 # PLOTTING
 #----------------------------
+
+DEFAULT_COLORS = [
+    "tab:olive",
+    "tab:cyan",
+    "deeppink",
+    "darkorange",
+    "darkorchid",
+    "gold",
+    "limegreen",
+    "royalblue",
+    "lightseagreen",
+    "steelblue",
+    "mediumslateblue",
+    "coral",
+]
 
 PLOT_VARS = {
     "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 200],"is_log": True},

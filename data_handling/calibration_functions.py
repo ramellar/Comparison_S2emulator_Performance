@@ -5,9 +5,15 @@ from scipy.optimize import lsq_linear
 from configs.config import EMU_CONFIG, CALIB_CONFIGS, STRATEGIES, PU0_CONFIG_FOR_SEQ
 
 
+def offset_to_str(offset):
+    """Convert a float offset to a filename-safe string, e.g. 1.5 -> '1p5'."""
+    return str(float(offset)).replace('.', 'p')
+
+
 def derive_calibration(cluster, gen, mode,
                        bounds=(-np.inf, np.inf),
                        remove_layer1=False,
+                       offset=0,
                        name=""):
 
     lower_bound, upper_bound = bounds
@@ -46,7 +52,7 @@ def derive_calibration(cluster, gen, mode,
     elif mode == "PU200":
 
         cluster_eta = ak.flatten(cluster.eta, axis=1)
-        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) +1.5
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) + offset
 
         N = cluster_np.shape[0]
 
@@ -76,7 +82,7 @@ def derive_calibration(cluster, gen, mode,
         residual = np.asarray(gen_flat) - np.asarray(cluster_flat)
 
         cluster_eta = ak.flatten(cluster.eta, axis=1)
-        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) + 1.5
+        cluster_eta_np = -np.abs(np.asarray(cluster_eta)) + offset
 
         N = cluster_eta_np.shape[0]
 
@@ -98,6 +104,7 @@ def apply_calibration(cluster,
                       weights_layer=None,
                       weights_eta=None,
                       remove_layer1=False,
+                      offset=0,
                       name=""):
     
     # -----------------------
@@ -135,7 +142,7 @@ def apply_calibration(cluster,
         w_eta = weights_eta[0]
         bias = weights_eta[1]
 
-        E = E - (np.abs(eta_np) -1.5 )* w_eta - bias
+        E = E - (np.abs(eta_np) -offset )* w_eta - bias
 
     E = ak.unflatten(E, num_cluster)
 
@@ -157,6 +164,7 @@ class CalibrationManager:
         self.results = results
         self.output_dir = output_dir
         self.configs = configs
+        self.offset = getattr(args, 'offset', 0)
 
     # -----------------------
     # Load weights
@@ -166,14 +174,15 @@ class CalibrationManager:
         return ak.to_numpy(ak.from_parquet(path))
     
 
-    def load(self, strategy, config_name, key, layer_name=PU0_CONFIG_FOR_SEQ):
+    def load(self, strategy, config_name, key, layer_name=PU0_CONFIG_FOR_SEQ, offset=None):
+        offset_str = offset_to_str(offset if offset is not None else self.offset)
 
         if strategy == "PU0":
-            wl = self.load_weight(f"PU0_wl_{config_name}_{key}.parquet")
+            wl = self.load_weight(f"PU0_wl_{config_name}_{key}_offset{offset_str}.parquet")
             return {"layer": wl}
 
         elif strategy == "PU200":
-            w_all = self.load_weight(f"PU200_all_{config_name}_{key}.parquet")
+            w_all = self.load_weight(f"PU200_all_{config_name}_{key}_offset{offset_str}.parquet")
             return {"all": w_all}
 
         elif strategy == "PU200_seq":
@@ -181,14 +190,15 @@ class CalibrationManager:
                 PU0_cfg_name = config_name
             else:
                 PU0_cfg_name = PU0_CONFIG_FOR_SEQ
-            wl = self.load_weight(f"PU0_wl_{layer_name}_{key}.parquet")
-            ab = self.load_weight(f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}.parquet")
+            wl = self.load_weight(f"PU0_wl_{layer_name}_{key}_offset{offset_str}.parquet")
+            ab = self.load_weight(f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}_offset{offset_str}.parquet")
             return {"layer": wl, "eta": ab}
 
     # -----------------------
     # Apply calibration
     # -----------------------
-    def apply(self, cluster, weights, strategy, remove_layer1, name):
+    def apply(self, cluster, weights, strategy, remove_layer1, name, offset=None):
+        eff_offset = offset if offset is not None else self.offset
 
         if strategy == "PU0":
             return apply_calibration(
@@ -214,6 +224,7 @@ class CalibrationManager:
                 weights_layer=w_layer,
                 weights_eta=w_eta,
                 remove_layer1=remove_layer1,
+                offset=eff_offset,
                 name=name
             )
 
@@ -224,6 +235,7 @@ class CalibrationManager:
                 weights_layer=weights["layer"],
                 weights_eta=weights["eta"],
                 remove_layer1=remove_layer1,
+                offset=eff_offset,
                 name=name
             )
 
@@ -232,11 +244,11 @@ class CalibrationManager:
         return self.results[key]
 
 
-    def get_calibrated_cluster(self, strategy, config_name, key, args, name="test"):
+    def get_calibrated_cluster(self, strategy, config_name, key, args, name="test", offset=None):
         print("config_name", config_name)
         cfg = self.configs[config_name]
 
-        weights = self.load(strategy, config_name, key)
+        weights = self.load(strategy, config_name, key, offset=offset)
 
         data = self.get_data(args, key)
         cluster = data["pair_cluster"]
@@ -247,7 +259,8 @@ class CalibrationManager:
             weights,
             strategy,
             remove_layer1=cfg["remove_layer1"],
-            name=name
+            name=name,
+            offset=offset,
         )
 
         return cluster_calib, gen, weights

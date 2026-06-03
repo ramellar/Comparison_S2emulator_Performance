@@ -40,11 +40,12 @@ import argparse
 import awkward as ak
 
 from configs.config import (
-    PARQUET_BASE, EMU_CONFIG, CALIB_CONFIGS, COMPARISONS, PLOT_VARS, PU0_CONFIG_FOR_SEQ  
+    PARQUET_BASE, EMU_CONFIG, CALIB_CONFIGS, COMPARISONS, PLOT_VARS, PU0_CONFIG_FOR_SEQ, DEFAULT_COLORS
 )
 from data_handling.utils import build_parquet_dir, build_plotting_dir
 import data_handling.files as f
 import data_handling.calibration_functions as calib
+from data_handling.calibration_functions import offset_to_str
 from plotting.run_plots import PerformancePlotter, get_triangle_comparison
 import numpy as np
 
@@ -52,6 +53,27 @@ import numpy as np
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_BASE_LABELS = {
+    "raw":             r"raw $p_T$",
+    "PU0_bounds":      r"$w_l$ from PU0 bounds",
+    "PU0_no_bounds":   r"$w_l$ from PU0 no bounds",
+    "PU200_seq_b_nb":  r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) nb",
+    "PU200_seq_b_b":   r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) b",
+    "PU200_bounds":              r"PU200 w/ bounds",
+    "PU200_bounds_offset2p4":    r"PU200 w/ bounds",
+    "PU200_bounds_no_offset":    r"PU200 w/ bounds",
+    "PU200_no_bounds":           r"PU200 w/o bounds",
+}
+
+def get_comp_label(key):
+    """Return the plot label for a comparison key, appending the offset if non-zero."""
+    base = _BASE_LABELS.get(key, key)
+    offset = COMPARISONS.get(key, {}).get("offset", None)
+    if offset is not None and offset != 0:
+        base += rf" (offset={offset})"
+    return base
+
 
 def build_calib_plotting_dir(args, extra="calibration_comparison"):
     """Output directory, mirrors build_plotting_dir but with a calib suffix."""
@@ -115,12 +137,14 @@ def load_and_calibrate(args, triangles, calib_dir):
             print(f"config_name: {config_name}")
 
 
+            comp_offset = comp_cfg.get("offset", None)
             cluster_calib, gen, _ = manager.get_calibrated_cluster(
                 strategy=strategy,
                 config_name=config_name,
                 key=tri_key,
                 args=args,
                 name=comp_name,
+                offset=comp_offset,
             )
 
             results[tri_key][comp_name] = {
@@ -133,15 +157,7 @@ def load_and_calibrate(args, triangles, calib_dir):
 
 def build_weight_bundles(manager, tri_key, strategies_to_plot):
     """Extract weights for each strategy and format for plot_weights."""
-    default_colors = ["tab:olive","tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
-    LABELS = {
-        "PU0_bounds":      r"$w_l$ from PU0 bounds",
-        "PU0_no_bounds":   r"$w_l$ from PU0 no bounds",
-        "PU200_seq_b_nb": r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) nb",
-        "PU200_seq_b_b": r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) b",
-        "PU200_bounds":    r"PU200 w/ bounds",
-        "PU200_no_bounds": r"PU200 w/o bounds",
-    }
+    default_colors = DEFAULT_COLORS
 
     bundles = []
     for i, strat_key in enumerate(strategies_to_plot):
@@ -161,7 +177,8 @@ def build_weight_bundles(manager, tri_key, strategies_to_plot):
             config_name = comp_cfg["all"]
             layer_config = config_name 
 
-        weights = manager.load(strategy, config_name, tri_key)
+        comp_offset = comp_cfg.get("offset", None)
+        weights = manager.load(strategy, config_name, tri_key, offset=comp_offset)
 
         if strategy == "PU0":
             print(weights.keys())
@@ -179,7 +196,7 @@ def build_weight_bundles(manager, tri_key, strategies_to_plot):
             eta, bias = weights["eta"][0], weights["eta"][1]
 
         bundles.append({
-            "label": LABELS.get(strat_key, strat_key),
+            "label": get_comp_label(strat_key),
             "color": default_colors[i % len(default_colors)],
             "layer": w_layer,
             "eta":   eta,
@@ -192,15 +209,7 @@ def build_weight_bundles(manager, tri_key, strategies_to_plot):
 
 
 def build_residual_bundles(manager, raw_results, tri_key, strategies_to_plot):
-    default_colors = ["tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
-    LABELS = {
-        "PU0_bounds":      r"$w_l$ PU0 bounds",
-        "PU0_no_bounds":   r"$w_l$ PU0 no bounds",
-        "PU200_seq_b_nb":  r"$w_l$ (PU0)b + $\alpha\beta$ (PU200)nb",
-        "PU200_seq_b_b":   r"$w_l$ (PU0)b + $\alpha\beta$ (PU200)b",
-        "PU200_bounds":    r"PU200 bounds",
-        "PU200_no_bounds": r"PU200 no bounds",
-    }
+    default_colors = DEFAULT_COLORS
     bundles       = []
     color_idx     = 0
     shared_data   = None   # computed once, reused for all PU200_seq strategies
@@ -221,7 +230,8 @@ def build_residual_bundles(manager, raw_results, tri_key, strategies_to_plot):
             config_name  = comp_cfg["all"]
             layer_config = config_name
 
-        weights    = manager.load(strategy, config_name, tri_key)
+        comp_offset = comp_cfg.get("offset", None)
+        weights    = manager.load(strategy, config_name, tri_key, offset=comp_offset)
         cfg        = CALIB_CONFIGS[layer_config]
         remove_l1  = cfg["remove_layer1"]
 
@@ -262,12 +272,13 @@ def build_residual_bundles(manager, raw_results, tri_key, strategies_to_plot):
             data_abs_eta  = shared_data["abs_eta"]
 
         bundles.append({
-            "label":    LABELS.get(strat_key, strat_key),
-            "color":    default_colors[color_idx % len(default_colors)],
+            "label":    get_comp_label(strat_key),
+            "color":    default_colors[(color_idx+1) % len(default_colors)],
             "eta":      data_abs_eta,
             "residual": data_residual,   # real data scatter, same for all PU200_seq
             "alpha":    alpha,
             "beta":     beta,
+            "offset":   comp_cfg.get("offset", 0),
         })
         color_idx += 1
 
@@ -281,25 +292,7 @@ def build_comparison_bundle(results, tri_key, strategies_to_plot):
     Each entry has:
         label, data (pair_cluster), gen (pair_gen), color (optional)
     """
-    default_colors = [
-        "tab:olive",    # raw
-        "tab:cyan",     # PU0_bounds
-        "darkorchid",   # PU200_seq_mixed
-        "darkorange",   # PU200_bounds
-        "deeppink",
-        "gold",
-        "limegreen",
-    ]
-
-    LABELS = {
-        "raw":            r"raw $p_T$",
-        "PU0_bounds":      r"$w_l$ from PU0 bounds",
-        "PU0_no_bounds":   r"$w_l$ from PU0 no bounds",
-        "PU200_seq_b_nb": r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) nb",
-        "PU200_seq_b_b": r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) b",
-        "PU200_bounds":    r"PU200 w/ bounds",
-        "PU200_no_bounds": r"PU200 w/o bounds",
-    }
+    default_colors = DEFAULT_COLORS
 
     bundle = []
 
@@ -314,11 +307,16 @@ def build_comparison_bundle(results, tri_key, strategies_to_plot):
             pass
         else:
             # Ecalib_<strat_key> → overwrite .pt so _get_values picks it up
+            # print(f"Ecalib_{strat_key}")
+            # if strat_key=="PU200_bounds_offset2p4":
+            #     print(cluster.Ecalib_PU200_bounds_offset2p4[:10])
+            # if strat_key=="PU200_bounds_no_offset":
+            #     print(cluster.Ecalib_PU200_bounds_no_offset[:10])
             ecalib = getattr(cluster, f"Ecalib_{strat_key}")
             cluster = ak.with_field(cluster, ecalib, "pt")
 
         bundle.append({
-            "label":  LABELS.get(strat_key, strat_key) + f"  [{tri_key}]",
+            "label":  get_comp_label(strat_key) + f"  [{tri_key}]",
             "data":   cluster,
             "gen":    gen,
             "color":  default_colors[i % len(default_colors)],
@@ -331,9 +329,7 @@ def build_triangle_bundle(results, strat_key):
     Build the list-of-dicts for ONE strategy, overlaying all triangle sizes.
     Mirrors get_triangle_comparison() from run_plots.py.
     """
-    default_colors = [
-        "tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"
-    ]
+    default_colors = DEFAULT_COLORS
     bundle = []
     for i, tri_key in enumerate(EMU_CONFIG.keys()):
         if tri_key not in results:
@@ -346,6 +342,56 @@ def build_triangle_bundle(results, strat_key):
             "color":  default_colors[i % len(default_colors)],
         })
     return bundle
+
+
+# ---------------------------------------------------------------------------
+# Weight table helpers
+# ---------------------------------------------------------------------------
+
+def build_weight_table_data(calib_dir, tri_key, offsets, strategy, config_name):
+    """
+    For a (strategy, config_name, tri_key), loads weights for every offset value.
+
+    Returns
+    -------
+    dict  {offset_value: np.array}
+        Each array holds the raw weight vector as saved by derive_calibration.py.
+        Missing files are silently skipped with a warning.
+    """
+    result = {}
+    for offset in offsets:
+        off_str = offset_to_str(offset)
+        if strategy == "PU0":
+            fname = f"PU0_wl_{config_name}_{tri_key}_offset{off_str}.parquet"
+        elif strategy == "PU200":
+            fname = f"PU200_all_{config_name}_{tri_key}_offset{off_str}.parquet"
+        elif strategy == "PU200_seq":
+            pu0_cfg = PU0_CONFIG_FOR_SEQ if PU0_CONFIG_FOR_SEQ is not None else config_name
+            fname = f"PU200_seq_ab_{config_name}_with_PU0_{pu0_cfg}_{tri_key}_offset{off_str}.parquet"
+        else:
+            raise ValueError(f"Unknown strategy: {strategy}")
+
+        path = os.path.join(calib_dir, fname)
+        if os.path.exists(path):
+            result[offset] = ak.to_numpy(ak.from_parquet(path))
+        else:
+            print(f"[WARN] Weight file not found: {path}")
+    return result
+
+
+def _weight_row_labels(n_weights, strategy):
+    """Return human-readable row labels for a weight vector of length n_weights."""
+    if strategy in ("PU200_seq",):
+        # seq eta weights: always [α, β]
+        return [r"α", r"β"]
+
+    layer_count = {13: 13, 12: 12, 15: 13, 14: 12}.get(n_weights, n_weights)
+    has_eta = n_weights in (14, 15)
+    start = 1 if layer_count == 12 else 0
+    labels = [f"Layer {i}" for i in range(start, start + layer_count)]
+    if has_eta:
+        labels += [r"α", r"β"]
+    return labels
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +414,8 @@ def parse_args():
                         help='Cluster pT cut in GeV')
     parser.add_argument('--gen_pt_cut', type=float, default=0,
                         help='Gen pT cut in GeV')
+    parser.add_argument('--offset',     type=float, default=0,
+                        help='Offset for the eta correction')
 
     # -- triangle selection --
     parser.add_argument('--triangle',   type=str,   default=None,
@@ -408,6 +456,10 @@ def parse_args():
                     help='Plot layer weights per strategy')
     parser.add_argument('--eta_residual', action='store_true',
                     help='Plot eta correction residual vs |eta| with fit curve overlay')
+    parser.add_argument('--weight_table', action='store_true',
+                    help='Table comparing weight values across different offsets for each triangle')
+    parser.add_argument('--offsets', nargs='+', type=float, default=None,
+                    help='Offsets to compare in the weight table (default: use --offset only)')
     parser.add_argument('--tag', type=str,  default=None,
                     help='Add tag to the name of the plots')
 
@@ -435,9 +487,13 @@ def main():
     print(f"Output dir  : {output_dir}")
 
     # ----------------------------------------------------------------
-    # Load data & apply all calibrations
+    # Load data & apply all calibrations (skip for weight-table-only runs)
     # ----------------------------------------------------------------
-    results, manager, raw_results = load_and_calibrate(args, triangles, calib_dir)
+    need_data = (args.distribution or args.scale_distribution or
+                 args.resolution_plots or args.binned_distributions or
+                 args.weights or args.eta_residual)
+    if need_data:
+        results, manager, raw_results = load_and_calibrate(args, triangles, calib_dir)
 
     strategies_to_plot = args.strategies   # user-chosen subset
 
@@ -464,7 +520,7 @@ def main():
             bundle = build_triangle_bundle(results, strat_key)
 
             if args.distribution:
-                for var in ["pt_calib", "eta_calib", "abs_eta_calib", "phi_calib"]:
+                for var in ["pt_calib", "abs_eta_calib", "phi_calib"]:
                     plotter.plot_1d(bundle, var,
                                     filename=f"Dist_{var}_{strat_key}",
                                     title=title)
@@ -476,7 +532,7 @@ def main():
 
             if args.resolution_plots:
                 x_vars = ["pt_gen", "abs_eta_gen", "phi_gen"]
-                y_vars = ["pt_response", "eta_response", "phi_response"]
+                y_vars = ["pt_response"]
                 for x_var in x_vars:
                     for y_var in y_vars:
                         for mode in ['mean', 'resolution', 'rms']:
@@ -489,7 +545,7 @@ def main():
             if args.binned_distributions:
                 for x_var, y_var in [("pt_gen", "pt_response"),
                                      ("abs_eta_gen", "pt_response"),
-                                     ("phi_gen", "phi_response")]:
+                                     ("phi_gen", "pt_response")]:
                     plotter.plot_distributions_per_bin(
                         datasets=bundle,
                         var_key=y_var,
@@ -504,9 +560,11 @@ def main():
         for tri_key in triangles:
             tri_out = os.path.join(output_dir, tri_key)
             plotter = PerformancePlotter(args, output_dir=tri_out)
-            print(strategies_to_plot)
-            bundle  = build_comparison_bundle(results, tri_key, strategies_to_plot)
             tri_title = (title + f"\n Triangle {tri_key}").strip()
+
+            if need_data:
+                print(strategies_to_plot)
+                bundle = build_comparison_bundle(results, tri_key, strategies_to_plot)
 
             # --- 1-D calibrated distributions ---
             if args.distribution:
@@ -524,7 +582,7 @@ def main():
             # --- Response & resolution profiles ---
             if args.resolution_plots:
                 x_vars = ["pt_gen", "abs_eta_gen", "phi_gen"]
-                y_vars = ["pt_response", "eta_response", "phi_response"]
+                y_vars = ["pt_response"]
                 for x_var in x_vars:
                     for y_var in y_vars:
                         for mode in ['mean', 'resolution', 'rms']:
@@ -538,7 +596,7 @@ def main():
             if args.binned_distributions:
                 for x_var, y_var in [("pt_gen",      "pt_response"),
                                      ("abs_eta_gen",  "pt_response"),
-                                     ("phi_gen",      "phi_response")]:
+                                     ("phi_gen",      "pt_response")]:
                     plotter.plot_distributions_per_bin(
                         datasets=bundle,
                         var_key=y_var,
@@ -561,15 +619,49 @@ def main():
                     residual_bundles,
                     filename=f"EtaResidual_{tri_key}",
                     args=args,
+                    offset=args.offset,
                     title=tri_title,
                 )
-            
-    if not (args.distribution or args.scale_distribution
-            or args.resolution_plots or args.binned_distributions):
+
+            if args.weight_table:
+                offsets_to_compare = args.offsets if args.offsets else [args.offset]
+                for comp_name, comp_cfg in COMPARISONS.items():
+                    strategy   = comp_cfg["strategy"]
+                    if strategy == "PU0":
+                        config_name = comp_cfg["wl"]
+                    elif strategy == "PU200":
+                        config_name = comp_cfg["all"]
+                    elif strategy == "PU200_seq":
+                        config_name = comp_cfg["eta"]
+                    else:
+                        continue
+
+                    table_data = build_weight_table_data(
+                        calib_dir, tri_key, offsets_to_compare, strategy, config_name
+                    )
+                    if not table_data:
+                        continue
+
+                    row_labels = _weight_row_labels(
+                        len(next(iter(table_data.values()))), strategy
+                    )
+                    plotter.plot_weight_table(
+                        table_data=table_data,
+                        offsets=offsets_to_compare,
+                        row_labels=row_labels,
+                        filename=f"WeightTable_{tri_key}_{comp_name}",
+                        args=args,
+                        title=f"{comp_name}  |  triangle {tri_key}",
+                    )
+
+    if not (args.distribution or args.scale_distribution or args.resolution_plots
+            or args.binned_distributions or args.weights or args.eta_residual
+            or args.weight_table):
         print(
             "[INFO] No plot type selected. Add one or more of:\n"
             "  --distribution  --scale_distribution  "
-            "--resolution_plots  --binned_distributions"
+            "--resolution_plots  --binned_distributions  --weights  "
+            "--eta_residual  --weight_table"
         )
 
 

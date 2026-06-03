@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from configs.config import PLOT_VARS, EMU_CONFIG
+from configs.config import PLOT_VARS, EMU_CONFIG, DEFAULT_COLORS
 import matplotlib.colors as colors
 import mplhep as hep
 import numpy as np
@@ -127,8 +127,8 @@ class PerformancePlotter:
             fig, ax = plt.subplots(figsize=(10, 10))
             
             for i, ds in enumerate(datasets):
-                default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink", "lightseagreen", "steelblue", "gold", "mediumslateblue", "coral"]
-                color = ds.get('color', default_colors[i % len(default_colors)])
+                # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink", "lightseagreen", "steelblue", "gold", "mediumslateblue", "coral"]
+                color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
                 bin_vals, n_clusters = self._get_ncluster_values(ds, gen_n=gen_n)
                 
                 mask = (bin_vals >= low) & (bin_vals < high)
@@ -193,7 +193,7 @@ class PerformancePlotter:
         # This now handles BOTH distributions AND responses
         conf = PLOT_VARS[var_key]
         fig, ax = plt.subplots(figsize=(10, 10))
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
 
         for i, ds in enumerate(datasets):
             # values = self._get_values(ds, var_key)
@@ -202,7 +202,7 @@ class PerformancePlotter:
             else:
                 values = self._get_values(ds, var_key)
 
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             
             ax.hist(values, bins=conf["bins"], range=conf["range"], color=color,
                     label=ds['label'], histtype='step', linewidth=2.5)
@@ -302,11 +302,11 @@ class PerformancePlotter:
         #Define binning
         bin_edges = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
 
 
         for i, ds in enumerate(datasets):
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
 
             # Efficiency = (Gen particles that were matched) / (All Gen particles)
             matched_gen_x = self._get_values(ds, f"{x_var_key}_gen")
@@ -353,13 +353,13 @@ class PerformancePlotter:
         y_conf = PLOT_VARS[y_var_key]
         
         fig, ax = plt.subplots(figsize=(12, 12  ))
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
 
         bin_edges = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
         for i, ds in enumerate(datasets):
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             if y_var_key == "n_clusters":
                 x_vals, y_vals = self._get_ncluster_values(ds, x_var_key, gen_n=gen_n)
             else:
@@ -389,7 +389,7 @@ class PerformancePlotter:
                     ylabel = r"$\sigma_{cluster}$"
                 
                 # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(2*counts - 2), out=np.zeros_like(stat), where=counts>1)
+                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
 
             elif mode == 'rms':
                 means, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
@@ -405,7 +405,7 @@ class PerformancePlotter:
                     ylabel = r"$\sigma^{eff-RMS}_{cluster}$"
                 
                 # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(2*counts - 2), out=np.zeros_like(stat), where=counts>1)
+                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
 
             # Masking in case there are few stats
             mask = ~np.isnan(stat) & (counts > 2) # Require at least 3 points to plot
@@ -432,73 +432,101 @@ class PerformancePlotter:
         plt.close()
         print(f"--- Plot Saved: {save_path}")
 
-    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename, args):
+    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename, combined=True):
         """
-        Creates a separate plot for EVERY bin defined in PLOT_VARS[binning_var_key].
-        Shows the distribution of var_key (e.g., pt_response) for that bin.
+        Shows the distribution of var_key (e.g., pt_response) for each bin of binning_var_key.
+        With combined=True (default) all bins are laid out in a single figure saved as one PNG/PDF.
         """
         var_conf = PLOT_VARS[var_key]
         bin_conf = PLOT_VARS[binning_var_key]
-        
-        # 1. Define the bin edges exactly as the Profile Plot does
+
         bin_edges = np.linspace(bin_conf['range'][0], bin_conf['range'][1], bin_conf['bins'] + 1)
-        
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
+        n_bins = len(bin_edges) - 1
 
-        # 2. Loop over every bin interval
-        for j in range(len(bin_edges) - 1):
-            low, high = bin_edges[j], bin_edges[j+1]
-            
-            fig, ax = plt.subplots(figsize=(10, 10))
-            
-            for i, ds in enumerate(datasets):
-                color = ds.get('color', default_colors[i % len(default_colors)])
-                
-                # Extract aligned arrays
-                vals_to_plot = self._get_values(ds, var_key)
-                bin_vals = self._get_values(ds, binning_var_key)
-                
-                # Mask for the CURRENT bin
-                mask = (bin_vals >= low) & (bin_vals < high)
-                slice_data = vals_to_plot[mask]
-        
-                ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'], 
-                        color=color, label=f"{ds['label']}", 
-                        histtype='step', linewidth=2.5)
-                ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'], 
-                        color=color, histtype='stepfilled', alpha=0.2)
+        tag = f"_{self.args.tag}" if self.args.tag is not None else ""
+        base_name = f"{filename}_{var_key}_in_{binning_var_key}{tag}"
 
+        if combined:
+            n_rows = 2
+            n_cols = int(np.ceil(n_bins / n_rows))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(7 * n_cols, 6 * n_rows))
+            axes = np.array(axes).flatten()
 
-            # Styling to match the Profile Plots
-            bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
-            hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=ax)
-            
-            ax.set_xlabel(var_conf['label'])
-            ax.set_ylabel("Counts")
-            ax.legend(title=bin_label, fontsize=18, loc='upper left', title_fontsize=18)
-            ax.grid(linestyle=":", alpha=0.6)
-            
-            # Save with the bin index in the filename
-            save_name = f"{filename}_{var_key}_in_{binning_var_key}_bin{j}.png"
-            save_path = os.path.join(self.output_dir, "bin_distributions", save_name)
-            save_path_pdf = os.path.join(self.output_dir, "bin_distributions", f"{filename}_{var_key}_in_{binning_var_key}_bin{j}.pdf")
-            if self.args.tag is not None:
-                save_path     = os.path.join(self.output_dir, f"{filename}_{var_key}_in_{binning_var_key}_bin{j}_{self.args.tag}.png")
-                save_path_pdf = os.path.join(self.output_dir, f"{filename}_{var_key}_in_{binning_var_key}_bin{j}_{self.args.tag}.pdf")
-            # Ensure the sub-directory exists
+            for j in range(n_bins):
+                low, high = bin_edges[j], bin_edges[j + 1]
+                ax = axes[j]
+
+                for i, ds in enumerate(datasets):
+                    color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
+                    vals_to_plot = self._get_values(ds, var_key)
+                    bin_vals     = self._get_values(ds, binning_var_key)
+                    mask         = (bin_vals >= low) & (bin_vals < high)
+                    slice_data   = vals_to_plot[mask]
+
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, label=ds['label'], histtype='step', linewidth=2.5)
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, histtype='stepfilled', alpha=0.2)
+
+                bin_label = f"{low:.2f} < {bin_conf['label']} < {high:.2f}"
+                ax.set_xlabel(var_conf['label'], fontsize=13)
+                ax.set_ylabel("Counts", fontsize=13)
+                ax.legend(title=bin_label, fontsize=11, loc='upper left', title_fontsize=11)
+                ax.grid(linestyle=":", alpha=0.6)
+
+            # Hide unused subplots
+            for j in range(n_bins, len(axes)):
+                axes[j].set_visible(False)
+
+            fig.suptitle(f"{var_conf['label']} per {bin_conf['label']} bin  |  {self.args.particles} {self.args.pileup}",
+                         fontsize=16, y=1.01)
+            fig.tight_layout()
+
+            save_path     = os.path.join(self.output_dir, f"{base_name}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{base_name}.pdf")
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    
-            plt.savefig(save_path, dpi=300)
-            plt.savefig(save_path_pdf)
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.savefig(save_path_pdf, bbox_inches='tight')
             plt.close()
             print(f"--- Bin Distribution Saved: {save_path}")
 
+        else:
+            for j in range(n_bins):
+                low, high = bin_edges[j], bin_edges[j + 1]
+                fig, ax = plt.subplots(figsize=(10, 10))
+
+                for i, ds in enumerate(datasets):
+                    color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
+                    vals_to_plot = self._get_values(ds, var_key)
+                    bin_vals     = self._get_values(ds, binning_var_key)
+                    mask         = (bin_vals >= low) & (bin_vals < high)
+                    slice_data   = vals_to_plot[mask]
+
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, label=ds['label'], histtype='step', linewidth=2.5)
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, histtype='stepfilled', alpha=0.2)
+
+                bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
+                hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=ax)
+                ax.set_xlabel(var_conf['label'])
+                ax.set_ylabel("Counts")
+                ax.legend(title=bin_label, fontsize=18, loc='upper left', title_fontsize=18)
+                ax.grid(linestyle=":", alpha=0.6)
+
+                save_path     = os.path.join(self.output_dir, "bin_distributions", f"{base_name}_bin{j}.png")
+                save_path_pdf = os.path.join(self.output_dir, "bin_distributions", f"{base_name}_bin{j}.pdf")
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                plt.savefig(save_path, dpi=300)
+                plt.savefig(save_path_pdf)
+                plt.close()
+                print(f"--- Bin Distribution Saved: {save_path}")
+
     def plot_weights(self, weight_bundles, filename, args, title=""):
         fig, ax = plt.subplots(figsize=(14, 6))
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
 
         for i, b in enumerate(weight_bundles):
-            color = b.get('color', default_colors[i % len(default_colors)])
+            color = b.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             
             w = list(b['layer'])
             if b.get('eta') is not None:
@@ -528,7 +556,7 @@ class PerformancePlotter:
 
         ax.set_xticks(np.arange(max_len))
         ax.set_xticklabels(xtick_labels)
-        ax.set_ylim(-20, 20)
+        ax.set_ylim(-5, 5)
         ax.axhline(1.0, color='gray', linestyle='--', linewidth=1, label='w=1')
         ax.axvline(12.5, color='gray', linestyle=':', linewidth=1)  # separator before alpha/beta
         ax.set_xlabel("Layer index")
@@ -548,7 +576,85 @@ class PerformancePlotter:
         plt.savefig(save_path_pdf)
         plt.close()
         print(f"--- Plot Saved: {save_path}")
-    def plot_eta_residual(self, residual_bundles, filename, args, title=""):
+    def plot_weight_table(self, table_data, offsets, row_labels, filename, args, title=""):
+        """
+        Render a matplotlib table comparing weight values across different offsets.
+
+        Parameters
+        ----------
+        table_data  : dict {offset: np.array}  — one weight vector per offset
+        offsets     : list of float            — column order
+        row_labels  : list of str              — one label per weight index
+        """
+        present = [o for o in offsets if o in table_data]
+        if not present:
+            print(f"[WARN] No data for weight table '{filename}', skipping.")
+            return
+
+        n_rows = len(row_labels)
+        n_cols = len(present)
+
+        cell_text = []
+        for row_idx in range(n_rows):
+            row = []
+            for offset in present:
+                w = table_data[offset]
+                row.append(f"{w[row_idx]:.4f}" if row_idx < len(w) else "—")
+            cell_text.append(row)
+
+        col_labels = [f"offset = {o}" for o in present]
+
+        # Pastel colour coding: pink for w < 0, green for w > 1, white otherwise
+        cell_colours = []
+        for row_idx in range(n_rows):
+            row_colours = []
+            for offset in present:
+                w = table_data[offset]
+                val = w[row_idx] if row_idx < len(w) else None
+                if val is None:
+                    row_colours.append("#f0f0f0")
+                elif val < 0:
+                    row_colours.append("#f38bc1")
+                elif val > 1:
+                    row_colours.append("#a8f164")
+                else:
+                    row_colours.append("#ffffff")
+            cell_colours.append(row_colours)
+
+        fig_h = max(3, 0.38 * n_rows + 1.0)
+        fig_w = max(4, 1.4 * n_cols + 2.5)
+
+        with plt.style.context('default'):
+            fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+            ax.axis("off")
+
+            # Table fills the lower 88 % of the axes; top strip is for the title
+            tbl = ax.table(
+                cellText=cell_text,
+                cellColours=cell_colours,
+                rowLabels=row_labels,
+                colLabels=col_labels,
+                cellLoc="center",
+                bbox=[0, 0, 1, 0.88],
+            )
+            tbl.auto_set_font_size(False)
+            tbl.set_fontsize(10)
+            tbl.auto_set_column_width(list(range(n_cols)))
+
+            ax.text(0.5, 0.91, title + " | " + args.particles, transform=ax.transAxes,
+                    ha="center", va="bottom", fontsize=11, fontweight="bold",
+                    color="#222222")
+
+            tag = f"_{args.tag}" if args.tag else ""
+            save_path     = os.path.join(self.output_dir, f"{filename}{tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}{tag}.pdf")
+            fig.savefig(save_path, dpi=200, bbox_inches="tight")
+            fig.savefig(save_path_pdf, bbox_inches="tight")
+            fig.clear()
+            plt.close(fig)
+            print(f"--- Plot Saved: {save_path}")
+
+    def plot_eta_residual(self, residual_bundles, filename, args, offset=0, title=""):
         """
         For each strategy that has an eta correction (PU200_seq or PU200),
         plots:
@@ -565,7 +671,7 @@ class PerformancePlotter:
             'beta':     float,
             }
         """
-        default_colors = ["tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
+        # DEFAULT_COLORS = ["tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
         eta_conf = PLOT_VARS["abs_eta_gen"]
 
         fig, ax = plt.subplots(figsize=(12, 8))
@@ -575,7 +681,7 @@ class PerformancePlotter:
         eta_smooth  = np.linspace(eta_conf['range'][0], eta_conf['range'][1], 200)
 
         for i, b in enumerate(residual_bundles):
-            color = b.get('color', default_colors[i % len(default_colors)])
+            color = b.get('color', DEFAULT_COLORS[(i + 1) % len(DEFAULT_COLORS)])
             abs_eta  = b['eta']
             residual = b['residual']
             alpha    = b['alpha']
@@ -598,7 +704,8 @@ class PerformancePlotter:
             )
 
             # --- fitted curve: -alpha*|eta| - beta ---
-            curve =  alpha * (eta_smooth -1.5) + beta
+            b_offset = b.get('offset', offset)
+            curve =  alpha * (eta_smooth - b_offset) + beta
             ax.plot(
                 eta_smooth, curve,
                 linestyle='--', linewidth=2, color=color,

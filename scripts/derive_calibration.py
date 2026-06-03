@@ -18,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='', help='Unique tag for json files')
     parser.add_argument('--gen_pt_cut', type=float, default=0, help='Provide the cut for the gen pt') 
     parser.add_argument('--pt_cut', type=float, default=0, help='Provide the cut for the gen pt')
+    parser.add_argument('--offset', type=float, default=0, help='Provide the offset for the eta correction')
     args = parser.parse_args()
 
     #--------------------
@@ -39,6 +40,8 @@ if __name__ == '__main__':
     output_dir = build_parquet_dir(args)
 
 
+    offset_str = calib.offset_to_str(args.offset)
+
     for strategy in STRATEGIES:  # ["PU0", "PU200", "PU200_seq"]
 
         for config_name, cfg in CALIB_CONFIGS.items(): # ["no_bounds", "bounds_0_20", "no_bounds_no_layer1", "bounds_0_20_no_layer1"]
@@ -59,12 +62,13 @@ if __name__ == '__main__':
                         cluster, gen,
                         mode="PU0",
                         bounds=bounds,
-                        remove_layer1=remove_layer1
+                        remove_layer1=remove_layer1,
+                        offset=args.offset
                     )
 
                     calib.save_weights(
                         w_layer, output_dir,
-                        f"PU0_wl_{config_name}_{key}.parquet"
+                        f"PU0_wl_{config_name}_{key}_offset{offset_str}.parquet"
                     )
 
                 # =========================================
@@ -78,12 +82,13 @@ if __name__ == '__main__':
                         cluster, gen,
                         mode="PU200",
                         bounds=bounds,
-                        remove_layer1=remove_layer1
+                        remove_layer1=remove_layer1,
+                        offset=args.offset
                     )
 
                     calib.save_weights(
                         w_all, output_dir,
-                        f"PU200_all_{config_name}_{key}.parquet"
+                        f"PU200_all_{config_name}_{key}_offset{offset_str}.parquet"
                     )
 
                 # =========================================
@@ -105,7 +110,8 @@ if __name__ == '__main__':
                         results_PU0[key]["pair_gen"],
                         mode="PU0",
                         bounds=PU0_cfg["bounds"],
-                        remove_layer1=PU0_cfg["remove_layer1"]
+                        remove_layer1=PU0_cfg["remove_layer1"],
+                        offset=args.offset
                     )
 
                     # ---- Apply wl on PU200 ----
@@ -113,6 +119,7 @@ if __name__ == '__main__':
                         results_PU200[key]["pair_cluster"],
                         weights_layer=w_layer,
                         remove_layer1=PU0_cfg["remove_layer1"],
+                        offset=args.offset,
                         name="tmp"
                     )
 
@@ -122,17 +129,18 @@ if __name__ == '__main__':
                         results_PU200[key]["pair_gen"],
                         mode="PU_eta",
                         bounds=bounds,
+                        offset=args.offset,
                         name="tmp"
                     )
 
                     # ---- Save weights ----
                     # calib.save_weights(
                     #     w_layer, output_dir,
-                    #     f"PU200_seq_wl_{PU0_cfg_name}_{config_name}_{key}.parquet"
+                    #     f"PU200_seq_wl_{PU0_cfg_name}_{config_name}_{key}_offset{offset_str}.parquet"
                     # )
                     calib.save_weights(
                         w_eta, output_dir,
-                        f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}.parquet"
+                        f"PU200_seq_ab_{config_name}_with_PU0_{PU0_cfg_name}_{key}_offset{offset_str}.parquet"
                     )
 
     manager = calib.CalibrationManager( 
