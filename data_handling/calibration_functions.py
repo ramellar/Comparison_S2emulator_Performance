@@ -245,7 +245,7 @@ class CalibrationManager:
 
 
     def get_calibrated_cluster(self, strategy, config_name, key, args, name="test", offset=None):
-        print("config_name", config_name)
+        # print("config_name", config_name)
         cfg = self.configs[config_name]
 
         weights = self.load(strategy, config_name, key, offset=offset)

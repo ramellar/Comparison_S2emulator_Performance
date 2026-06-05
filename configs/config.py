@@ -77,10 +77,10 @@ PU0_CONFIG_FOR_SEQ="bounds_0_20"
 #     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
 # }
 # COMPARISONS = {
-#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
-#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
-#     "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1"},
-#     "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1"},  
+#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds", "offset": 2.5},
+#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.5},
+#     "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1", "offset": 2.5},
+#     "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 2.5},  
 # }
 # COMPARISONS = {
 #     # "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
@@ -96,15 +96,16 @@ PU0_CONFIG_FOR_SEQ="bounds_0_20"
 
 COMPARISONS = {
     "PU200_seq_b_nb":           {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds", "offset": 0},
-    "PU200_bounds_offset2p4":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.4},
-    # "PU200_bounds_no_offset":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 0},
+    "PU200_bounds_offset2p8":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.8},
+    # "PU200_bounds_offset2p4":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.4},
+    # "PU200_no_bounds":   {"strategy": "PU200",     "all": "no_bounds", "offset": 2.8},
     # "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 0},
     # "PU200_all_no_bounds_no_layer1_offset2p4":          {"strategy": "PU200",     "all": "no_bounds_no_layer1","offset": 2.4}
 }
 
 #only used in derive_calibrations
-STRATEGIES = ["PU0", "PU200", "PU200_seq"]
-# STRATEGIES = ["PU0","PU200_seq"]
+# STRATEGIES = ["PU0"]
+STRATEGIES = ["PU0","PU200_seq", "PU200"]
 
 #----------------------------
 # PLOTTING

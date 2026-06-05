@@ -55,13 +55,14 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 _BASE_LABELS = {
-    "raw":             r"raw $p_T$",
+    "raw":             r"Uncalibrated $p_T$",
     "PU0_bounds":      r"$w_l$ from PU0 bounds",
     "PU0_no_bounds":   r"$w_l$ from PU0 no bounds",
     "PU200_seq_b_nb":  r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) nb",
     "PU200_seq_b_b":   r"$w_l$ (PU0) b + $\alpha\beta$ (PU200) b",
     "PU200_bounds":              r"PU200 w/ bounds",
     "PU200_bounds_offset2p4":    r"PU200 w/ bounds",
+    "PU200_bounds_offset2p8":    r"PU200 w/ bounds",
     "PU200_bounds_no_offset":    r"PU200 w/ bounds",
     "PU200_no_bounds":           r"PU200 w/o bounds",
 }
@@ -134,7 +135,7 @@ def load_and_calibrate(args, triangles, calib_dir):
                 raise ValueError(f"Unknown strategy: {strategy}")
 
        
-            print(f"config_name: {config_name}")
+            # print(f"config_name: {config_name}")
 
 
             comp_offset = comp_cfg.get("offset", None)
@@ -316,7 +317,8 @@ def build_comparison_bundle(results, tri_key, strategies_to_plot):
             cluster = ak.with_field(cluster, ecalib, "pt")
 
         bundle.append({
-            "label":  get_comp_label(strat_key) + f"  [{tri_key}]",
+            "label":  get_comp_label(strat_key),
+            # "label":  get_comp_label(strat_key) + f"  [{tri_key}]",
             "data":   cluster,
             "gen":    gen,
             "color":  default_colors[i % len(default_colors)],
@@ -335,9 +337,14 @@ def build_triangle_bundle(results, strat_key):
         if tri_key not in results:
             continue
         data = results[tri_key][strat_key]
+        cluster = data["pair_cluster"]  
+        ## Apply calibration
+        if strat_key != "raw":
+            ecalib = getattr(cluster, f"Ecalib_{strat_key}")
+            cluster = ak.with_field(cluster, ecalib, "pt")
         bundle.append({
-            "label":  f"Tri {tri_key}",
-            "data":   data["pair_cluster"],
+            "label":  f"Tri {tri_key} ", 
+            "data":   cluster,
             "gen":    data["pair_gen"],
             "color":  default_colors[i % len(default_colors)],
         })
@@ -523,12 +530,12 @@ def main():
                 for var in ["pt_calib", "abs_eta_calib", "phi_calib"]:
                     plotter.plot_1d(bundle, var,
                                     filename=f"Dist_{var}_{strat_key}",
-                                    title=title)
+                                    title=title + f"\n{get_comp_label(strat_key)}")
 
             if args.scale_distribution:
                 plotter.plot_1d(bundle, "pt_response",
                                 filename=f"Scale_pt_response_{strat_key}",
-                                title=title)
+                                title=title + f"\n{get_comp_label(strat_key)}")
 
             if args.resolution_plots:
                 x_vars = ["pt_gen", "abs_eta_gen", "phi_gen"]
@@ -539,7 +546,7 @@ def main():
                             plotter.plot_profile(
                                 bundle, x_var, y_var,
                                 filename=f"Profile_{y_var}_vs_{x_var}_{strat_key}",
-                                mode=mode, title=title
+                                mode=mode, title=title + f"\n{get_comp_label(strat_key)}"
                             )
 
             if args.binned_distributions:
@@ -551,6 +558,7 @@ def main():
                         var_key=y_var,
                         binning_var_key=x_var,
                         filename=f"Dist_Response_{strat_key}",
+                        title_=f"\n{get_comp_label(strat_key)}"
                     )
 
     # ----------------------------------------------------------------
@@ -602,6 +610,7 @@ def main():
                         var_key=y_var,
                         binning_var_key=x_var,
                         filename=f"Dist_Response_{tri_key}",
+                        title_=tri_title,
                     )
 
             if args.weights:

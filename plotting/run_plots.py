@@ -221,7 +221,7 @@ class PerformancePlotter:
         if conf["is_log"] == True :
             ax.set_yscale('log')
         ax.grid(linestyle=":")
-        ax.legend(title=title, frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='best')
+        ax.legend(title=title, frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='lower right')
         plt.tight_layout()
         save_path = os.path.join(self.output_dir, f"{filename}.png")
         save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
@@ -432,7 +432,7 @@ class PerformancePlotter:
         plt.close()
         print(f"--- Plot Saved: {save_path}")
 
-    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename, combined=True):
+    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename,  title_="", combined=True):
         """
         Shows the distribution of var_key (e.g., pt_response) for each bin of binning_var_key.
         With combined=True (default) all bins are laid out in a single figure saved as one PNG/PDF.
@@ -471,7 +471,7 @@ class PerformancePlotter:
                 bin_label = f"{low:.2f} < {bin_conf['label']} < {high:.2f}"
                 ax.set_xlabel(var_conf['label'], fontsize=13)
                 ax.set_ylabel("Counts", fontsize=13)
-                ax.legend(title=bin_label, fontsize=11, loc='upper left', title_fontsize=11)
+                ax.legend(title=bin_label + title_, fontsize=11, loc='upper left', title_fontsize=11)
                 ax.grid(linestyle=":", alpha=0.6)
 
             # Hide unused subplots
@@ -556,7 +556,7 @@ class PerformancePlotter:
 
         ax.set_xticks(np.arange(max_len))
         ax.set_xticklabels(xtick_labels)
-        ax.set_ylim(-5, 5)
+        ax.set_ylim(-20, 20)
         ax.axhline(1.0, color='gray', linestyle='--', linewidth=1, label='w=1')
         ax.axvline(12.5, color='gray', linestyle=':', linewidth=1)  # separator before alpha/beta
         ax.set_xlabel("Layer index")

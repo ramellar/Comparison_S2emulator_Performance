@@ -150,16 +150,16 @@ if __name__ == '__main__':
     args
     )
 
-    for key in EMU_CONFIG: 
-        cluster_calib, gen, weights = manager.get_calibrated_cluster( 
-            strategy="PU200_seq", config_name="bounds_0_20", 
-            key=key, 
-            args= args,
-            name="PU200_seq" ) 
-        Ecalib = getattr(cluster_calib, "Ecalib_PU200_seq") 
-        print("Calibrated:", ak.flatten(Ecalib)[:10]) 
-        print("Gen:", ak.flatten(gen.pt)[:10])
-        print("weights:", weights)
+    # for key in EMU_CONFIG: 
+    #     cluster_calib, gen, weights = manager.get_calibrated_cluster( 
+    #         strategy="PU200_seq", config_name="bounds_0_20", 
+    #         key=key, 
+    #         args= args,
+    #         name="PU200_seq" ) 
+    #     Ecalib = getattr(cluster_calib, "Ecalib_PU200_seq") 
+    #     print("Calibrated:", ak.flatten(Ecalib)[:10]) 
+    #     print("Gen:", ak.flatten(gen.pt)[:10])
+    #     print("weights:", weights)
 
     
 
