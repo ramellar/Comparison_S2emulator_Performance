@@ -2,6 +2,7 @@ import os
 import argparse
 import awkward as ak
 from data_handling.event_performances import provide_events_performaces
+from data_handling.files import load_events
 from configs.config import PARQUET_BASE, EVENT_NAMES
 
 if __name__ == '__main__':
@@ -14,19 +15,18 @@ if __name__ == '__main__':
   parser.add_argument('--base_path', type=str, default='/data_CMS_upgrade/sauvan/HGCAL/2603_internship-pivato/stage2_emulator_ntuples_semiemulator_2Passes/2_July_25_semiEmulator_2Passes/ggfHiggs')
   parser.add_argument('--name_tree',    type=str , default='l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple')
   parser.add_argument('--pt_cut',    type=float, default=0,         help='Provide the cut for the cluster pt')
-  parser.add_argument('--n_files',    type=float, default=10,         help='Provide the cut for the cluster pt')
+  parser.add_argument('--n_files',   type=float, default=10,         help='Provide the cut for the cluster pt')
   parser.add_argument('--job_id', type=int, default=0)
   parser.add_argument('--n_jobs', type=int, default=1)
   parser.add_argument('--tau', action='store_true', help='Enable tau-specific processing')
   args = parser.parse_args()
 
- # Since the dataset is too heavy to load the events every time, we just need to load them once and save them as parquet files
+  #Since the dataset is too heavy to load the events every time, we just need to load them once and save them as parquet files
 
   print(args.base_path)
   
-  events_gen, tau_vis, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref = provide_events_performaces(args.n, args.base_path, args.particles, args.pileup, args.n_files, args.pt_cut, args.job_id, args.n_jobs, args.tau)
-  events= [events_gen, tau_vis, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref]
-  
+  events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref = provide_events_performaces(args.n, args.base_path, args.particles, args.pileup, args, args.n_files, args.pt_cut, args.job_id, args.n_jobs)
+  events = [events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref]
 
   
   output_dir = PARQUET_BASE + "/" + args.particles + "_" + args.pileup + "_new_branch/"  + "single_jobs/"
@@ -34,5 +34,15 @@ if __name__ == '__main__':
   os.makedirs(output_dir, exist_ok=True)
 
   for event, name in zip(events, EVENT_NAMES):
+    if event is None:
+        continue
     ak.to_parquet(event, output_dir + f"/{name}_part_{args.job_id}.parquet")
     print(f"Saved chunk {args.job_id} to {output_dir}")
+
+  #events, events_gen = load_events(PARQUET_BASE + "/" + args.particles + "_" + args.pileup + "_new_branch/")   #salva i dati "incollati"
+  #events, events_gen = load_events(output_dir)   #per salvare gli eventi ancora in chunks
+
+  #print(len(events_gen.pt))
+  #print(events_gen.gen_decayMode[:10])
+  #print("FIELDS AFTER RETURN:",ak.fields(events_gen))
+  #print("TYPE BEFORE RETURN:", ak.type(events_gen))

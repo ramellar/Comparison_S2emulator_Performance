@@ -18,9 +18,10 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
         print()
 
 
-def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , thr=0.0, job_id=0, n_jobs=10, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple", tau=False):
+def provide_events_performaces( n, base_path, particle, pileup, args, n_files=300 , thr=0.0, job_id=0, n_jobs=10, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"):
     full_base_path = f"{base_path}{particle}_{pileup}"
-
+    
+    #Job division
     all_indices = list(range(int(n_files)))
     avg = len(all_indices) / float(n_jobs)
     chunks = []
@@ -122,8 +123,7 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , th
             print(f"Skipping missing file: {f_path}")
 
 
-    for batch in tqdm(uproot.iterate(valid_files, branches, library="ak", step_size="50 MB", 
-                                    allow_missing=True)):
+    for batch in tqdm(uproot.iterate(valid_files, branches, library="ak", step_size="50 MB", allow_missing=True)):
         batches.append(batch)
         total += len(batch["event"])
         if total >= n: break
@@ -132,6 +132,7 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , th
         raise RuntimeError(f"Job {job_id} could not read any data. Check your Proxy!")
 
     data = ak.concatenate(batches)[:n]
+    event_id = ak.Array(np.arange(len(data.event)))
 
     print("Number of events:", len(data.event))
 
@@ -142,25 +143,34 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , th
     #       only keep the particles whose shower will stay inside the detector
     # -----------------------
     
-    if tau: 
+    filtered_gen = None
+    if args.tau: 
         
-        m_reco, best_match_idx, mask_clean = taureco_function(data.gen_pt, data.gen_eta, data.gen_phi, data.gen_energy, data.gen_id, data.gen_status, data.gen_daughters, data.gentau_pt, data.gentau_eta, data.gentau_phi, data.gentau_energy, data.gentau_mass)
-        flag_vis_prod, flag_pp, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass = vis_filter_function(0.0005, 0.0005, m_reco, best_match_idx, mask_clean, data.gentau_vis_pt, data.gentau_vis_eta, data.gentau_vis_phi, data.gentau_vis_energy, data.gentau_vis_mass, data.gentau_products_pt, data.gentau_products_eta, data.gentau_products_phi, data.gentau_products_energy)
-            
+        m_reco, best_match_idx, mask_clean = taureco_function(data.gen_pt, data.gen_eta, data.gen_phi, data.gen_energy, data.gen_pdgid, data.gen_status, data.gen_daughters, data.gentau_pt, data.gentau_eta, data.gentau_phi, data.gentau_energy)
+        flag_vis_prod, flag_pp, gen_flag, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass, gdecaymode = vis_filter_function(0.005, 0.005, m_reco, best_match_idx, mask_clean, data.gentau_decayMode, data.gentau_vis_pt, data.gentau_vis_eta, data.gentau_vis_phi, data.gentau_vis_energy, data.gentau_vis_mass, data.gentau_products_pt, data.gentau_products_eta, data.gentau_products_phi, data.gentau_products_energy, data.gentau_products_mass, data.gentau_products_id)
+        
+        #Mask for endcap eta  
         eta_mask = ((abs(gvis_eta) > 1.5) & (abs(gvis_eta) < 3.0))
+        had_mask = ((gdecaymode == 0) | (gdecaymode == 1) | (gdecaymode == 4) | (gdecaymode == 5))
+
+        gen_mask = eta_mask & had_mask
         
-        filtered_tau_vis = ak.zip({                      
-            "flag_vis_prod": flag_vis_prod[eta_mask],      #flag for all the events where m_vis =! m_products
-            "flag_pp": flag_pp[eta_mask],      #flag for all the events with pair production                          
-            "pt": gvis_pt[eta_mask],      # filtered gentau_vis_pt
-            "eta": gvis_eta[eta_mask],      # filtered gentau_vis_eta
-            "phi": gvis_phi[eta_mask],      # filtered gentau_vis_phi
-            "energy": gvis_energy[eta_mask],      # filtered gentau_vis_energy
-            "mass": gvis_mass[eta_mask],      # filtered gentau_vis_mass
+        filtered_gen = ak.zip({    
+            "event_id": event_id,                  
+            "flag_vis_prod": flag_vis_prod,      #flag for all the events where m_vis =! m_products
+            "flag_pp": flag_pp,      #flag for all the events with pair production                          
+            "pt": gvis_pt[gen_mask],      # filtered gentau_vis_pt
+            "eta": gvis_eta[gen_mask],      # filtered gentau_vis_eta
+            "phi": gvis_phi[gen_mask],      # filtered gentau_vis_phi
+            "energy": gvis_energy[gen_mask],      # filtered gentau_vis_energy
+            "mass": gvis_mass[gen_mask],  # filtered gentau_vis_mass
+            "gen_flag": gen_flag[gen_mask],  # flag for the taus (1 for the first and 2 for the second)
+            "gen_decayMode": gdecaymode[gen_mask]
         })
         
-        event_mask = ak.num(filtered_tau_vis.pt) > 0
-        filtered_tau_vis = filtered_tau_vis[event_mask]   
+        
+        event_mask = ak.num(filtered_gen.pt) > 0
+        filtered_gen = filtered_gen[event_mask]   
             
         #I would like to add the "event" branch also to filtered_tau_vis but it has already been used (I'm not sure they are the same ones)
         
@@ -168,8 +178,8 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , th
         
         #flag_vis_prod is an array that flags all the events where the reconstructed invariant mass from gentau_products_*
         #collection differs from the one from gentau_vis_* more than a fixed parameter
-        
-        
+
+
         
     else:
         
@@ -230,15 +240,22 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=300 , th
     # print(cl_0p0113.layer_pt)
     # print(len(cl_0p0113.eta))
     # print(len(cl_0p0113.layer_pt))
+    
+    #print("FIELDS BEFORE RETURN:", ak.fields(filtered_gen))
+    #print("TYPE BEFORE RETURN:", ak.type(filtered_gen))
+
  
-    return filtered_gen, filtered_tau_vis, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
+    return filtered_gen, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
 
 
-def apply_matching(events, gen, args, deltaR=0.1):
+def apply_matching(events, gen, args, deltaR=0.2):
     #Masking events were no clusters are reconstructed
     mask_ev = ak.num(getattr(events, "eta")) > 0
     filtered_events = events[mask_ev]
     filtered_gen = gen[mask_ev]
+    
+    #print("filtered_gen fields:", ak.fields(filtered_gen))
+    #print("filtered_gen type:", ak.type(filtered_gen))
 
     if args.total_efficiency:
         print("Number of events with clusters", len(filtered_gen))
@@ -266,7 +283,8 @@ def apply_matching(events, gen, args, deltaR=0.1):
         "eta": getattr(filtered_gen, 'eta'),
         "phi": getattr(filtered_gen, 'phi'),
         "pt": getattr(filtered_gen, 'pt'),
-        "gen_flag": getattr(filtered_gen,'genpart_gen'),
+        "gen_flag": ak.local_index(filtered_gen.pt, axis=1) + 1,    # c'era questo prima: "gen_flag": getattr(filtered_gen,'gen_flag'),
+        "decayMode": getattr(filtered_gen, 'gen_decayMode')
     })
 
     if args.pt_cut !=0 :
@@ -352,6 +370,7 @@ def apply_matching(events, gen, args, deltaR=0.1):
         "phi": flatten_pair_gen_masked.phi,
         "pt": flatten_pair_gen_masked.pt,
         "gen_flag": flatten_pair_gen_masked.gen_flag,
+        "gen_decayMode": flatten_pair_gen_masked.decayMode,
     })
 
     # If there is only one gen particle matched
@@ -381,6 +400,7 @@ def apply_matching(events, gen, args, deltaR=0.1):
         'phi': ak.unflatten(best_gen_one_matched.phi, 1),
         'pt': ak.unflatten(best_gen_one_matched.pt, 1),
         'gen_flag': ak.unflatten(best_gen_one_matched.gen_flag, 1),
+        'gen_decayMode': ak.unflatten(best_gen_one_matched.gen_decayMode, 1),
     })
 
     # If there are two gen particles that were matched
@@ -409,17 +429,4 @@ def apply_matching(events, gen, args, deltaR=0.1):
     pair_cluster_masked_highest_pt = ak.concatenate([best_cluster_one_matched, best_cluster_two_matched], axis=0)
     pair_gen_masked_highest_pt = ak.concatenate([best_gen_one_matched, best_gen_two_matched], axis=0)
 
-    ##Use for debugging
-    # for i in range(len(max_idx1)):
-    #     if ak.any(max_idx1[i]!=0):
-    #         print(max_idx1[i])
-    #         print(i)
-    # print(result1.pt[89])
-    # print(result2.pt[89])
-
-    # print("deltar", delta_r)
-    # print(pair_cluster_masked_highest_pt.delta_r)
-    # print("len")
-    # print((ak.type(pair_cluster_masked_highest_pt.layer_pt)))
-    # print((pair_cluster_masked_highest_pt.pt[0]))
     return pair_cluster_masked_highest_pt, pair_gen_masked_highest_pt, clusters, genparts

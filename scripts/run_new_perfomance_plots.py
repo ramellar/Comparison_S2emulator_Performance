@@ -30,11 +30,15 @@ if __name__ == '__main__':
     parser.add_argument('--efficiency',     action='store_true', help='Plot the efficiency')
     parser.add_argument('--binned_distributions',     action='store_true', help='Plot binned distributions')
     parser.add_argument('--n_clusters_plots',     action='store_true', help='Plot binned distributions')
+    
+    #aggiunto per plot decayMode
+    parser.add_argument('--decaymode_plot', action='store_true', help='Plot number of events per gen decay mode')
 
     args = parser.parse_args()
 
     parquet_dir= build_parquet_dir(args)
     parquet_dir_bare_events= f"{PARQUET_BASE}{args.particles}_{args.pileup}_new_branch/"
+        
 
     output_dir= build_plotting_dir(args)
 
@@ -42,29 +46,33 @@ if __name__ == '__main__':
     if args.matched:
         matched_events= f.load_matching_results(parquet_dir)
         TASKS = {
-            "dist": ["pt", "eta", "abs_eta", "phi", "delta_r"],
+            "dist": ["pt", "eta", "abs_eta", "phi", "delta_r", "pt_gen"],
             "resp": ["pt_response", "eta_response", "phi_response"],
-            "corr": [("pt_gen", "pt"), ("eta", "phi"),("pt", "eta"), ("delta_r", "eta") ],
+            "corr": [("pt_gen", "pt"), ("abs_eta", "phi"),("pt", "abs_eta"), ("delta_r", "eta") ],
             "dif_resp": [("pt_gen", "pt"), ("eta_gen", "pt"),("phi_gen", "pt"),  ("eta_gen", "eta")],
             "eff":  ["pt_eff", "eta_eff", "abs_eta_eff"],
-            "binned_resp": [("pt_gen", "pt_response"), ("eta_gen", "pt_response"), ("phi_gen", "pt_response"), ("eta_gen", "eta_response"), ("phi_gen", "phi_response")]
+            "binned_resp": [("pt_gen", "pt_response"), ("eta_gen", "pt_response"), ("phi_gen", "pt_response"), ("pt_gen", "eta_response"), ("eta_gen", "eta_response"), ("phi_gen", "eta_response") , ("pt_gen", "phi_response"), ("eta_gen", "phi_response"), ("phi_gen", "phi_response")]
             }
+        
+    #print(ak.flatten(matched_events["0p0113"]["pair_gen"].pt, axis=-1))
+    #print(ak.min(ak.flatten(matched_events["0p0113"]["pair_gen"].pt, axis=-1)))
         
     if args.events:
         events, events_gen= f.load_events(parquet_dir_bare_events)
         TASKS = {
-            "dist": ["pt", "eta","abs_eta", "phi"],
-            "corr": [("eta", "phi"),("pt", "eta")],
+            "dist": ["pt", "eta", "abs_eta", "phi", "pt_gen"],
+            "corr": [("eta", "phi"),("pt", "eta"), ("abs_eta", "phi")]
             }
         if args.gen_pt_cut > 0:
             event_mask = ak.any(events_gen.pt > args.gen_pt_cut, axis=-1)
             events_gen = events_gen[event_mask]
             for key in events.keys():
                 events[key] = events[key][event_mask]
+                
     if args.filtered_events:
         filtered_events= f.load_filtered_events(parquet_dir)
         TASKS = {
-            "dist": ["pt", "eta","abs_eta", "phi"],
+            "dist": ["pt", "eta", "abs_eta", "phi"],
             "corr": [("eta", "phi"),("pt", "eta")],
             }
 
@@ -124,12 +132,12 @@ if __name__ == '__main__':
         data = get_triangle_comparison(matched_events)
         # Define the 'X' axes (The generator truth we bin by)
         # Note: Using 'abs_eta_gen' will trigger our new absolute value logic
-        x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
+        #x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
         x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
 
         # Define the 'Y' axes (The performance metrics we want to see)
-        # y_variables = ["pt_response", "eta_response", "phi_response"]
-        y_variables = ["phi_response"]
+        y_variables = ["pt_response", "eta_response", "phi_response"]
+        #y_variables = ["phi_response"]
 
         for x_var in x_variables:
             for y_var in y_variables:
@@ -160,7 +168,6 @@ if __name__ == '__main__':
                 var_key=var[1], 
                 binning_var_key=var[0], 
                 filename="Dist_Response",
-                title=title
                 )
             
 
@@ -193,3 +200,32 @@ if __name__ == '__main__':
         # Useful to see if detector geometry (Endcaps vs Barrel) affects splitting
         plotter.plot_profile(data, "abs_eta_gen", "n_clusters", "N_clusters_abs_eta_gen", mode='mean', gen_n=1, title=title)
         plotter.plot_profile(data, "abs_eta_gen", "n_clusters", "N_clusters_abs_eta_gen", mode='resolution', gen_n=1, title=title)
+        
+        
+    
+    # for decayMode plots
+    if args.decaymode_plot:
+        if args.matched:
+            gen_matched_events = {
+                key: matched_events[key]["pair_gen"]
+                for key in matched_events
+            }
+            data = get_triangle_comparison(gen_matched_events)
+
+            response_data = []
+            for key in matched_events:
+                response_data.append({
+                    "gen": matched_events[key]["pair_gen"],
+                    "cluster": matched_events[key]["pair_cluster"],
+                    "label": key
+                })
+        
+        elif args.events:
+            data = [{"data": events_gen, "label": "Gen"}]
+            response_data = None
+
+        elif args.filtered_events:
+            data = get_triangle_comparison(filtered_events)
+            response_data = None
+            
+        plotter.plot_response_distribution_per_decaymode(response_data, var_key="pt", decaymode_key="gen_decayMode", filename="Gen_pt_response")

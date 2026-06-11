@@ -7,9 +7,9 @@ def load_events(parquet_dir):
     events = {}
 
     for key in EMU_CONFIG:
-        events[key] = ak.from_parquet(parquet_dir + f"events_{key}.parquet")
+        events[key] = ak.from_parquet(parquet_dir + f"events_{key}.parquet")     #cambia f"events_{key}_part_0.parquet" se vuoi vedere come sono stati salvati i files in single chunk
 
-    events_gen = ak.from_parquet(parquet_dir + "events_gen.parquet")
+    events_gen = ak.from_parquet(parquet_dir + "events_gen.parquet")         #cambia anche qua "events_gen_part_0.parquet"
 
     return events, events_gen
 

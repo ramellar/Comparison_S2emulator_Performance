@@ -4,6 +4,7 @@ import data_handling.event_performances as ev
 import numpy as np
 import matplotlib.pyplot as plt
 import mplhep
+from scipy.stats import beta
 plt.style.use(mplhep.style.CMS)
 
 def calcDeltaR(eta_cl, phi_cl, gen):
@@ -30,19 +31,26 @@ def compute_efficiencies(events, events_gen, args):
         len(ak.flatten(events_gen.pt)),
         "particles",
     )
-
     results = {}
-
     for key, branch in EMU_CONFIG.items():
-
         results[key] = compute_total_efficiency(
             key,
             events[key],
             events_gen,
             args
         )
-
     return results
+
+
+
+
+def get_efficiency_with_error(k, n, alpha=0.3173):   # alpha is for the definition of 1-sigma confidence interval
+    if n == 0:
+        return 0.0, 0.0, 0.0
+    eff = k / n
+    low = 0.0 if k == 0 else beta.ppf(alpha / 2, k, n - k + 1)
+    up = 1.0 if k == n else beta.ppf(1 - alpha / 2, k + 1, n - k)
+    return eff, eff - low, up - eff
 
     #Plotting total efficinecy
 
@@ -70,9 +78,19 @@ def compute_total_efficiency(size, event_cl, event_gen, args, deltaR=0.1):
     print("Number of matched clusters:", len(ak.flatten(pair_cluster_matched.pt,axis=-1)))
     print("Number of particles after matching",len(ak.flatten(pair_gen_masked.pt,axis=-1)))
     if args.gen_pt_cut != 0 and args.pt_cut != 0:
-        print("Denominator is the number of particle after the gen cut only:", len(ak.flatten(event_gen.pt, axis=-1)))
-    print("Total efficiency at particle level:", len(ak.flatten(pair_gen_masked.pt,axis=-1)) / len(ak.flatten(event_gen.pt, axis=-1)) * 100)
-    print("Total efficiency at event level:", len(pair_gen_masked) / len(event_gen.pt) * 100)
-    print("\n")
+        pass
+        #print("Denominator is the number of particle after the gen cut only:", len(ak.flatten(event_gen.pt, axis=-1)))
+    #print("Total efficiency at particle level:", len(ak.flatten(pair_gen_masked.pt,axis=-1)) / len(ak.flatten(event_gen.pt, axis=-1)) * 100)
+    #print("Total efficiency at event level:", len(pair_gen_masked) / len(event_gen.pt) * 100)
+    #print("\n")
+    
+    n_pass_part = len(ak.flatten(pair_gen_masked.pt, axis=-1))
+    n_tot_part  = len(ak.flatten(event_gen.pt, axis=-1))
+    n_pass_ev = len(pair_gen_masked)
+    n_tot_ev  = len(event_gen)
+    eff_part, err_part_low, err_part_up = get_efficiency_with_error(n_pass_part, n_tot_part)
+    eff_ev, err_ev_low, err_ev_up = get_efficiency_with_error(n_pass_ev, n_tot_ev)
+    print(f"Total efficiency at particle level: " f"{eff_part*100:.2f} -{err_part_low*100:.2f} +{err_part_up*100:.2f} %")
+    print(f"Total efficiency at event level: " f"{eff_ev*100:.2f} -{err_ev_low*100:.2f} +{err_ev_up*100:.2f} %")
     return pair_cluster_matched, pair_gen_masked
 

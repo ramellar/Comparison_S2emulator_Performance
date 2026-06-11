@@ -11,7 +11,7 @@ import os
 
 #Function for computing the \DeltaR between two particles
 def deltaR(eta1, phi1, eta2, phi2):
-    dphi = (phi1 - phi2 + np.pi) % (2*np.pi) - np.pi #I add the last member to avoid to cut right events
+    dphi = (phi1 - phi2 + np.pi) % (2*np.pi) - np.pi 
     deta = eta1 - eta2
     return np.sqrt(deta**2 + dphi**2)
 
@@ -34,11 +34,14 @@ def find_tau_status2(idx, iev, id, status, daughters):
 
 #Function that finds all the final particles comming from tau decays
 def find_status1_daughters(idx, iev, status, daughters):
-    # if it's already final, it keeps it
+    if idx < 0 or idx >= len(status[iev]):
+        return []
     if status[iev][idx] == 1:
         return [idx]
     final_idxs = []
     for d in daughters[iev][idx]:
+        if d < 0 or d >= len(status[iev]):
+            continue
         final_idxs.extend(find_status1_daughters(d, iev, status, daughters))
     return final_idxs
 
@@ -46,38 +49,51 @@ def find_status1_daughters(idx, iev, status, daughters):
 
 
 #Function for tau reconstruction starting from gen collection
-def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gphi, genergy, gmass):
-    
-    #Mask to isolate all the final Higgs bosons in each event
-    mask_higgs = ((id == 25) & (status == 62))
-    pt = pt[mask_higgs]
-    eta = eta[mask_higgs]
-    phi = phi[mask_higgs]
-    energy = energy[mask_higgs]
-    id = id[mask_higgs]
-    status = status[mask_higgs]
-    daughters = daughters[mask_higgs]
-    
-    
-    #Look for all the tau with status = 2 that come from Higgs decay
-    for iev in range(len(daughters)):
+def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gphi, genergy):
+
+    # array completi originali
+    full_pt = pt
+    full_eta = eta
+    full_phi = phi
+    full_energy = energy
+    full_id = id
+    full_status = status
+    full_daughters = daughters
+
+    # mask per trovare gli Higgs finali
+    mask_higgs = ((full_id == 25) & (full_status == 62))
+
+    higgs_idx = []
+    for iev in range(len(full_id)):
+        higgs_idx.append(ak.where(mask_higgs[iev])[0])
+    higgs_idx = ak.Array(higgs_idx)
+
+    tau2_idx = []
+    for iev in range(len(higgs_idx)):
         event_tau2 = []
-        for group in daughters[iev]:
-            for idx in group:
-                if abs(id[iev][idx]) == 15:
-                    res = find_tau_status2(idx, iev, id, status, daughters)
-                    if res is not None:
-                        event_tau2.append(res)
+        for hidx in higgs_idx[iev]:
+            daughters_of_higgs = full_daughters[iev][hidx]
+            
+            for item in daughters_of_higgs:
+                idxs = [item] if np.isscalar(item) else item
+                for idx in idxs:
+                    if idx < 0 or idx >= len(full_id[iev]):
+                        continue
+                    if abs(full_id[iev][idx]) == 15:
+                        res = find_tau_status2(idx, iev, full_id, full_status, full_daughters)
+                        if res is not None:
+                            event_tau2.append(res)
         tau2_idx.append(event_tau2)
+
     tau2_idx = ak.Array(tau2_idx)
-    
-    pt = pt[tau2_idx]
-    eta = eta[tau2_idx]
-    phi = phi[tau2_idx]
-    id = id[tau2_idx]
-    energy = energy[tau2_idx]
-    status = status[tau2_idx]
-    daughters = daughters[tau2_idx]
+
+    pt = full_pt[tau2_idx]
+    eta = full_eta[tau2_idx]
+    phi = full_phi[tau2_idx]
+    id = full_id[tau2_idx]
+    energy = full_energy[tau2_idx]
+    status = full_status[tau2_idx]
+    daughters = full_daughters[tau2_idx]
     
      
     #Match the reco_taus from gen_* collection with the ones from gentau_* collection
@@ -99,10 +115,7 @@ def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gph
     geta = geta[mask_clean]
     gphi = gphi[mask_clean]
     genergy = genergy[mask_clean]
-    gid = gid[mask_clean]
-    gstatus = gstatus[mask_clean]
-    gdaughters = gdaughters[mask_clean]
-    
+
     pt = pt[best_match_idx][mask_clean]
     eta = eta[best_match_idx][mask_clean]
     phi = phi[best_match_idx][mask_clean]
@@ -119,19 +132,20 @@ def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gph
         for tau_daus in daughters[iev]:
             tau_products = []
             for idx in tau_daus:
-                tau_products.extend(find_status1_daughters(idx, iev, status, daughters))
-            tau_products = sorted(set(tau_products))   # opzionale, per evitare duplicati
+                if idx < 0 or idx >= len(full_status[iev]):
+                    continue
+                tau_products.extend(find_status1_daughters(idx, iev, full_status, full_daughters))
+            tau_products = sorted(set(tau_products))
             event_products.append(tau_products)
         tau_final_products_idx.append(event_products)
-    tau_final_products_idx = ak.Array(tau_final_products_idx)
     
     
     #Selection of final particles resulting from tau decays from gen_* collection
-    tau_final_products_id = ak.Array([[id[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
-    tau_final_products_pt = ak.Array([[pt[iev][idxs] for idxs in tau_final_products_idx[iev]]for iev in range(len(tau_final_products_idx))])
-    tau_final_products_eta = ak.Array([[eta[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
-    tau_final_products_phi = ak.Array([[phi[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
-    tau_final_products_energy = ak.Array([[energy[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
+    tau_final_products_id = ak.Array([[full_id[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
+    tau_final_products_pt = ak.Array([[full_pt[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
+    tau_final_products_eta = ak.Array([[full_eta[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
+    tau_final_products_phi = ak.Array([[full_phi[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
+    tau_final_products_energy = ak.Array([[full_energy[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])    
     #tau_final_products_status = ak.Array([[status[iev][idxs] for idxs in tau_final_products_idx[iev]] for iev in range(len(tau_final_products_idx))])
     
     #Selection of the right final particles (no neutrinos)
@@ -169,7 +183,7 @@ def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gph
     return m_reco, best_match_idx, mask_clean #, pt, eta, phi, energy, status, id, daughters, gpt, geta, gphi, gid, genergy, gstatus, gdaughters
 
 
-def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass, gprod_pt, gprod_eta, gprod_phi, gprod_energy, gprod_mass, gprod_id):
+def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gdecaymode, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass, gprod_pt, gprod_eta, gprod_phi, gprod_energy, gprod_mass, gprod_id):
     
     #Applying the filter to gentau_vis_* and gentau_products_* to correctly sort the particles
     gvis_pt = gvis_pt[best_match_idx][mask_clean]
@@ -177,6 +191,7 @@ def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gv
     gvis_phi = gvis_phi[best_match_idx][mask_clean]
     gvis_energy = gvis_energy[best_match_idx][mask_clean]
     gvis_mass = gvis_mass[best_match_idx][mask_clean]
+    gdecaymode = gdecaymode[best_match_idx][mask_clean]
     
     gprod_pt =  gprod_pt[best_match_idx][mask_clean]
     gprod_eta =  gprod_eta[best_match_idx][mask_clean]
@@ -230,7 +245,9 @@ def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gv
     filter_value = filter1
     flag_pp = ak.values_astype(abs(m_reco - m_gentau_visv) > filter_value, np.int32)
     
-    return flag_vis_prod, flag_pp, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass #, gprod_pt, gprod_eta, gprod_phi, gprod_energy, gprod_mass, gprod_id
+    gen_flag = ak.local_index(gvis_pt) + 1
+    
+    return flag_vis_prod, flag_pp, gen_flag, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass, gdecaymode #, gprod_pt, gprod_eta, gprod_phi, gprod_energy, gprod_mass, gprod_id
 
 
 

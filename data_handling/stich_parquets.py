@@ -48,6 +48,6 @@ if __name__ == "__main__":
     parser.add_argument('--n_jobs', type=int, default=1)
     args = parser.parse_args()
 
-    BASE_DIR = PARQUET_BASE+ args.particles + "_" + args.pileup + "_new_branch/"  +"single_jobs/"
+    BASE_DIR = PARQUET_BASE+ args.particles + "_" + args.pileup + "_new_branch/"  + "single_jobs/"
     
     merge_results(args)

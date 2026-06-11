@@ -1,3 +1,4 @@
+#test
 import os
 import argparse
 import awkward as ak
@@ -24,33 +25,7 @@ if __name__ == '__main__':
     print(base)
     events, events_gen = io.load_events(base)
     output_dir= build_parquet_dir(args)
-    results = {}
-
-    if args.total_efficiency:
-        compute_efficiencies(events, events_gen, args)
-
-
-    #Apply matching of clusters and gen partciles requiring DeltaR <0.1 and taking the highest pt cluster
-    for key, branch in EMU_CONFIG.items():
-        pair_cluster, pair_gen, events_filtered, events_gen_filtered = apply_matching(
-            events[key],
-            events_gen,
-            args,
-            deltaR=args.deltaR
-        )
     
-        results[key] = {
-            "pair_cluster": pair_cluster,
-            "pair_gen": pair_gen,
-            "events_filtered": events_filtered,
-            "events_gen_filtered": events_gen_filtered,
-        }
-        
+    #print(events_gen.pt)
 
-    matched_clusters = [results[key]["pair_cluster"] for key in EMU_CONFIG]
-    matched_gen = [results[key]["pair_gen"] for key in EMU_CONFIG]
-    events_cl_gen_cut = [results[key]["events_filtered"] for key in EMU_CONFIG]
-    events_gen_gen_cut = [results[key]["events_gen_filtered"] for key in EMU_CONFIG]
-
-    io.save_matching_results(results, output_dir)
-
+    results = {}
