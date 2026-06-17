@@ -93,4 +93,3 @@ def compute_total_efficiency(size, event_cl, event_gen, args, deltaR=0.2):
     print(f"Total efficiency at particle level: " f"{eff_part*100:.2f} -{err_part_low*100:.2f} +{err_part_up*100:.2f} %")
     print(f"Total efficiency at event level: " f"{eff_ev*100:.2f} -{err_ev_low*100:.2f} +{err_ev_up*100:.2f} %")
     return pair_cluster_matched, pair_gen_masked
-

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from configs.config import PLOT_VARS, EMU_CONFIG
+from configs.config import PLOT_VARS, EMU_CONFIG, DEFAULT_COLORS
 import matplotlib.colors as colors
 import mplhep as hep
 import numpy as np
@@ -130,9 +130,8 @@ class PerformancePlotter:
             fig, ax = plt.subplots(figsize=(10, 10))
             
             for i, ds in enumerate(datasets):
-                #default_colors = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f", "#e5c494", "#b3b3b3", "#1b9e77", "#d95f02"]
-                default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink", "lightseagreen", "steelblue", "gold", "mediumslateblue", "coral"]
-                color = ds.get('color', default_colors[i % len(default_colors)])
+                # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink", "lightseagreen", "steelblue", "gold", "mediumslateblue", "coral"]
+                color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
                 bin_vals, n_clusters = self._get_ncluster_values(ds, gen_n=gen_n)
                 
                 mask = (bin_vals >= low) & (bin_vals < high)
@@ -171,6 +170,9 @@ class PerformancePlotter:
             
             save_name = f"NClusters_{binning_var_key}_bin{j}_gen{gen_n}.png"
             save_name_pdf = f"NClusters_{binning_var_key}_bin{j}_gen{gen_n}.pdf"
+            if self.args.tag is not None:
+                save_name     = f"NClusters_{binning_var_key}_bin{j}_gen{gen_n}_{self.args.tag}.png"
+                save_name_pdf = f"NClusters_{binning_var_key}_bin{j}_gen{gen_n}_{self.args.tag}.pdf"
             os.makedirs(os.path.join(self.output_dir), exist_ok=True)
             plt.savefig(os.path.join(self.output_dir, save_name))
             plt.savefig(os.path.join(self.output_dir, save_name_pdf))
@@ -198,7 +200,7 @@ class PerformancePlotter:
         # This now handles BOTH distributions AND responses
         conf = PLOT_VARS[var_key]
         fig, ax = plt.subplots(figsize=(10, 10))
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink", "lightseagreen", "steelblue", "gold", "mediumslateblue", "coral"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
 
         for i, ds in enumerate(datasets):
             # values = self._get_values(ds, var_key)
@@ -207,7 +209,7 @@ class PerformancePlotter:
             else:
                 values = self._get_values(ds, var_key)
 
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             
             ax.hist(values, bins=conf["bins"], range=conf["range"], color=color,
                     label=ds['label'], histtype='step', linewidth=2.5)
@@ -226,10 +228,13 @@ class PerformancePlotter:
         if conf["is_log"] == True :
             ax.set_yscale('log')
         ax.grid(linestyle=":")
-        ax.legend(title=title, frameon=True, facecolor='white', edgecolor='black', fontsize=16)
+        ax.legend(title=title, frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='lower right')
         plt.tight_layout()
         save_path = os.path.join(self.output_dir, f"{filename}.png")
         save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+        if self.args.tag is not None:
+            save_path     = os.path.join(self.output_dir, f"{filename}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}_{self.args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf)
         plt.close()
@@ -278,11 +283,16 @@ class PerformancePlotter:
         ax.set_ylabel(y_conf['label'])
         
         plt.tight_layout()
-
+        
+        
+        
         save_dir = os.path.join(self.output_dir, "2D_distributions")
         os.makedirs(save_dir, exist_ok=True)
         save_path = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.png")
         save_path_pdf = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.pdf")
+        if self.args.tag is not None:
+            save_path     = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}_{self.args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf)
         plt.close()
@@ -318,7 +328,7 @@ class PerformancePlotter:
         #Define binning
         bin_edges = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
 
 
 #        for i, ds in enumerate(datasets):
@@ -340,7 +350,7 @@ class PerformancePlotter:
             
             
         for i, ds in enumerate(datasets):
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
 
             matched_gen = ds['gen']
             total_gen = ds['total_gen']
@@ -373,6 +383,9 @@ class PerformancePlotter:
         plt.tight_layout()
         save_path = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}.png")
         save_path_pdf = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}.pdf")
+        if self.args.tag is not None:
+            save_path     = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}_{self.args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf)
         plt.close()
@@ -412,13 +425,13 @@ class PerformancePlotter:
         y_conf = PLOT_VARS[y_var_key]
         
         fig, ax = plt.subplots(figsize=(12, 12  ))
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
+        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
 
         bin_edges = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
         for i, ds in enumerate(datasets):
-            color = ds.get('color', default_colors[i % len(default_colors)])
+            color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
             if y_var_key == "n_clusters":
                 x_vals, y_vals = self._get_ncluster_values(ds, x_var_key, gen_n=gen_n)
             else:
@@ -448,7 +461,7 @@ class PerformancePlotter:
                     ylabel = r"$\sigma_{cluster}$"
                 
                 # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(2*counts - 2), out=np.zeros_like(stat), where=counts>1)
+                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
 
             elif mode == 'rms':
                 means, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
@@ -464,7 +477,7 @@ class PerformancePlotter:
                     ylabel = r"$\sigma^{eff-RMS}_{cluster}$"
                 
                 # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(2*counts - 2), out=np.zeros_like(stat), where=counts>1)
+                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
 
             # Masking in case there are few stats
             mask = ~np.isnan(stat) & (counts > 2) # Require at least 3 points to plot
@@ -481,12 +494,14 @@ class PerformancePlotter:
         ax.grid(linestyle=":")
         ax.legend(title=title, fontsize=15)
         
+
         profile_dir = save_dir if save_dir is not None else os.path.join(self.output_dir, "profile_distributions")
         os.makedirs(profile_dir, exist_ok=True)
-        
-        save_path     = os.path.join(profile_dir, f"{filename}_{mode}.png")
+        save_path = os.path.join(profile_dir, f"{filename}_{mode}.png")
         save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}.pdf")
-        
+        if self.args.tag is not None:
+            save_path     = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf, dpi=300)
         plt.close()
@@ -506,8 +521,6 @@ class PerformancePlotter:
         bin_edges = np.linspace(bin_conf['range'][0], bin_conf['range'][1], bin_conf['bins'] + 1)
         n_bins = len(bin_edges) - 1
         
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
-
         tag = f"_{self.args.tag}" if self.args.tag is not None else ""
         base_name = f"{filename}_{var_key}_in_{binning_var_key}{tag}"
 
@@ -522,16 +535,16 @@ class PerformancePlotter:
                 ax = axes[j]
                 
                 for i, ds in enumerate(datasets):
-                    color = ds.get('color', default_colors[i % len(default_colors)])
+                    color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
                     vals_to_plot = self._get_values(ds, var_key)
                     bin_vals     = self._get_values(ds, binning_var_key)
                     
-                    if self.args.gen_pt_cut > 0:
-                        pt_gen_vals = self._get_values(ds, "pt_gen")
-                        gen_mask = pt_gen_vals > self.args.gen_pt_cut
-
-                        vals_to_plot = vals_to_plot[gen_mask]
-                        bin_vals = bin_vals[gen_mask]
+                    #if self.args.gen_pt_cut > 0:
+                    #    pt_gen_vals = self._get_values(ds, "pt_gen")
+                    #    gen_mask = pt_gen_vals > self.args.gen_pt_cut
+#
+                    #    vals_to_plot = vals_to_plot[gen_mask]
+                    #    bin_vals = bin_vals[gen_mask]
                     
                     mask         = (bin_vals >= low) & (bin_vals < high)
                     slice_data   = vals_to_plot[mask]
@@ -570,16 +583,16 @@ class PerformancePlotter:
                 fig, ax = plt.subplots(figsize=(10, 10))
 
                 for i, ds in enumerate(datasets):
-                    color = ds.get('color', default_colors[i % len(default_colors)])
+                    color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
                     vals_to_plot = self._get_values(ds, var_key)
                     bin_vals     = self._get_values(ds, binning_var_key)
                     
-                    if self.args.gen_pt_cut > 0:
-                        pt_gen_vals = self._get_values(ds, "pt_gen")
-                        gen_mask = pt_gen_vals > self.args.gen_pt_cut
-                    
-                        vals_to_plot = vals_to_plot[gen_mask]
-                        bin_vals = bin_vals[gen_mask]
+                    #if self.args.gen_pt_cut > 0:
+                    #    pt_gen_vals = self._get_values(ds, "pt_gen")
+                    #    gen_mask = pt_gen_vals > self.args.gen_pt_cut
+                    #
+                    #    vals_to_plot = vals_to_plot[gen_mask]
+                    #    bin_vals = bin_vals[gen_mask]
 
                     mask         = (bin_vals >= low) & (bin_vals < high)
                     slice_data   = vals_to_plot[mask]
@@ -587,7 +600,6 @@ class PerformancePlotter:
                     ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
                             color=color, label=ds['label'], histtype='step', linewidth=2.5)
                     ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
-
                             color=color, histtype='stepfilled', alpha=0.2)
 
                 bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
@@ -601,6 +613,7 @@ class PerformancePlotter:
                 os.makedirs(save_dir, exist_ok=True)
                 save_path = os.path.join(save_dir, f"{base_name}_bin{j}.png")
                 save_path_pdf = os.path.join(save_dir, f"{base_name}_bin{j}.pdf")
+                
                 plt.savefig(save_path, dpi=300)
                 plt.savefig(save_path_pdf)
                 plt.close()
@@ -1141,3 +1154,215 @@ class PerformancePlotter:
         plt.savefig(os.path.join(save_dir, f"{tag}.pdf"), dpi=300)
         plt.close()
         print(f"--- Anomaly plot saved: {tag}.png")
+
+    def plot_weights(self, weight_bundles, filename, args, title=""):
+        fig, ax = plt.subplots(figsize=(14, 6))
+
+        for i, b in enumerate(weight_bundles):
+            color = b.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
+            
+            w = list(b['layer'])
+            if b.get('eta') is not None:
+                w.append(b['eta'])
+                w.append(b.get('bias', 0) or 0)
+
+            # If layer 0 was removed, start plotting from index 1
+            start = 1 if b.get('remove_layer1') else 0
+            x = np.arange(start, start + len(b['layer']))
+            # Append alpha/beta positions after layer 12
+            if b.get('eta') is not None:
+                x = np.append(x, [13, 14])
+
+            print("w:", w)
+
+            ax.plot(x, w, marker='o', linewidth=2, markersize=6,
+                    label=b['label'], color=color)
+
+        # Dynamic x-axis labels
+        max_len = max(
+            len(b['layer']) + (2 if b.get('eta') is not None else 0)
+            for b in weight_bundles
+        )
+        xtick_labels = [str(i) for i in range(13)]
+        if max_len > 13: xtick_labels.append(r'$\alpha$')
+        if max_len > 14: xtick_labels.append(r'$\beta$')
+
+        ax.set_xticks(np.arange(max_len))
+        ax.set_xticklabels(xtick_labels)
+        ax.set_ylim(-20, 20)
+        ax.axhline(1.0, color='gray', linestyle='--', linewidth=1, label='w=1')
+        ax.axvline(12.5, color='gray', linestyle=':', linewidth=1)  # separator before alpha/beta
+        ax.set_xlabel("Layer index")
+        ax.set_ylabel("Weight value")
+        ax.grid(linestyle=":")
+        ax.legend(title=title, fontsize=13, title_fontsize=14,
+                frameon=True, facecolor='white', edgecolor='black')
+        hep.cms.label("Preliminary", data=True,
+                    rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
+        plt.tight_layout()
+        save_path     = os.path.join(self.output_dir, f"{filename}.png")
+        save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+        if args.tag is not None:
+            save_path     = os.path.join(self.output_dir, f"{filename}_{args.tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}_{args.tag}.pdf")
+        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path_pdf)
+        plt.close()
+        print(f"--- Plot Saved: {save_path}")
+    def plot_weight_table(self, table_data, offsets, row_labels, filename, args, title=""):
+        """
+        Render a matplotlib table comparing weight values across different offsets.
+
+        Parameters
+        ----------
+        table_data  : dict {offset: np.array}  — one weight vector per offset
+        offsets     : list of float            — column order
+        row_labels  : list of str              — one label per weight index
+        """
+        present = [o for o in offsets if o in table_data]
+        if not present:
+            print(f"[WARN] No data for weight table '{filename}', skipping.")
+            return
+
+        n_rows = len(row_labels)
+        n_cols = len(present)
+
+        cell_text = []
+        for row_idx in range(n_rows):
+            row = []
+            for offset in present:
+                w = table_data[offset]
+                row.append(f"{w[row_idx]:.4f}" if row_idx < len(w) else "—")
+            cell_text.append(row)
+
+        col_labels = [f"offset = {o}" for o in present]
+
+        # Pastel colour coding: pink for w < 0, green for w > 1, white otherwise
+        cell_colours = []
+        for row_idx in range(n_rows):
+            row_colours = []
+            for offset in present:
+                w = table_data[offset]
+                val = w[row_idx] if row_idx < len(w) else None
+                if val is None:
+                    row_colours.append("#f0f0f0")
+                elif val < 0:
+                    row_colours.append("#f38bc1")
+                elif val > 1:
+                    row_colours.append("#a8f164")
+                else:
+                    row_colours.append("#ffffff")
+            cell_colours.append(row_colours)
+
+        fig_h = max(3, 0.38 * n_rows + 1.0)
+        fig_w = max(4, 1.4 * n_cols + 2.5)
+
+        with plt.style.context('default'):
+            fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+            ax.axis("off")
+
+            # Table fills the lower 88 % of the axes; top strip is for the title
+            tbl = ax.table(
+                cellText=cell_text,
+                cellColours=cell_colours,
+                rowLabels=row_labels,
+                colLabels=col_labels,
+                cellLoc="center",
+                bbox=[0, 0, 1, 0.88],
+            )
+            tbl.auto_set_font_size(False)
+            tbl.set_fontsize(10)
+            tbl.auto_set_column_width(list(range(n_cols)))
+
+            ax.text(0.5, 0.91, title + " | " + args.particles, transform=ax.transAxes,
+                    ha="center", va="bottom", fontsize=11, fontweight="bold",
+                    color="#222222")
+
+            tag = f"_{args.tag}" if args.tag else ""
+            save_path     = os.path.join(self.output_dir, f"{filename}{tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}{tag}.pdf")
+            fig.savefig(save_path, dpi=200, bbox_inches="tight")
+            fig.savefig(save_path_pdf, bbox_inches="tight")
+            fig.clear()
+            plt.close(fig)
+            print(f"--- Plot Saved: {save_path}")
+
+    def plot_eta_residual(self, residual_bundles, filename, args, offset=0, title=""):
+        """
+        For each strategy that has an eta correction (PU200_seq or PU200),
+        plots:
+        - scatter/profile of  (Ecalib - sum(wl*El))  vs  |eta|    data points
+        - the fitted curve     -alpha*|eta| - beta                 fit line
+
+        residual_bundles: list of dicts, one per strategy:
+            {
+            'label':    str,
+            'color':    str,
+            'eta':      np.array, shape (N,)   -- |eta| per cluster, flattened
+            'residual': np.array, shape (N,)   -- Ecalib - sum(wl*El) per cluster
+            'alpha':    float,
+            'beta':     float,
+            }
+        """
+        # DEFAULT_COLORS = ["tab:cyan", "darkorchid", "darkorange", "deeppink", "royalblue", "limegreen"]
+        eta_conf = PLOT_VARS["abs_eta_gen"]
+
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+        bin_edges   = np.linspace(eta_conf['range'][0], eta_conf['range'][1], 30)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+        eta_smooth  = np.linspace(eta_conf['range'][0], eta_conf['range'][1], 200)
+
+        for i, b in enumerate(residual_bundles):
+            color = b.get('color', DEFAULT_COLORS[(i + 1) % len(DEFAULT_COLORS)])
+            abs_eta  = b['eta']
+            residual = b['residual']
+            alpha    = b['alpha']
+            beta     = b['beta']
+
+            # --- profile: mean residual per |eta| bin ---
+            from scipy.stats import binned_statistic
+            means,  _, _ = binned_statistic(abs_eta, residual, statistic='mean',  bins=bin_edges)
+            stds,   _, _ = binned_statistic(abs_eta, residual, statistic='std',   bins=bin_edges)
+            counts, _, _ = binned_statistic(abs_eta, residual, statistic='count', bins=bin_edges)
+
+            err  = np.divide(stds, np.sqrt(counts), out=np.zeros_like(stds), where=counts > 0)
+            mask = counts > 2
+
+            ax.errorbar(
+                bin_centers[mask], means[mask], yerr=err[mask],
+                xerr=(bin_edges[1] - bin_edges[0]) / 2,
+                fmt='o', markersize=6, color=color,
+                label=b['label'] + r" (data profile)",
+            )
+
+            # --- fitted curve: -alpha*|eta| - beta ---
+            b_offset = b.get('offset', offset)
+            curve =  alpha * (eta_smooth - b_offset) + beta
+            ax.plot(
+                eta_smooth, curve,
+                linestyle='--', linewidth=2, color=color,
+                label=b['label'] + rf" (fit: $ {alpha:.2f}|\eta| + {beta:.2f}$)",
+            )
+
+        ax.axhline(0, color='gray', linestyle=':', linewidth=1)
+        ax.set_xlabel(r"$|\eta^{cluster}|$")
+        # ax.set_ylabel(r"$E_{calib} - \sum w_l E_l^{raw}$  [GeV]")
+        ax.set_ylabel(r"$\sum w_l E_l^{raw} - E_{calib}$  [GeV]")
+        ax.grid(linestyle=":")
+        ax.legend(title=title, fontsize=12, title_fontsize=13,
+                frameon=True, facecolor='white', edgecolor='black')
+        hep.cms.label("Preliminary", data=True,
+                    rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
+        plt.tight_layout()
+        save_path     = os.path.join(self.output_dir, f"{filename}.png")
+        save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+        if args.tag is not None:
+            save_path     = os.path.join(self.output_dir, f"{filename}_{args.tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}_{args.tag}.pdf")
+        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path_pdf)
+        plt.close()
+        print(f"--- Plot Saved: {save_path}")
+
+            

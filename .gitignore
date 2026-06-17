@@ -6,6 +6,12 @@ __pycache__/
 *.png
 *.pdf
 logs/
+plots*/
+logs/
+.Xauthority
+.bash_history
+.lesshst
+
 
 #Plots
 *results*

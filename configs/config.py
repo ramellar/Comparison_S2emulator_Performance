@@ -39,35 +39,91 @@ CALIB_CONFIGS = {
 }
 
 # Choose the PU0 config to be used to derive the eta correction factors
-# If "None" then the same method will be applied to PU0 and PU200
+# If "None" then the same method type will be applied to PU0 and PU200
 # If fixed string, then that method will be applied for the layer weights
 
 # PU0_CONFIG_FOR_SEQ=None
 PU0_CONFIG_FOR_SEQ="bounds_0_20"
 
+# COMPARISONS = {
+#     "PU0_bounds": {
+#         "strategy": "PU0",
+#         "wl": "bounds",
+#     },
+
+#     "PU200_seq_mixed": {
+#         "strategy": "PU200_seq_b_nb",
+#         "wl": "bounds",
+#         "eta": "no_bounds",
+#     },
+
+#     "PU200_bounds": {
+#         "strategy": "PU200",
+#         "all": "bounds",
+#     },
+# }
+# COMPARISONS = {
+#     # PU0 only
+#     "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
+#     "PU0_no_bounds":         {"strategy": "PU0",       "wl": "no_bounds"},
+
+#     # PU200 sequential: PU0 layer weights + PU200 eta correction
+#     "PU200_seq_b_nb":        {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds"},
+#     "PU200_seq_b_b":         {"strategy": "PU200_seq", "wl": "bounds", "eta": "bounds_0_20"},
+
+#     # PU200 joint
+#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds"},
+#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20"},
+# }
+# COMPARISONS = {
+#     "PU200_no_bounds":       {"strategy": "PU200",     "all": "no_bounds", "offset": 2.5},
+#     "PU200_bounds":          {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.5},
+#     "PU200_all_bounds_0_20_no_layer1":          {"strategy": "PU200",     "all": "bounds_0_20_no_layer1", "offset": 2.5},
+#     "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 2.5},  
+# }
+# COMPARISONS = {
+#     # "PU0_bounds":            {"strategy": "PU0",       "wl": "bounds_0_20"},
+#     # "PU0_no_bounds":         {"strategy": "PU0",       "wl": "no_bounds"},
+#     # "PU0_bounds_0_20_no_layer1": {"strategy": "PU0",     "wl": "bounds_0_20_no_layer1"},
+#     # "PU0_no_bounds_no_layer1":  {"strategy": "PU0",     "wl": "no_bounds_no_layer1"},  
+#     "PU200_seq_b_nb":       {"strategy": "PU200_seq",     "wl": "bounds", "eta": "no_bounds"},
+#     "PU200_seq_b_b":          {"strategy": "PU200_seq",     "wl": "bounds", "eta": "bounds_0_20"},
+# }
+
+
+#Final configuration for photons
+
 COMPARISONS = {
-    "PU0_bounds": {
-        "strategy": "PU0",
-        "wl": "bounds",
-    },
-
-    "PU200_seq_mixed": {
-        "strategy": "PU200_seq",
-        "wl": "bounds",
-        "eta": "no_bounds",
-    },
-
-    "PU200_bounds": {
-        "strategy": "PU200",
-        "all": "bounds",
-    },
+    "PU200_seq_b_nb":           {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds", "offset": 0},
+    "PU200_bounds_offset2p8":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.8},
+    # "PU200_bounds_offset2p4":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.4},
+    # "PU200_no_bounds":   {"strategy": "PU200",     "all": "no_bounds", "offset": 2.8},
+    # "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 0},
+    # "PU200_all_no_bounds_no_layer1_offset2p4":          {"strategy": "PU200",     "all": "no_bounds_no_layer1","offset": 2.4}
 }
 
-STRATEGIES = ["PU0", "PU200", "PU200_seq"]
+#only used in derive_calibrations
+# STRATEGIES = ["PU0"]
+STRATEGIES = ["PU0","PU200_seq", "PU200"]
 
 #----------------------------
 # PLOTTING
 #----------------------------
+
+DEFAULT_COLORS = [
+    "tab:olive",
+    "tab:cyan",
+    "deeppink",
+    "darkorange",
+    "darkorchid",
+    "gold",
+    "limegreen",
+    "royalblue",
+    "lightseagreen",
+    "steelblue",
+    "mediumslateblue",
+    "coral",
+]
 
 PLOT_VARS = {
     "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 200],"is_log": True},
