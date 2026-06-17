@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--pileup',    type=str, default='PU0',     help='Choose the pileup - PU0 or PU200')
     parser.add_argument('--pt_cut',    type=float, default=0,         help='Provide the cut for the cluster pt')
     parser.add_argument('--gen_pt_cut',    type=float, default=0,         help='Provide the cut for the gen pt')
-    parser.add_argument('--deltaR',    type=float, default=0.1,         help='DeltaR')
+    parser.add_argument('--deltaR',    type=float, default=0.2,         help='DeltaR')
     parser.add_argument('--total_efficiency',     action='store_true', help='Compute the total efficiency for each emulation test')
 
     args = parser.parse_args()

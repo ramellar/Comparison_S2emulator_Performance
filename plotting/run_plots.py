@@ -45,6 +45,8 @@ class PerformancePlotter:
         os.makedirs(output_dir, exist_ok=True)
         hep.style.use(hep.style.CMS)
 
+
+
     def _get_values(self, ds, var_key):
         use_abs = var_key.startswith("abs_")
         
@@ -71,6 +73,8 @@ class PerformancePlotter:
         branch = PLOT_VARS[var_key]["branch"]
         vals = self._extract_array(ds['data'], branch)
         return np.abs(vals) if use_abs else vals
+    
+    
     
 
     def _get_ncluster_values(self, ds,x_var_key='pt', gen_n=None):
@@ -107,6 +111,9 @@ class PerformancePlotter:
             x_vals = ak.to_numpy(ak.flatten(gen_masked[branch], axis=-1))
 
         return x_vals, y_vals
+
+
+
 
     def plot_nclusters_per_bin(self, datasets, binning_var_key, title="", gen_n=1):
         """
@@ -169,6 +176,8 @@ class PerformancePlotter:
             plt.savefig(os.path.join(self.output_dir, save_name_pdf))
             print(f"--- Plot Saved: {os.path.join(self.output_dir, save_name)}")
     
+    
+    
     def _extract_array(self, data, branch):
         """
         Internal helper: Handles .attribute, ['key'], and flattening.
@@ -182,6 +191,8 @@ class PerformancePlotter:
         # 2. Flatten the Awkward array to 1D numpy
         return ak.to_numpy(ak.flatten(arr, axis=-1))
     
+
+
 
     def plot_1d(self, datasets, var_key, filename, title="", gen_n=None):
         # This now handles BOTH distributions AND responses
@@ -225,6 +236,9 @@ class PerformancePlotter:
         print(f"--- Plot Saved: {save_path}")
     
         
+        
+        
+        
     def plot_2d(self, dataset, x_var_key, y_var_key, filename, title=""):
         """
         Plots a 2D histogram of two variables for a SINGLE dataset.
@@ -264,12 +278,17 @@ class PerformancePlotter:
         ax.set_ylabel(y_conf['label'])
         
         plt.tight_layout()
-        save_path = os.path.join(self.output_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.png")
-        save_path_pdf = os.path.join(self.output_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.pdf")
+
+        save_dir = os.path.join(self.output_dir, "2D_distributions")
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.png")
+        save_path_pdf = os.path.join(save_dir, f"{filename}_{x_var_key}_vs_{y_var_key}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf)
         plt.close()
         print(f"--- Plot Saved: {save_path}")
+
+
 
     def plot_2d_batch(self, bundle, correlations, title):
         """
@@ -359,16 +378,36 @@ class PerformancePlotter:
         plt.close()
         print(f"--- Plot Saved: {save_path}")
 
+
+
+
+    #def effrms(self, x, c=0.68):
+    #    """ Computes half-width of the smallest interval containing c% of the distribution. """
+    #    # if len(x) < 5: return 0 # Need enough points to find an interval
+    #    x_sorted = np.sort(x)
+    #    m = int(c * len(x_sorted))
+    #    # Find the width of all intervals containing 'm' points
+    #    widths = x_sorted[m:] - x_sorted[:-m]
+    #    return np.min(widths) / 2.0
+    
     def effrms(self, x, c=0.68):
-        """ Computes half-width of the smallest interval containing c% of the distribution. """
-        # if len(x) < 5: return 0 # Need enough points to find an interval
+        x = np.asarray(x)
+        x = x[np.isfinite(x)]
+        if len(x) < 2:
+            return np.nan
         x_sorted = np.sort(x)
-        m = int(c * len(x_sorted))
-        # Find the width of all intervals containing 'm' points
+        m = int(np.ceil(c * len(x_sorted)))
+        if m < 1 or m >= len(x_sorted):
+            return np.nan
         widths = x_sorted[m:] - x_sorted[:-m]
+        if len(widths) == 0:
+            return np.nan
         return np.min(widths) / 2.0
 
-    def plot_profile(self, datasets, x_var_key, y_var_key, filename, mode='mean', title="", gen_n=1):
+
+
+
+    def plot_profile(self, datasets, x_var_key, y_var_key, filename, mode='mean', title="", gen_n=1, save_dir=None):
         x_conf = PLOT_VARS[x_var_key]
         y_conf = PLOT_VARS[y_var_key]
         
@@ -442,208 +481,199 @@ class PerformancePlotter:
         ax.grid(linestyle=":")
         ax.legend(title=title, fontsize=15)
         
-        save_path = os.path.join(self.output_dir, f"{filename}_{mode}.png")
-        save_path_pdf = os.path.join(self.output_dir, f"{filename}_{mode}.pdf")
+        profile_dir = save_dir if save_dir is not None else os.path.join(self.output_dir, "profile_distributions")
+        os.makedirs(profile_dir, exist_ok=True)
+        
+        save_path     = os.path.join(profile_dir, f"{filename}_{mode}.png")
+        save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}.pdf")
+        
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf, dpi=300)
         plt.close()
         print(f"--- Plot Saved: {save_path}")
 
-    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename):
+
+
+
+    def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename,  title_="", combined=True):
+        """
+        Shows the distribution of var_key (e.g., pt_response) for each bin of binning_var_key.
+        With combined=True (default) all bins are laid out in a single figure saved as one PNG/PDF.
+        """
         var_conf = PLOT_VARS[var_key]
         bin_conf = PLOT_VARS[binning_var_key]
-        
-        if "eta" in binning_var_key.lower():
-            bin_edges = np.array([1.5, 1.8, 2.1, 2.4, 2.7, 3.0])
-        else:
-            bin_edges = np.linspace(
-            bin_conf['range'][0],
-            bin_conf['range'][1],
-            bin_conf['bins'] + 1
-            )
 
+        bin_edges = np.linspace(bin_conf['range'][0], bin_conf['range'][1], bin_conf['bins'] + 1)
+        n_bins = len(bin_edges) - 1
+        
+        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
+
+        tag = f"_{self.args.tag}" if self.args.tag is not None else ""
+        base_name = f"{filename}_{var_key}_in_{binning_var_key}{tag}"
+
+        if combined:
+            n_rows = 2
+            n_cols = int(np.ceil(n_bins / n_rows))
+            fig, axes = plt.subplots(n_rows, n_cols, figsize=(7 * n_cols, 6 * n_rows))
+            axes = np.array(axes).flatten()
+
+            for j in range(n_bins):
+                low, high = bin_edges[j], bin_edges[j + 1]
+                ax = axes[j]
+                
+                for i, ds in enumerate(datasets):
+                    color = ds.get('color', default_colors[i % len(default_colors)])
+                    vals_to_plot = self._get_values(ds, var_key)
+                    bin_vals     = self._get_values(ds, binning_var_key)
+                    
+                    if self.args.gen_pt_cut > 0:
+                        pt_gen_vals = self._get_values(ds, "pt_gen")
+                        gen_mask = pt_gen_vals > self.args.gen_pt_cut
+
+                        vals_to_plot = vals_to_plot[gen_mask]
+                        bin_vals = bin_vals[gen_mask]
+                    
+                    mask         = (bin_vals >= low) & (bin_vals < high)
+                    slice_data   = vals_to_plot[mask]
+
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, label=ds['label'], histtype='step', linewidth=2.5)
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, histtype='stepfilled', alpha=0.2)
+
+                bin_label = f"{low:.2f} < {bin_conf['label']} < {high:.2f}"
+                ax.set_xlabel(var_conf['label'], fontsize=13)
+                ax.set_ylabel("Counts", fontsize=13)
+                ax.legend(title=bin_label + title_, fontsize=11, loc='upper left', title_fontsize=11)
+                ax.grid(linestyle=":", alpha=0.6)
+
+            # Hide unused subplots
+            for j in range(n_bins, len(axes)):
+                axes[j].set_visible(False)
+                
+            fig.suptitle(f"{var_conf['label']} per {bin_conf['label']} bin  |  {self.args.particles} {self.args.pileup}",
+                         fontsize=16, y=1.01)
+            fig.tight_layout()
+
+            save_dir = os.path.join(self.output_dir, "bin_distributions")                
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f"{base_name}_bin{j}.png")
+            save_path_pdf = os.path.join(save_dir, f"{base_name}_bin{j}.pdf") 
+            plt.savefig(save_path, dpi=150, bbox_inches='tight')
+            plt.savefig(save_path_pdf, bbox_inches='tight')
+            plt.close()
+            print(f"--- Bin Distribution Saved: {save_path}")
+
+        else:
+            for j in range(n_bins):
+                low, high = bin_edges[j], bin_edges[j + 1]
+                fig, ax = plt.subplots(figsize=(10, 10))
+
+                for i, ds in enumerate(datasets):
+                    color = ds.get('color', default_colors[i % len(default_colors)])
+                    vals_to_plot = self._get_values(ds, var_key)
+                    bin_vals     = self._get_values(ds, binning_var_key)
+                    
+                    if self.args.gen_pt_cut > 0:
+                        pt_gen_vals = self._get_values(ds, "pt_gen")
+                        gen_mask = pt_gen_vals > self.args.gen_pt_cut
+                    
+                        vals_to_plot = vals_to_plot[gen_mask]
+                        bin_vals = bin_vals[gen_mask]
+
+                    mask         = (bin_vals >= low) & (bin_vals < high)
+                    slice_data   = vals_to_plot[mask]
+
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+                            color=color, label=ds['label'], histtype='step', linewidth=2.5)
+                    ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
+
+                            color=color, histtype='stepfilled', alpha=0.2)
+
+                bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
+                hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=ax)
+                ax.set_xlabel(var_conf['label'])
+                ax.set_ylabel("Counts")
+                ax.legend(title=bin_label, fontsize=18, loc='upper left', title_fontsize=18)
+                ax.grid(linestyle=":", alpha=0.6)
+
+                save_dir = os.path.join(self.output_dir, "bin_distributions")                
+                os.makedirs(save_dir, exist_ok=True)
+                save_path = os.path.join(save_dir, f"{base_name}_bin{j}.png")
+                save_path_pdf = os.path.join(save_dir, f"{base_name}_bin{j}.pdf")
+                plt.savefig(save_path, dpi=300)
+                plt.savefig(save_path_pdf)
+                plt.close()
+                print(f"--- Bin Distribution Saved: {save_path}")
+                
+        
+    def plot_multiplicity_per_decaymode(self, datasets, decaymode_key="gen_decayMode", filename="Multiplicity_per_decaymode", title="", make_raw=True,):
+        valid_dm = np.array([0, 1, 4, 5])
+        bins = np.arange(-0.5, 6.5, 1)
+        bin_centers = 0.5 * (bins[:-1] + bins[1:])
+        valid_mask = np.isin(bin_centers, valid_dm)
 
         default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
 
-        n_bins = len(bin_edges) - 1
-        ncols = 5
-        nrows = int(np.ceil(n_bins / ncols))
-
-        fig, axes = plt.subplots(
-            nrows,
-            ncols,
-            figsize=(5 * ncols, 4.5 * nrows),
-            sharex=True,
-            sharey=True
-        )
-
-        axes = np.array(axes).reshape(-1)
-
-        for j in range(n_bins):
-            low, high = bin_edges[j], bin_edges[j + 1]
-            ax = axes[j]
-
-            for i, ds in enumerate(datasets):
-                color = ds.get('color', default_colors[i % len(default_colors)])
-
-                vals_to_plot = self._get_values(ds, var_key)
-                bin_vals = self._get_values(ds, binning_var_key)
-                
-                if "eta" in binning_var_key.lower():
-                    bin_vals = np.abs(bin_vals)
-
-                mask = (bin_vals >= low) & (bin_vals < high)
-                slice_data = vals_to_plot[mask]
-
-                ax.hist(
-                    slice_data,
-                    bins=var_conf['bins'],
-                    range=var_conf['range'],
-                    color=color,
-                    histtype='step',
-                    linewidth=2.0,
-                    label=ds['label']
-                )
-
-                ax.hist(
-                    slice_data,
-                    bins=var_conf['bins'],
-                    range=var_conf['range'],
-                    color=color,
-                    histtype='stepfilled',
-                    alpha=0.2
-                )
-
-            ax.set_title(f"{low:.1f} < {bin_conf['label']} < {high:.1f}", fontsize=14)
-            ax.grid(linestyle=":", alpha=0.6)
-
-        for ax in axes[n_bins:]:
-            ax.axis("off")
-
-        fig.supxlabel(var_conf['label'], fontsize=22)
-        fig.supylabel("Counts", fontsize=22)
-
-        handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc="upper right", fontsize=16)
-
-        #hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=axes[0])
-        hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=axes[0], pad=30)
-
-        save_dir = os.path.join(self.output_dir, "bin_distributions")
+        save_dir = os.path.join(self.output_dir, "decaymode_distributions")
         os.makedirs(save_dir, exist_ok=True)
 
-        save_path = os.path.join(
-            save_dir,
-            f"{filename}_{var_key}_in_{binning_var_key}_all_bins.png"
-        )
-        save_path_pdf = os.path.join(
-            save_dir,
-            f"{filename}_{var_key}_in_{binning_var_key}_all_bins.pdf"
-        )
+        # ============================================================
+        # Plot 1: normalized distribution + TRatio
+        # ============================================================
 
-        plt.tight_layout(rect=[0, 0, 0.92, 0.95])
-        plt.savefig(save_path, dpi=300)
-        plt.savefig(save_path_pdf)
-        plt.close()
-
-        print(f"--- All-bin Distribution Saved: {save_path}")
-        
-        
-    def plot_decay_modes(self, datasets, filename="DecayMode_counts", title="", normalize=False):
-        fig, ax = plt.subplots(figsize=(10, 8))
-    
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
-    
-        # bin centrati su 0, 1, 2, 3, 4, 5
-        bins = np.arange(-0.5, 6.5, 1)
-    
-        for i, ds in enumerate(datasets):
-            color = ds.get("color", default_colors[i % len(default_colors)])
-    
-            decay_modes = self._get_values(ds, "gen_decayMode")
-            decay_modes = ak.to_numpy(ak.flatten(decay_modes, axis=None))
-            
-            ax.hist(decay_modes, bins=bins, histtype="stepfilled", alpha=0.22, color=color, density=normalize)
-            ax.hist(decay_modes, bins=bins, histtype="step", linewidth=2.5, color=color, label=ds["label"], density=normalize)
-        
-        
-        ax.set_xlabel("gen decayMode", fontsize=22)
-        if normalize:
-            ax.set_ylabel("Normalized events", fontsize=22)
-        else:
-            ax.set_ylabel("Number of events", fontsize=22)
-            
-        ax.set_title(title, fontsize=24)
-        ax.set_xticks([0, 1, 4, 5])
-        ax.legend(fontsize=16)
-        ax.grid(axis="y", linestyle=":", alpha=0.6)
-    
-        save_path = os.path.join(self.output_dir, f"{filename}.png")
-        save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
-    
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=300)
-        plt.savefig(save_path_pdf)
-        plt.close()
-        
-        
-    def plot_decay_modes_ratio(self, datasets, filename="DecayMode_counts_ratio", title=""):
         fig, (ax, rax) = plt.subplots(
             2, 1,
             figsize=(10, 9),
             sharex=True,
-            gridspec_kw={"height_ratios": [3, 1], "hspace": 0.05}
+            gridspec_kw={"height_ratios": [3, 1], "hspace": 0.05},
         )
 
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
-        bins = np.arange(-0.5, 6.5, 1)
-        bin_centers = 0.5 * (bins[:-1] + bins[1:])
-
-        # usa ultimo dataset come riferimento, es. Tri Ref
-        ref_ds = datasets[-1]
-        ref_dm = self._get_values(ref_ds, "gen_decayMode")
-        ref_dm = ak.to_numpy(ak.flatten(ref_dm, axis=None))
-
+        # riferimento = ultimo dataset
+        ref_dm = ak.to_numpy(ak.flatten(datasets[-1]["gen"][decaymode_key], axis=None))
         ref_counts, _ = np.histogram(ref_dm, bins=bins)
-        ref_norm = ref_counts / np.sum(ref_counts)
+        ref_norm = np.divide(ref_counts, np.sum(ref_counts), out=np.zeros_like(ref_counts, dtype=float), where=np.sum(ref_counts) > 0,)
 
         for i, ds in enumerate(datasets):
             color = ds.get("color", default_colors[i % len(default_colors)])
 
-            decay_modes = self._get_values(ds, "gen_decayMode")
-            decay_modes = ak.to_numpy(ak.flatten(decay_modes, axis=None))
+            dm_vals = ak.to_numpy(ak.flatten(ds["gen"][decaymode_key], axis=None))
 
-            counts, _ = np.histogram(decay_modes, bins=bins)
-            norm = counts / np.sum(counts)
+            counts, _ = np.histogram(dm_vals, bins=bins)
+            norm = np.divide(
+                counts,
+                np.sum(counts),
+                out=np.zeros_like(counts, dtype=float),
+                where=np.sum(counts) > 0,
+            )
+
+            weights = np.ones_like(dm_vals, dtype=float) / len(dm_vals)
 
             ax.hist(
-                decay_modes,
+                dm_vals,
                 bins=bins,
                 histtype="stepfilled",
                 alpha=0.22,
                 color=color,
-                weights=np.ones_like(decay_modes) / len(decay_modes)
+                weights=weights,
             )
 
             ax.hist(
-                decay_modes,
+                dm_vals,
                 bins=bins,
                 histtype="step",
                 linewidth=2.5,
                 color=color,
                 label=ds["label"],
-                weights=np.ones_like(decay_modes) / len(decay_modes)
+                weights=weights,
             )
 
             ratio = np.divide(
                 norm,
                 ref_norm,
                 out=np.zeros_like(norm, dtype=float),
-                where=ref_norm > 0
+                where=ref_norm > 0,
             )
-
-            valid_dm = np.array([0, 1, 4, 5])
-            valid_mask = np.isin(bin_centers, valid_dm)
 
             rax.plot(
                 bin_centers[valid_mask],
@@ -652,64 +682,112 @@ class PerformancePlotter:
                 linestyle="none",
                 markersize=6,
                 color=color,
-                label=ds["label"]
+                label=ds["label"],
             )
 
-        ax.set_ylabel("Normalized events", fontsize=20)
-        ax.set_title(title, fontsize=22)
-        ax.legend(fontsize=14)
+        hep.cms.label(
+            "Preliminary",
+            data=True,
+            rlabel=f"{self.args.particles}-{self.args.pileup}",
+            ax=ax,
+        )
+
+        ax.set_ylabel("Normalized events", fontsize=18)
+        ax.legend(title=title, fontsize=13)
         ax.grid(axis="y", linestyle=":", alpha=0.6)
 
         rax.axhline(1.0, color="black", linestyle="--", linewidth=1)
-        rax.set_xlabel("gen decayMode", fontsize=20)
-        rax.set_ylabel("Ratio / Ref", fontsize=16)
-        rax.set_xticks([0, 1, 4, 5])
-        rax.grid(axis="y", linestyle=":", alpha=0.6)
+        rax.set_xlabel("gen decayMode", fontsize=18)
+        rax.set_ylabel("Ratio / Ref", fontsize=14)
+        rax.set_xticks(valid_dm)
         rax.set_xlim(-0.5, 5.5)
-        rax.set_ylim(0.95, 1.05)
-
-        save_path = os.path.join(self.output_dir, f"{filename}.png")
-        save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+        rax.set_ylim(0.8, 1.2)
+        rax.grid(axis="y", linestyle=":", alpha=0.6)
 
         plt.tight_layout()
-        plt.savefig(save_path, dpi=300)
-        plt.savefig(save_path_pdf)
+        plt.savefig(os.path.join(save_dir, f"{filename}.png"), dpi=300)
+        plt.savefig(os.path.join(save_dir, f"{filename}.pdf"), dpi=300)
         plt.close()
 
-        print(f"--- Ratio Plot Saved: {save_path}")
+        print(f"--- Normalized multiplicity per DM saved: {os.path.join(save_dir, filename)}.png")
+
+        # ============================================================
+        # Plot 2: raw distribution, no normalization, no TRatio
+        # ============================================================
+
+        if make_raw:
+            fig_raw, ax_raw = plt.subplots(figsize=(10, 7))
+
+            for i, ds in enumerate(datasets):
+                color = ds.get("color", default_colors[i % len(default_colors)])
+
+                dm_vals = ak.to_numpy(
+                    ak.flatten(ds["gen"][decaymode_key], axis=None)
+                )
+
+                ax_raw.hist(dm_vals, bins=bins, histtype="stepfilled", alpha=0.22, color=color,)
+
+                ax_raw.hist(dm_vals, bins=bins, histtype="step", linewidth=2.5, color=color, label=ds["label"],)
+
+            hep.cms.label(
+                "Preliminary",
+                data=True,
+                rlabel=f"{self.args.particles}-{self.args.pileup}",
+                ax=ax_raw,
+            )
+
+            ax_raw.set_xlabel("gen decayMode", fontsize=18)
+            ax_raw.set_ylabel("Events", fontsize=18)
+            ax_raw.set_xticks(valid_dm)
+            ax_raw.set_xlim(-0.5, 5.5)
+            ax_raw.legend(title=title, fontsize=13)
+            ax_raw.grid(axis="y", linestyle=":", alpha=0.6)
+
+            plt.tight_layout()
+            plt.savefig(os.path.join(save_dir, f"{filename}_raw.png"), dpi=300)
+            plt.savefig(os.path.join(save_dir, f"{filename}_raw.pdf"), dpi=300)
+            plt.close()
+
+            print(f"--- Raw multiplicity per DM saved: {os.path.join(save_dir, filename)}_raw.png")
         
         
     def plot_distributions_per_decaymode(self, datasets, var_key, decaymode_key, filename):
         var_conf = PLOT_VARS[var_key]
-    
+
         decay_modes = [0, 1, 4, 5]
         default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
-    
+
         ncols = 2
         nrows = 2
-    
+
         fig, axes = plt.subplots(nrows, ncols, figsize=(14, 10), sharex=True, sharey=True)
         axes = axes.flatten()
-    
+
         for j, dm in enumerate(decay_modes):
             ax = axes[j]
-    
+
             for i, ds in enumerate(datasets):
                 color = ds.get("color", default_colors[i % len(default_colors)])
-    
+
                 if var_key == "abs_eta":
-                    vals_to_plot = abs(self._get_values(ds, "eta"))
+                    vals_to_plot = np.abs(self._get_values(ds, "eta"))
                 else:
                     vals_to_plot = self._get_values(ds, var_key)
-    
-                dm_vals = self._get_values(ds, decaymode_key)
-    
+
+                dm_vals = ak.to_numpy(ak.flatten(ds["gen"][decaymode_key], axis=None))
+
                 vals_to_plot = ak.to_numpy(ak.flatten(vals_to_plot, axis=None))
                 dm_vals = ak.to_numpy(ak.flatten(dm_vals, axis=None))
-    
-                mask = (dm_vals == dm)
+
+                mask = dm_vals == dm
                 slice_data = vals_to_plot[mask]
-    
+                slice_data = slice_data[np.isfinite(slice_data)]
+
+                if len(slice_data) == 0:
+                    continue
+
+                weights = np.ones_like(slice_data, dtype=float) / len(slice_data)
+
                 ax.hist(
                     slice_data,
                     bins=var_conf["bins"],
@@ -717,8 +795,9 @@ class PerformancePlotter:
                     histtype="stepfilled",
                     alpha=0.22,
                     color=color,
-                    density=True
+                    weights=weights,
                 )
+
                 ax.hist(
                     slice_data,
                     bins=var_conf["bins"],
@@ -727,18 +806,19 @@ class PerformancePlotter:
                     linewidth=2.2,
                     color=color,
                     label=ds["label"],
-                    density=True
+                    weights=weights,
                 )
-    
+
             ax.set_title(f"DecayMode = {dm}", fontsize=18)
             ax.grid(linestyle=":", alpha=0.6)
-    
+
         fig.supxlabel(var_conf["label"], fontsize=22)
-        fig.supylabel("Normalized counts", fontsize=22)
-    
+        fig.supylabel("Normalized entries", fontsize=22)
+
         handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc="upper right", fontsize=14)
-    
+        if labels:
+            fig.legend(handles, labels, loc="upper right", fontsize=14)
+
         hep.cms.label(
             "Preliminary",
             data=True,
@@ -747,119 +827,24 @@ class PerformancePlotter:
             loc=0,
             fontsize=16
         )
-    
+
         save_dir = os.path.join(self.output_dir, "decaymode_distributions")
         os.makedirs(save_dir, exist_ok=True)
-    
+
         save_path = os.path.join(save_dir, f"{filename}_{var_key}_per_{decaymode_key}.png")
         save_path_pdf = os.path.join(save_dir, f"{filename}_{var_key}_per_{decaymode_key}.pdf")
-    
+
         plt.tight_layout(rect=[0, 0, 0.92, 0.90])
-        plt.savefig(save_path, dpi=300)
-        plt.savefig(save_path_pdf)
-        plt.close()
-    
-        print(f"--- DecayMode Distribution Saved: {save_path}")
-        
-        
-        
-    def plot_stat_per_decaymode(self, datasets, y_var_key, decaymode_key, filename, mode="response", title=""):
-        y_conf = PLOT_VARS[y_var_key]
-
-        decay_modes = [0, 1, 4, 5]
-        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
-
-        fig, ax = plt.subplots(figsize=(10, 8))
-
-        for i, ds in enumerate(datasets):
-            color = ds.get("color", default_colors[i % len(default_colors)])
-
-            y_vals = self._get_values(ds, y_var_key)
-            dm_vals = self._get_values(ds, decaymode_key)
-
-            y_vals = ak.to_numpy(ak.flatten(y_vals, axis=None))
-            dm_vals = ak.to_numpy(ak.flatten(dm_vals, axis=None))
-
-            stats = []
-            errors = []
-
-            for dm in decay_modes:
-                mask_dm = (dm_vals == dm)
-                slice_data = y_vals[mask_dm]
-
-                n = len(slice_data)
-
-                if n > 2:
-                    mean = np.mean(slice_data)
-                    std = np.std(slice_data)
-
-                    if mode == "response":
-                        stat = mean
-                        err = std / np.sqrt(n)
-                        ylabel = f"<{y_conf['label']}>"
-
-                    elif mode == "resolution":
-                        if "pt" in y_var_key:
-                            stat = std / mean if mean != 0 else np.nan
-                            ylabel = r"$\sigma_{cluster} / \mu_{cluster}$"
-                        else:
-                            stat = std
-                            ylabel = r"$\sigma_{cluster}$"
-
-                        err = stat / np.sqrt(2 * n - 2)
-
-                    else:
-                        raise ValueError("mode must be 'response' or 'resolution'")
-
-                else:
-                    stat = np.nan
-                    err = np.nan
-
-                stats.append(stat)
-                errors.append(err)
-
-            stats = np.array(stats)
-            errors = np.array(errors)
-
-            mask = ~np.isnan(stats)
-
-            ax.errorbar(
-                np.array(decay_modes)[mask],
-                stats[mask],
-                yerr=errors[mask],
-                label=ds["label"],
-                color=color,
-                fmt="o",
-                markersize=8
-            )
-
-        hep.cms.label(
-            "Preliminary",
-            data=True,
-            rlabel=f"{self.args.particles}-{self.args.pileup}",
-            ax=ax
-        )
-
-        ax.set_xlabel("gen decayMode")
-        ax.set_ylabel(ylabel)
-        ax.set_xticks(decay_modes)
-        ax.grid(linestyle=":")
-        ax.legend(title=title, fontsize=15)
-
-        save_dir = os.path.join(self.output_dir, "decaymode_distributions")
-        os.makedirs(save_dir, exist_ok=True)
-
-        save_path = os.path.join(save_dir, f"{filename}_{y_var_key}_{mode}_per_{decaymode_key}.png")
-        save_path_pdf = os.path.join(save_dir, f"{filename}_{y_var_key}_{mode}_per_{decaymode_key}.pdf")
-
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf, dpi=300)
         plt.close()
 
-        print(f"--- DecayMode {mode} Saved: {save_path}")
+        print(f"--- DecayMode Distribution Saved: {save_path}")
         
+               
         
-        
+    
+    # Response plot per diecaymode
     def plot_response_distribution_per_decaymode(self, datasets, var_key, decaymode_key, filename):
         conf = PLOT_VARS[f"{var_key}_response"]
 
@@ -876,17 +861,47 @@ class PerformancePlotter:
                 color = ds.get("color", default_colors[i % len(default_colors)])
 
                 gen_vals = self._extract_array(ds["gen"], var_key)
-                cl_vals = self._extract_array(ds["cluster"], var_key)
+                #cl_vals = self._extract_array(ds["cluster"], var_key)
+                cl_vals = self._extract_array(ds.get("cluster", ds.get("data")), var_key)
                 dm_vals = self._extract_array(ds["gen"], decaymode_key)
 
-                gen_vals = ak.to_numpy(ak.flatten(gen_vals, axis=None))
-                cl_vals = ak.to_numpy(ak.flatten(cl_vals, axis=None))
-                dm_vals = ak.to_numpy(ak.flatten(dm_vals, axis=None))
+                # Prima seleziona per decayMode sugli awkward array,
+                # così gen/cluster/dm restano allineati.
+                mask = dm_vals == dm
 
-                response = cl_vals / gen_vals
+                gen_sel = ak.to_numpy(ak.flatten(gen_vals[mask], axis=None))
+                cl_sel = ak.to_numpy(ak.flatten(cl_vals[mask], axis=None))
 
-                mask = (dm_vals == dm)
-                slice_data = response[mask]
+                if len(gen_sel) == 0 or len(cl_sel) == 0:
+                    continue
+
+                # Safety: se dopo flatten le lunghezze non coincidono, salta il dataset.
+                if len(gen_sel) != len(cl_sel):
+                    print(
+                        f"[WARNING] Skipping {ds['label']} DM={dm} var={var_key}: "
+                        f"len(gen_sel)={len(gen_sel)} != len(cl_sel)={len(cl_sel)}"
+                    )
+                    continue
+
+                # Definizione response:
+                # pt  -> cluster / gen
+                # eta/phi -> cluster - gen
+                if var_key == "pt":
+                    slice_data = np.divide(
+                        cl_sel,
+                        gen_sel,
+                        out=np.zeros_like(cl_sel, dtype=float),
+                        where=gen_sel != 0,
+                    )
+                else:
+                    slice_data = cl_sel - gen_sel
+
+                slice_data = slice_data[np.isfinite(slice_data)]
+
+                if len(slice_data) == 0:
+                    continue
+                
+                weights = np.ones_like(slice_data, dtype=float) / len(slice_data)
 
                 ax.hist(
                     slice_data,
@@ -895,7 +910,7 @@ class PerformancePlotter:
                     histtype="stepfilled",
                     alpha=0.22,
                     color=color,
-                    density=True
+                    weights=weights,
                 )
                 ax.hist(
                     slice_data,
@@ -905,7 +920,7 @@ class PerformancePlotter:
                     linewidth=2.2,
                     color=color,
                     label=ds["label"],
-                    density=True
+                    weights=weights,
                 )
 
             ax.set_title(f"DecayMode = {dm}", fontsize=18)
@@ -915,7 +930,8 @@ class PerformancePlotter:
         fig.supylabel("Normalized counts", fontsize=22)
 
         handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc="upper right", fontsize=14)
+        if labels:
+            fig.legend(handles, labels, loc="upper right", fontsize=14)
 
         hep.cms.label(
             "Preliminary",
@@ -923,7 +939,7 @@ class PerformancePlotter:
             rlabel=f"{self.args.pileup} {self.args.particles}",
             ax=axes[0],
             loc=0,
-            fontsize=16
+            fontsize=16,
         )
 
         save_dir = os.path.join(self.output_dir, "decaymode_distributions")
@@ -934,7 +950,194 @@ class PerformancePlotter:
 
         plt.tight_layout(rect=[0, 0, 0.92, 0.90])
         plt.savefig(save_path, dpi=300)
-        plt.savefig(save_path_pdf)
+        plt.savefig(save_path_pdf, dpi=300)
         plt.close()
 
         print(f"--- DecayMode Response Distribution Saved: {save_path}")
+        
+        
+    
+    
+    # Response, resolution and efficiency plots for different decaymodes
+    def plot_profile_per_decaymode(self, datasets, x_var_key, y_var_key, filename, mode='mean', title=""):
+        decay_modes = [0, 1, 4, 5]
+        save_dir = os.path.join(self.output_dir, "decaymode_distributions", "profile_distributions_per_decaymode")
+        os.makedirs(save_dir, exist_ok=True)
+    
+        x_conf = PLOT_VARS[x_var_key]
+        y_conf = PLOT_VARS[y_var_key]
+    
+        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
+        bin_edges  = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    
+        fig, axes = plt.subplots(2, 2, figsize=(18, 14), sharex=True, sharey=True)
+        axes = axes.flatten()
+    
+        ylabel = ""
+    
+        for j, dm in enumerate(decay_modes):
+            ax = axes[j]
+    
+            # costruisci dataset mascherati per questo DM
+            dm_datasets = []
+            for ds in datasets:
+                gen    = ds['gen']
+                dm_raw = gen['gen_decayMode']
+                mask   = ak.to_numpy(ak.any(dm_raw == dm, axis=-1))
+    
+                ds_dm          = dict(ds)
+                ds_dm['gen']   = gen[mask]
+                ds_dm['data']  = ds.get('cluster', ds.get('data'))[mask]
+                if 'cluster' in ds:
+                    ds_dm['cluster'] = ds['cluster'][mask]
+                dm_datasets.append(ds_dm)
+    
+            for i, ds in enumerate(dm_datasets):
+                color  = ds.get('color', default_colors[i % len(default_colors)])
+                x_vals = self._get_values(ds, x_var_key)
+                y_vals = self._get_values(ds, y_var_key)
+    
+                counts, _, _ = binned_statistic(x_vals, y_vals, statistic='count', bins=bin_edges)
+    
+                if mode == 'mean':
+                    stat, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
+                    stds, _, _ = binned_statistic(x_vals, y_vals, statistic=lambda x: np.std(x), bins=bin_edges)
+                    y_err  = np.divide(stds, np.sqrt(counts), out=np.zeros_like(stds), where=counts > 0)
+                    ylabel = f"<{y_conf['label']}>"
+    
+                elif mode == 'resolution':
+                    means, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
+                    stds,  _, _ = binned_statistic(x_vals, y_vals, statistic=lambda x: np.std(x), bins=bin_edges)
+                    if 'pt' in y_var_key:
+                        stat   = np.divide(stds, means, out=np.zeros_like(stds), where=means != 0)
+                        ylabel = r"$\sigma_{cluster} / \mu_{cluster}$"
+                    else:
+                        stat   = stds
+                        ylabel = r"$\sigma_{cluster}$"
+                    y_err = np.divide(stat, np.sqrt(2 * counts - 2), out=np.zeros_like(stat), where=counts > 1)
+    
+                elif mode == 'rms':
+                    means,    _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
+                    eff_stds, _, _ = binned_statistic(x_vals, y_vals,
+                                                      statistic=lambda x: self.effrms(x),
+                                                      bins=bin_edges)
+                    if 'pt' in y_var_key:
+                        stat   = np.divide(eff_stds, means, out=np.zeros_like(eff_stds), where=means != 0)
+                        ylabel = r"$\sigma^{eff-RMS}_{cluster} / \mu_{cluster}$"
+                    else:
+                        stat   = eff_stds
+                        ylabel = r"$\sigma^{eff-RMS}_{cluster}$"
+                    y_err = np.divide(stat, np.sqrt(2 * counts - 2), out=np.zeros_like(stat), where=counts > 1)
+    
+                mask_plot = ~np.isnan(stat) & (counts > 2)
+                if np.any(mask_plot):
+                    ax.errorbar(
+                        bin_centers[mask_plot], stat[mask_plot],
+                        yerr=y_err[mask_plot],
+                        xerr=(bin_edges[1] - bin_edges[0]) / 2,
+                        label=ds['label'], color=color,
+                        fmt='o', markersize=8,
+                    )
+    
+            ax.set_title(f"Decay Mode {dm}", fontsize=16)
+            ax.grid(linestyle=":")
+            ax.legend(title=f"{title}" if title else "", fontsize=11)
+    
+        # assi condivisi
+        for ax in axes:
+            ax.set_xlabel(x_conf['label'], fontsize=13)
+        for ax in axes:
+            ax.set_ylabel(ylabel, fontsize=13)
+    
+        hep.cms.label("Preliminary", data=True,
+                      rlabel=f"{self.args.particles}-{self.args.pileup}",
+                      ax=axes[0])
+    
+        fig.tight_layout()
+    
+        base = f"{filename}_{mode}"
+        plt.savefig(os.path.join(save_dir, f"{base}.png"), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(save_dir, f"{base}.pdf"), dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"--- Profile per DM saved: {os.path.join(save_dir, base)}.png")
+        
+        
+        
+        
+    def plot_response_in_eta_bin_per_decaymode(self, datasets, dm, eta_low, eta_high,
+                                            var_key="pt_response", title=""):
+        """
+        Istogramma di var_key per un singolo decay mode e un bin di |eta_gen|.
+        Utile per investigare anomalie nei resolution plots.
+        """
+        conf     = PLOT_VARS[var_key]
+        eta_conf = PLOT_VARS["abs_eta_gen"]
+
+        default_colors = ["tab:olive", "tab:cyan", "darkorchid", "darkorange", "deeppink"]
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+        for i, ds in enumerate(datasets):
+            color = ds.get("color", default_colors[i % len(default_colors)])
+
+            # decay mode mask (a livello evento)
+            dm_raw   = ds['gen']['gen_decayMode']
+            dm_mask  = ak.to_numpy(ak.any(dm_raw == dm, axis=-1))
+
+            ds_dm          = dict(ds)
+            ds_dm['gen']   = ds['gen'][dm_mask]
+            ds_dm['data']  = ds.get('cluster', ds.get('data'))[dm_mask]
+
+            # eta mask (a livello particella, dopo flatten)
+            eta_vals      = self._get_values(ds_dm, "abs_eta_gen")  # già flatten 1D
+            response_vals = self._get_values(ds_dm, var_key)        # già flatten 1D
+
+            eta_mask   = (eta_vals >= eta_low) & (eta_vals < eta_high)
+            slice_data = response_vals[eta_mask]
+            slice_data = slice_data[np.isfinite(slice_data)]
+
+            outliers = slice_data[slice_data > 2.5]
+
+            if len(outliers) > 0:
+                print(
+                    f"{ds['label']} DM={dm} eta=[{eta_low},{eta_high}] "
+                    f"values > 2.5:"
+                )
+                print(outliers)
+            else:
+                print(
+                    f"{ds['label']} DM={dm} eta=[{eta_low},{eta_high}] : no events"
+                )
+
+            if len(slice_data) == 0:
+                print(f"[WARNING] {ds['label']} DM={dm} eta=[{eta_low},{eta_high}]: no entries")
+                continue
+
+            weights = np.ones_like(slice_data) / len(slice_data)
+
+            ax.hist(slice_data, bins=conf["bins"], range=conf["range"],
+                    histtype="stepfilled", alpha=0.22, color=color, weights=weights)
+            ax.hist(slice_data, bins=conf["bins"], range=conf["range"],
+                    histtype="step", linewidth=2.2, color=color,
+                    label=f"{ds['label']} (N={len(slice_data)})", weights=weights)
+
+        hep.cms.label("Preliminary", data=True,
+                      rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
+
+        eta_label = rf"${eta_low:.2f} < |\eta^{{gen}}| < {eta_high:.2f}$,  DM={dm}"
+        ax.set_xlabel(conf["label"], fontsize=16)
+        ax.set_ylabel("Normalized entries", fontsize=16)
+        ax.set_title(eta_label, fontsize=16)
+        ax.grid(linestyle=":", alpha=0.6)
+        ax.legend(title=title, fontsize=12)
+
+        save_dir = os.path.join(self.output_dir, "decaymode_distributions", "anomaly_investigation")
+        os.makedirs(save_dir, exist_ok=True)
+
+        tag = f"{var_key}_DM{dm}_eta{eta_low:.2f}-{eta_high:.2f}".replace(".", "p")
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, f"{tag}.png"), dpi=300)
+        plt.savefig(os.path.join(save_dir, f"{tag}.pdf"), dpi=300)
+        plt.close()
+        print(f"--- Anomaly plot saved: {tag}.png")

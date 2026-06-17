@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--matched',     action='store_true', help='Plot matched events')
     parser.add_argument('--events',     action='store_true', help='Plot matched events')
     parser.add_argument('--filtered_events',     action='store_true', help='Plot matched events')
+    parser.add_argument("--tag", default=None, help="Extra tag for output filenames")
 
     # Plotting arguments
     parser.add_argument('--distribution',     action='store_true', help='Plot the distributions')
@@ -31,8 +32,11 @@ if __name__ == '__main__':
     parser.add_argument('--binned_distributions',     action='store_true', help='Plot binned distributions')
     parser.add_argument('--n_clusters_plots',     action='store_true', help='Plot binned distributions')
     
-    #aggiunto per plot decayMode
-    parser.add_argument('--decaymode_plot', action='store_true', help='Plot number of events per gen decay mode')
+    #added for decaymode plots
+    parser.add_argument('--mult_decaymode',           action='store_true', help='Multiplicity of clusters per decay mode')
+    parser.add_argument('--distributions_per_decaymode', action='store_true', help='pt/eta/phi distributions per decay mode')
+    parser.add_argument('--response_per_decaymode',   action='store_true', help='Response plots per decay mode')
+    parser.add_argument('--profile_per_decaymode',    action='store_true', help='Profile plots per decay mode')
 
     args = parser.parse_args()
 
@@ -45,6 +49,17 @@ if __name__ == '__main__':
     #Load events 
     if args.matched:
         matched_events= f.load_matching_results(parquet_dir)
+        
+        
+
+        if args.gen_pt_cut > 0:
+            for key in matched_events.keys():
+                gen = matched_events[key]["pair_gen"]
+                cluster = matched_events[key]["pair_cluster"]
+                mask = gen.pt > args.gen_pt_cut
+                matched_events[key]["pair_gen"] = gen[mask]
+                matched_events[key]["pair_cluster"] = cluster[mask]
+            
         TASKS = {
             "dist": ["pt", "eta", "abs_eta", "phi", "delta_r", "pt_gen"],
             "resp": ["pt_response", "eta_response", "phi_response"],
@@ -204,28 +219,110 @@ if __name__ == '__main__':
         
     
     # for decayMode plots
-    if args.decaymode_plot:
-        if args.matched:
-            gen_matched_events = {
-                key: matched_events[key]["pair_gen"]
-                for key in matched_events
-            }
-            data = get_triangle_comparison(gen_matched_events)
+    #if args.decaymode_plot:
+    #    if args.matched:
+    #        gen_matched_events = {
+    #            key: matched_events[key]["pair_gen"]
+    #            for key in matched_events
+    #        }
+    #        data = get_triangle_comparison(gen_matched_events)
+#
+    #        response_data = []
+    #        for key in matched_events:
+    #            response_data.append({
+    #                "gen": matched_events[key]["pair_gen"],
+    #                "cluster": matched_events[key]["pair_cluster"],
+    #                "label": key
+    #            })
+    #    
+    #    elif args.events:
+    #        data = [{"data": events_gen, "label": "Gen"}]
+    #        response_data = None
+#
+    #    elif args.filtered_events:
+    #        data = get_triangle_comparison(filtered_events)
+    #        response_data = None
+    #        
+    #    plotter.plot_response_distribution_per_decaymode(response_data, var_key="pt", decaymode_key="gen_decayMode", filename="Gen_pt_response")
 
-            response_data = []
-            for key in matched_events:
-                response_data.append({
-                    "gen": matched_events[key]["pair_gen"],
-                    "cluster": matched_events[key]["pair_cluster"],
-                    "label": key
-                })
-        
-        elif args.events:
-            data = [{"data": events_gen, "label": "Gen"}]
-            response_data = None
 
-        elif args.filtered_events:
-            data = get_triangle_comparison(filtered_events)
-            response_data = None
+    #if args.decaymode_profile_plot:
+    #    data = get_triangle_comparison(matched_events)
+    #
+    #    for x_key, y_key in TASKS["binned_resp"]:
+    #        for mode in ["mean", "resolution"]:
+    #            plotter.plot_profile_per_decaymode(
+    #                datasets  = data,
+    #                x_var_key = x_key,
+    #                y_var_key = y_key,
+    #                filename  = f"Profile_{y_key}_vs_{x_key}",
+    #                mode      = mode,
+    #                title     = title,
+    #            )
+                
+    if args.mult_decaymode:
+        data = get_triangle_comparison(matched_events)
+        plotter.plot_multiplicity_per_decaymode(data, title=title)
+
+    if args.distributions_per_decaymode:
+        data = get_triangle_comparison(matched_events)
+        for var in ["pt", "eta", "phi", "abs_eta"]:
+            plotter.plot_distributions_per_decaymode(
+                datasets=data, var_key=var,
+                decaymode_key="gen_decayMode", filename="Dist"
+            )
+
+#    if args.response_per_decaymode:
+#        response_data = []
+#        for key in matched_events:
+#            response_data.append({
+#                "gen":     matched_events[key]["pair_gen"],
+#                "cluster": matched_events[key]["pair_cluster"],
+#                "label":   key
+#            })
+#        for var in ["pt", "eta", "phi"]:
+#            plotter.plot_response_distribution_per_decaymode(
+#                response_data, var_key=var,
+#                decaymode_key="gen_decayMode", filename="Response"
+#            )
+
+
+    if args.response_per_decaymode:
+        data = get_triangle_comparison(matched_events)   # <-- stesso degli altri
+        for var in ["pt", "eta", "phi"]:
+            plotter.plot_response_distribution_per_decaymode(
+                data, var_key=var,
+                decaymode_key="gen_decayMode", filename="Response"
+            )
             
-        plotter.plot_response_distribution_per_decaymode(response_data, var_key="pt", decaymode_key="gen_decayMode", filename="Gen_pt_response")
+            
+    if args.profile_per_decaymode:
+        
+        data = get_triangle_comparison(matched_events)
+        x_variables = ["pt_gen", "abs_eta_gen", "phi_gen"]
+        y_variables = ["pt_response", "eta_response", "phi_response"]
+        
+        #Investigation for anomaly
+        for eta_low, eta_high in [(1.86, 1.99), (1.99, 2.12), (2.12, 2.25)]:
+            plotter.plot_response_in_eta_bin_per_decaymode(
+                datasets=data,
+                dm=5,
+                eta_low=eta_low,
+                eta_high=eta_high,
+                var_key="pt_response",
+                title=title,
+            )     
+        for x_key in x_variables:
+            for y_key in y_variables:
+                for mode in ["mean", "resolution", "rms"]:
+                    plotter.plot_profile_per_decaymode(
+                        datasets=data,
+                        x_var_key=x_key,
+                        y_var_key=y_key,
+                        filename=f"Profile_{y_key}_vs_{x_key}",
+                        mode=mode,
+                        title=title,
+                    )
+         
+    
+    

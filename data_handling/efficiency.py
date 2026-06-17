@@ -54,7 +54,7 @@ def get_efficiency_with_error(k, n, alpha=0.3173):   # alpha is for the definiti
 
     #Plotting total efficinecy
 
-def compute_total_efficiency(size, event_cl, event_gen, args, deltaR=0.1):
+def compute_total_efficiency(size, event_cl, event_gen, args, deltaR=0.2):
     print("-------------------")
     print("For triangle size", size)
     print("Number of clusters before matching", len(ak.flatten(event_cl.eta, axis=-1)))
