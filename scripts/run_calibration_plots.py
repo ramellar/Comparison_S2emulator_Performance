@@ -285,6 +285,66 @@ def build_residual_bundles(manager, raw_results, tri_key, strategies_to_plot):
 
     return bundles
 
+def build_triangle_residual_bundles(manager, raw_results, strat_key, triangles):
+    """Build residual bundles over triangles for a fixed strategy (for --all_triangles)."""
+    if strat_key == "raw":
+        return []
+
+    comp_cfg = COMPARISONS[strat_key]
+    strategy = comp_cfg["strategy"]
+    if strategy == "PU0":
+        return []
+
+    if strategy == "PU200_seq":
+        config_name  = comp_cfg["eta"]
+        layer_config = PU0_CONFIG_FOR_SEQ
+    elif strategy == "PU200":
+        config_name  = comp_cfg["all"]
+        layer_config = config_name
+
+    comp_offset = comp_cfg.get("offset", None)
+    default_colors = DEFAULT_COLORS
+    bundles = []
+
+    for i, tri_key in enumerate(triangles):
+        if tri_key not in raw_results:
+            continue
+
+        weights   = manager.load(strategy, config_name, tri_key, offset=comp_offset)
+        cfg       = CALIB_CONFIGS[layer_config]
+        remove_l1 = cfg["remove_layer1"]
+
+        raw_cluster = raw_results[tri_key]["pair_cluster"]
+        layer_pt    = ak.to_numpy(ak.flatten(raw_cluster.layer_pt, axis=1))
+        layer_np    = layer_pt[:, 1:13] if remove_l1 else layer_pt[:, :13]
+        abs_eta     = np.abs(ak.to_numpy(ak.flatten(raw_cluster.eta, axis=1)))
+
+        if strategy == "PU200_seq":
+            w_layer = weights["layer"]
+            alpha   = weights["eta"][0]
+            beta    = weights["eta"][1]
+        elif strategy == "PU200":
+            w       = weights["all"]
+            w_layer = w[:13] if len(w) == 15 else w[:12]
+            alpha   = w[-2]
+            beta    = w[-1]
+
+        E_wl    = np.sum(layer_np * np.asarray(w_layer), axis=1)
+        gen_pt  = ak.to_numpy(ak.flatten(raw_results[tri_key]["pair_gen"].pt, axis=-1))
+
+        bundles.append({
+            "label":    f"Tri {tri_key}",
+            "color":    default_colors[i % len(default_colors)],
+            "eta":      abs_eta,
+            "residual": E_wl - gen_pt,
+            "alpha":    alpha,
+            "beta":     beta,
+            "offset":   comp_cfg.get("offset", 0),
+        })
+
+    return bundles
+
+
 def build_comparison_bundle(results, tri_key, strategies_to_plot):
     """
     Build the list-of-dicts that PerformancePlotter expects,
@@ -559,6 +619,19 @@ def main():
                         binning_var_key=x_var,
                         filename=f"Dist_Response_{strat_key}",
                         title_=f"\n{get_comp_label(strat_key)}"
+                    )
+
+            if args.eta_residual:
+                residual_bundles = build_triangle_residual_bundles(
+                    manager, raw_results, strat_key, triangles
+                )
+                if residual_bundles:
+                    plotter.plot_eta_residual(
+                        residual_bundles,
+                        filename=f"EtaResidual_{strat_key}",
+                        args=args,
+                        offset=args.offset,
+                        title=title + f"\n{get_comp_label(strat_key)}",
                     )
 
     # ----------------------------------------------------------------

@@ -1,0 +1,27 @@
+# Auto-generated resubmit file for failed jobs
+universe = vanilla
+executable = run_load_data.sh
+
+arguments = $(ProxyPath) -n 9999999 --particles $(Part) --pileup $(PU) --job_id $(JobID) --n_jobs $(NJobs) --n_files $(NFiles)
+
+transfer_input_files = scripts/, data_handling/, configs/
+
+request_memory = 8G
+request_cpus = 1
+
+T3Queue = short
+WNTag = el9
+include : /opt/exp_soft/cms/t3/t3queue |
+
+ProxyPath = /home/llr/cms/amella/.globus/user_proxy.pem
+
+output = logs/load_$(Part)_$(PU)_$(JobID).out
+error  = logs/load_$(Part)_$(PU)_$(JobID).err
+log    = logs/load_$(Part)_$(PU)_$(JobID).log
+
+queue Part, PU, JobID, NJobs, NFiles from (
+  Electron, PU0, 0, 5, 40
+  Electron, PU0, 2, 5, 40
+  Photon, PU0, 1, 5, 38
+  Photon, PU0, 4, 5, 38
+)

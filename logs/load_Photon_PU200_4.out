@@ -1,10 +1,156 @@
-Running: python3 scripts.load_data -n 291824 --particles Photon --pileup PU200 --job_id 4 --n_jobs 10
-root://eoscms.cern.ch//store/group/dpg_hgcal/comm_hgcal/TPG/stage2_emulator_ntuples_semiemulator_2Passes/double
+Running: python3 scripts.load_data -n 9999999 --particles Photon --pileup PU200 --job_id 4 --n_jobs 10 --n_files 976
+root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/double
 --- Job 4/10 starting: Processing 98 files ---
-Number of events: 29435
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
-Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_final//Photon_PU200_new_branch/single_jobs/
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_428.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_428.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_433.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_433.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_439.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_439.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_440.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_440.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_441.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99708121043173332 437555017 48 1781262669 1781262669 1781262661 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_442.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_442.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_443.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99702215463141332 441217933 48 1781269300 1781269300 1781269293 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_444.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_444.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_445.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99701244800532436 441834666 48 1781269919 1781269919 1781269913 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_446.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_446.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_447.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99708657914085332 441063610 48 1781261918 1781261918 1781261912 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_448.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_448.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_449.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99707970719317972 442585766 48 1781262907 1781262907 1781262901 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_450.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_450.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_451.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99713794694971348 443844577 48 1781259187 1781259187 1781259181 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_452.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_452.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_453.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99709546972315604 440543497 48 1781260810 1781260810 1781260804 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_454.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_454.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_455.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99702894067974100 442595872 48 1781268883 1781268883 1781268876 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_456.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_456.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_457.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  invalid literal for int() with base 10: b'\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00-99722685277274068 440760190 48 1781259012 1781259012 1781259007 0664 xrootd xrootd\x00'
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_458.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Invalid response
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_458.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_459.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_459.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_460.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_460.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_461.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_461.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_462.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_462.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_463.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_463.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_464.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_464.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_465.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_465.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_466.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_466.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_467.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_467.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_468.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_468.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_469.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_469.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_470.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_470.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_471.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_471.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_472.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_472.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_473.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_473.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_474.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_474.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_475.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_475.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_476.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_476.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_477.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_477.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_478.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_478.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_479.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_479.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_480.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_480.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_481.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_481.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_482.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_482.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_483.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_483.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_484.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_484.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_485.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_485.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_486.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_486.root
+Skipping file due to XRootD error: root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_487.root:l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple
+  XRootD error: [ERROR] Operation expired
+in file root://cms-xrd-global.cern.ch//store/user/ejclemen/HGCal/Stage2Emulator/doublePhoton_PU200/ntuple_487.root
+Number of events: 14186
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/
+Saved chunk 4 to /data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02//Photon_PU200_new_branch/single_jobs/

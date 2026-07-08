@@ -1,20 +1,22 @@
 import numpy as np
 
 EMU_CONFIG = {
-    "0p0113": "cl3d_p0113Tri",
+    # "0p0113": "cl3d_p0113Tri", #Not used for plotting 
     "0p016": "cl3d_p016Tri",
+    "0p02": "cl3d_p02Tri",
+    "0p025": "cl3d_p025Tri",
     "0p03": "cl3d_p03Tri",
-    "0p045": "cl3d_p045Tri",
+    # "0p045": "cl3d_p045Tri",  #Not used for plotting 
     "Ref": "cl3d_Ref",
 }
 
-PARQUET_BASE = "/data_CMS/cms/amella/HGCAL_samples/parquet_files_final/"
+PARQUET_BASE = "/data_CMS/cms/amella/HGCAL_samples/parquet_files_0p02/"
 
-EVENT_NAMES = ["events_gen", "events_0p0113", "events_0p016", "events_0p03", "events_0p045", "events_Ref"]
-CLUSTER_MATCHED_EVENTS_NAMES=["pair_cluster_0p0113_matched", "pair_cluster_0p016_matched", "pair_cluster_0p03_matched", "pair_cluster_0p045_matched", "pair_cluster_Ref_matched"]
-GEN_MATCHED_EVENTS_NAMES=["pair_gen_masked_0p0113.parquet", "pair_gen_masked_0p016.parquet", "pair_gen_masked_0p03.parquet", "pair_gen_masked_0p045.parquet", "pair_gen_masked_Ref.parquet"]
-FILTERED_CL_EVENTS_NAMES=["events_0p0113_filtered", "events_0p016_filtered", "events_0p03_filtered", "events_0p045_filtered", "events_Ref_filtered"]
-FILTERED_GEN_EVENTS_NAMES = ["events_gen_fileterd_0p0113", "events_gen_fileterd_0p016", "events_gen_fileterd_0p03", "events_gen_fileterd_0p045", "events_gen_fileterd_Ref"]
+EVENT_NAMES = ["events_gen", "events_0p0113", "events_0p016", "events_0p02", "events_0p025", "events_0p03", "events_0p045", "events_Ref"]
+CLUSTER_MATCHED_EVENTS_NAMES=["pair_cluster_0p0113_matched", "pair_cluster_0p016_matched", "pair_cluster_0p02_matched", "pair_cluster_0p025_matched", "pair_cluster_0p03_matched", "pair_cluster_0p045_matched", "pair_cluster_Ref_matched"]
+GEN_MATCHED_EVENTS_NAMES=["pair_gen_masked_0p0113.parquet", "pair_gen_masked_0p016.parquet", "pair_gen_masked_0p02.parquet", "pair_gen_masked_0p025.parquet", "pair_gen_masked_0p03.parquet", "pair_gen_masked_0p045.parquet", "pair_gen_masked_Ref.parquet"]
+FILTERED_CL_EVENTS_NAMES=["events_0p0113_filtered", "events_0p016_filtered", "events_0p02_filtered", "events_0p025_filtered", "events_0p03_filtered", "events_0p045_filtered", "events_Ref_filtered"]
+FILTERED_GEN_EVENTS_NAMES = ["events_gen_fileterd_0p0113", "events_gen_fileterd_0p016", "events_gen_fileterd_0p02", "events_gen_fileterd_0p025", "events_gen_fileterd_0p03", "events_gen_fileterd_0p045", "events_gen_fileterd_Ref"]
 
 #--------------------------
 # CALIBRATION
@@ -104,7 +106,7 @@ COMPARISONS = {
 }
 
 #only used in derive_calibrations
-# STRATEGIES = ["PU0"]
+# STRATEGIES = ["PU200"]
 STRATEGIES = ["PU0","PU200_seq", "PU200"]
 
 #----------------------------

@@ -3,7 +3,6 @@ import numpy as np
 import awkward as ak
 import uproot
 from tqdm import tqdm
-import subprocess
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -49,6 +48,16 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
         "cl3d_p016Tri_pt",
         'cl3d_p016Tri_layer_pt',
 
+        "cl3d_p02Tri_eta",
+        "cl3d_p02Tri_phi",
+        "cl3d_p02Tri_pt",
+        'cl3d_p02Tri_layer_pt',
+
+        "cl3d_p025Tri_eta",
+        "cl3d_p025Tri_phi",
+        "cl3d_p025Tri_pt",
+        'cl3d_p025Tri_layer_pt',
+
         "cl3d_p03Tri_eta",
         "cl3d_p03Tri_phi",
         "cl3d_p03Tri_pt",
@@ -69,36 +78,22 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     total = 0
 
     my_file_indices = chunks[job_id]
-    raw_files = [f"{full_base_path}/ntuple_{i}.root" for i in my_file_indices]
-    
-    valid_files = []
-    print(f"Checking existence of {len(raw_files)} files...")
-    
-    for f_path in raw_files:
-        # Use xrdfs to check if the file exists (stat)
-        # We strip 'root://eoscms.cern.ch/' for the xrdfs command
-        eos_path = f_path.replace("root://eoscms.cern.ch/", "/")
-        check = subprocess.run(
-            ["xrdfs", "root://eoscms.cern.ch", "stat", eos_path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        
-        if check.returncode == 0:
-            # File exists, add it to our list with the tree name
-            valid_files.append(f"{f_path}:{name_tree}")
-        else:
-            print(f"Skipping missing file: {f_path}")
+    all_files = [f"{full_base_path}/ntuple_{i}.root:{name_tree}" for i in my_file_indices]
 
     xrootd_options = {
-    "timeout": 180,      # 3 minutes per request
-    "max_retries": 100,    # Retry if a chunk fails
+        "timeout": 600,
     }
 
-    for batch in tqdm(uproot.iterate(valid_files, branches, library="ak", step_size="50 MB", 
-                                     options=xrootd_options, allow_missing=True)):
-        batches.append(batch)
-        total += len(batch["event"])
+    for f in tqdm(all_files):
+        try:
+            for batch in uproot.iterate(f, branches, library="ak", step_size="50 MB",
+                                        options=xrootd_options, allow_missing=True):
+                batches.append(batch)
+                total += len(batch["event"])
+                if total >= n: break
+        except (OSError, ValueError) as e:
+            print(f"Skipping file due to XRootD error: {f}\n  {e}")
+            continue
         if total >= n: break
 
     if not batches:
@@ -163,6 +158,8 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
 
     cl_0p0113 = build_clusters("cl3d_p0113Tri")
     cl_0p016 = build_clusters("cl3d_p016Tri")
+    cl_0p02 = build_clusters("cl3d_p02Tri")
+    cl_0p025 = build_clusters("cl3d_p025Tri")
     cl_0p03 = build_clusters("cl3d_p03Tri")
     cl_0p045 = build_clusters("cl3d_p045Tri")
     cl_ref = build_clusters("cl3d_Ref")
@@ -171,7 +168,7 @@ def provide_events_performaces( n, base_path, particle, pileup, n_files=976 , th
     # print(len(cl_0p0113.eta))
     # print(len(cl_0p0113.layer_pt))
 
-    return filtered_gen, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
+    return filtered_gen, cl_0p0113, cl_0p016, cl_0p02, cl_0p025, cl_0p03, cl_0p045, cl_ref
 
 
 

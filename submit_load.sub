@@ -3,7 +3,7 @@ universe = vanilla
 executable = run_load_data.sh
 
 # Arguments: ProxyPath, then the rest of the python flags
-arguments = $(ProxyPath) -n 72000 --particles $(Part) --pileup $(PU) --job_id $(Process) --n_jobs 20 --n_files 240
+arguments = $(ProxyPath) -n 9999999 --particles $(Part) --pileup $(PU) --job_id $(JobID) --n_jobs $(NJobs) --n_files $(NFiles)
 
 # Transfer everything needed
 transfer_input_files = scripts/, data_handling/, configs/
@@ -20,11 +20,44 @@ include : /opt/exp_soft/cms/t3/t3queue |
 ProxyPath = /home/llr/cms/amella/.globus/user_proxy.pem
 
 # Logging
-output = logs/load_$(Part)_$(PU)_$(Process).out
-error  = logs/load_$(Part)_$(PU)_$(Process).err
-log    = logs/load_$(Part)_$(PU)_$(Process).log
+output = logs/load_$(Part)_$(PU)_$(JobID).out
+error  = logs/load_$(Part)_$(PU)_$(JobID).err
+log    = logs/load_$(Part)_$(PU)_$(JobID).log
 
 # The Queue
-queue 20 Part,PU from (
-  Electron, PU200
+# Electron PU0:  40 files (max index 39) -> 5 jobs, 8 files/job
+# Electron PU200: 327 files (max index 326) -> 10 jobs, ~33 files/job
+# Photon PU0:  38 files (max index 37) -> 5 jobs, ~8 files/job
+# Photon PU200: 976 files (max index 975) -> 10 jobs, ~98 files/job
+queue Part, PU, JobID, NJobs, NFiles from (
+  Electron, PU0,   0, 5, 40
+  Electron, PU0,   1, 5, 40
+  Electron, PU0,   2, 5, 40
+  Electron, PU0,   3, 5, 40
+  Electron, PU0,   4, 5, 40
+#  Electron, PU200, 0, 10, 327
+#  Electron, PU200, 1, 10, 327
+#  Electron, PU200, 2, 10, 327
+#  Electron, PU200, 3, 10, 327
+#  Electron, PU200, 4, 10, 327
+#  Electron, PU200, 5, 10, 327
+#  Electron, PU200, 6, 10, 327
+#  Electron, PU200, 7, 10, 327
+#  Electron, PU200, 8, 10, 327
+#  Electron, PU200, 9, 10, 327
+  Photon, PU0,   0, 5, 38
+  Photon, PU0,   1, 5, 38
+  Photon, PU0,   2, 5, 38
+  Photon, PU0,   3, 5, 38
+  Photon, PU0,   4, 5, 38
+#  Photon, PU200, 0, 10, 976
+#  Photon, PU200, 1, 10, 976
+#  Photon, PU200, 2, 10, 976
+#  Photon, PU200, 3, 10, 976
+#  Photon, PU200, 4, 10, 976
+#  Photon, PU200, 5, 10, 976
+#  Photon, PU200, 6, 10, 976
+#  Photon, PU200, 7, 10, 976
+#  Photon, PU200, 8, 10, 976
+#  Photon, PU200, 9, 10, 976
 )

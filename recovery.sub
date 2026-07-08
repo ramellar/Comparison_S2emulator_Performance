@@ -19,4 +19,4 @@ error  = logs/load_Photon_PU200_$(JobID).err
 log    = logs/load_Photon_PU200_$(JobID).log
 
 # Just queue the two missing IDs
-queue JobID in (5,7)
+queue JobID in (1)

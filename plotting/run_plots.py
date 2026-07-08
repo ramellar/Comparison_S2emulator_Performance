@@ -729,7 +729,7 @@ class PerformancePlotter:
             save_path_pdf = os.path.join(self.output_dir, f"{filename}_{args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf)
-        plt.close()
         print(f"--- Plot Saved: {save_path}")
+        plt.close()
 
             
