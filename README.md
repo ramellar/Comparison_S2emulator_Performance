@@ -1,7 +1,10 @@
+
 # Performance Studies for S2 Emulation Algorithms
 
 This repository is based on [S2_emulator](https://github.com/mchiusi/S2_emulator) framework but is only focused on performances plots. Its goal is to compare different S2 emulator algorithms, each configured with varying triangle sizes, against the reference CMSSW simulation.
 Currently, we are working with a semi-emulator setup. As such, this repository does not perform cluster reconstruction directly. Instead, it uses pre-produced Ntuples containing clusters generated both by specific triangle configurations and the CMSSW simulation. Finally, in addition to the [S2_emulator](https://github.com/mchiusi/S2_emulator) framework, these scripts use awkward arrays for the matching to make it easier to handle a big number of events.
+
+This framework was initially conceived to test the electron and photon performances, in the "tau_reco" branch there are some additional functions, allowing to test the performances of tau objects from $H \to \tau \tau$ samples (where a first event selection is necessary to select the taus to be studied and the the same workflow applies)
 
 ----
 
@@ -126,16 +129,19 @@ condor_submit submit_load.sub
 
 ### Job Recovery & Merging
 
-If any batch jobs fail, specify the missing IDs in `recovery.sub` and resubmit them via:
+To check which jobs failed you can use the script `check_and_resubmit.py`
+run `python3 check_and_resubmit.py` to verify how many and which jobs failed.
+
+If any batch jobs fail resubmit them via:
 
 ```Bash
-condor_submit recovery.sub
+python3 check_and_resubmit.py --submit
 ```
 
 Once all batch chunks have successfully finished, stitch the standalone Parquet chunks into a single unified list:
 
 ```Bash
-python3 -m data_handling.stitch_parquets --particles Photon --pileup PU200
+python3 -m data_handling.stich_parquets --particles Electron --pileup PU200
 ```
 
 ## Applying Matching
@@ -143,13 +149,13 @@ python3 -m data_handling.stitch_parquets --particles Photon --pileup PU200
 To execute DeltaR matching between generated particles and reconstructed clusters (with an optional generator-level pT cut), run:
 
 ```Bash
-python3 -m scripts.matching_test --particles Photon --pileup PU0 --gen_pt_cut 20.0
+python3 -m scripts.matching_test --particles Electron --pileup PU200 --gen_pt_cut 20.0
 ```
 
 To compute and output the **total efficiency** metric, simply append the `--total_efficiency` flag:
 
 ```Bash
-python3 -m scripts.matching_test --particles Photon --pileup PU0 --gen_pt_cut 20.0 --total_efficiency
+python3 -m scripts.matching_test --particles Electron --pileup PU200 --gen_pt_cut 20.0 --total_efficiency
 ```
 
 ## Deriving and Applying Calibrations
@@ -158,7 +164,7 @@ You can evaluate multiple calibration configurations by defining them inside `C
 
 The core calibration formula is defined as:
 
-$$E_T^{calib​}=l∑​w_l​E_T^l​−(α∣η∣-1.5+β)$$
+$$E_T^{calib​}=l∑​w_l​E_T^l​−(α∣η∣- \alpha \text{ offset }+β)$$
 
 Currently, **4 configurations** are available for **3 distinct strategies**:
 
@@ -184,9 +190,9 @@ Each strategy can be parsed into one of four setup options:
 ### Running Calibration
 
 To derive the calibration factors based on your configurations, run:
-
+Always leave PU200 if you want your files to be stored in PU200 folder
 ```Bash
-python3 -m scripts.derive_calibration --particles Photon --pileup PU200 --gen_pt_cut 20.0
+python3 -m scripts.derive_calibration --particles Photon --pileup PU200 --gen_pt_cut 20.0 --offset 2.8
 ```
 
 All calculated weights are automatically stored within the configured `parquet_path` and can be evaluated elsewhere using the `apply_functions` in `data_handling/calibration_functions.py`
@@ -250,10 +256,10 @@ To choose which strategies and configurations to plot only `COMPARISONS` in `con
 
 ```python
 COMPARISONS = {
-"PU200_no_bounds": {"strategy": "PU200", "all": "no_bounds"},
-"PU200_bounds": {"strategy": "PU200", "all": "bounds_0_20"},
-"PU200_all_bounds_0_20_no_layer1": {"strategy": "PU200", "all": "bounds_0_20_no_layer1"},
-"PU200_all_no_bounds_no_layer1": {"strategy": "PU200", "all": "no_bounds_no_layer1"},
+
+"PU200_seq_b_nb": {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds", "offset": 0},
+
+"PU200_bounds_offset2p8": {"strategy": "PU200", "all": "bounds_0_20", "offset": 2.8},
 }
 ```
 
@@ -283,6 +289,8 @@ python -m scripts.run_calibration_plots --particles Photon --pileup PU200 --gen_
 # Eta residual vs abs(eta) with fit curve overlay, for every strategy, triangle 0p03:
 python -m scripts.run_calibration_plots --particles Photon --pileup PU200 --gen_pt_cut 20 --triangle 0p03 --eta_residual --tag PU200_seq_1p5
 
+# Table showing all the wieght values
+python -m scripts.run_calibration_plots --particles Photon --pileup PU200 --gen_pt_cut 20 --triangle 0p03 --weight_table --offsets 0 2.8 --tag PU200_seq_1p5
 
 # Compare all triangles for one strategy (pass --all_triangles):
 python -m scripts.run_calibration_plots --particles Photon --pileup PU200 --gen_pt_cut 20 --all_triangles --resolution_plots
@@ -290,3 +298,4 @@ python -m scripts.run_calibration_plots --particles Photon --pileup PU200 --gen_
 
 For all options: python -m scripts.run_calibration_plots --help
 ```
+
