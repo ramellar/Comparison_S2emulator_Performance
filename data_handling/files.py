@@ -36,6 +36,11 @@ def save_matching_results(results, parquet_dir):
             results[key]["events_gen_filtered"],
             parquet_dir + f"events_gen_filtered_{key}.parquet"
         )
+        
+        ak.to_parquet(
+            results[key]["events_gen_denominator"],
+            parquet_dir + f"events_gen_denominator_{key}.parquet"
+        )
 
 
 def load_matching_results(parquet_dir):
@@ -47,6 +52,7 @@ def load_matching_results(parquet_dir):
         results[key] = {
             "pair_cluster": ak.from_parquet(parquet_dir + f"pair_cluster_{key}_matched.parquet"),
             "pair_gen": ak.from_parquet(parquet_dir + f"pair_gen_masked_{key}.parquet"),
+            "events_gen_denominator": ak.from_parquet(parquet_dir + f"events_gen_denominator_{key}.parquet")
         }
 
     return results
@@ -60,6 +66,33 @@ def load_filtered_events(parquet_dir):
         results[key] = {
             "events_cluster_filtered": ak.from_parquet(parquet_dir + f"events_{key}_filtered.parquet"),
             "events_gen_filtered": ak.from_parquet(parquet_dir + f"events_gen_filtered_{key}.parquet"),
+        }
+
+    return results
+
+def load_matching_results(parquet_dir):
+
+    results = {}
+
+    for key in EMU_CONFIG:
+
+        results[key] = {
+            "pair_cluster": ak.from_parquet(
+                parquet_dir + f"pair_cluster_{key}_matched.parquet"
+            ),
+
+            "pair_gen": ak.from_parquet(
+                parquet_dir + f"pair_gen_masked_{key}.parquet"
+            ),
+
+            "events_filtered": ak.from_parquet(
+                parquet_dir + f"events_{key}_filtered.parquet"
+            ),
+
+            "events_gen_filtered": ak.from_parquet(
+                parquet_dir + f"events_gen_filtered_{key}.parquet"
+            ),
+
         }
 
     return results

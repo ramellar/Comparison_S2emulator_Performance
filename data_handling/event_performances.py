@@ -7,6 +7,7 @@ from data_handling.taureco import taureco_function
 from data_handling.taureco import vis_filter_function
 import subprocess
 import os
+import fastjet
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -246,6 +247,173 @@ def provide_events_performaces( n, base_path, particle, pileup, args, n_files=30
 
  
     return filtered_gen, cl_0p0113, cl_0p016, cl_0p03, cl_0p045, cl_ref
+
+
+
+
+
+#def perform_antikt(cluster_events, R=0.4, ghost_rapidity=5.0):
+#
+#    area_def = fastjet.AreaDefinition(fastjet.active_area_explicit_ghosts, fastjet.GhostedAreaSpec(ghost_rapidity))
+#    jet_definition = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
+#
+#    clusters = []
+#    for event in cluster_events:
+#        pseudojet_data = []
+#        for cluster in event:
+#            pt = cluster["pt"]
+#            if pt <= 0:
+#                continue
+#
+#            pt  = float(cluster["pt"])
+#            eta = float(cluster["eta"])
+#            phi = float(cluster["phi"])
+#
+#            px = float(pt * np.cos(phi))
+#            py = float(pt * np.sin(phi))
+#            pz = float(pt * np.sinh(eta))
+#            E = float(np.sqrt(px**2 + py**2 + pz**2))
+#
+#            pseudojet_data.append(fastjet.PseudoJet(px, py, pz, E))
+#
+#        if len(pseudojet_data) == 0:
+#            clusters.append([])
+#            continue
+#
+#        cs = fastjet.ClusterSequenceArea(pseudojet_data, jet_definition, area_def)
+#        clusters.append(cs.inclusive_jets())
+#
+#    return clusters
+#
+
+
+
+def perform_antikt(cluster_events, R=0.4):
+
+    area_def = fastjet.AreaDefinition(
+        fastjet.active_area_explicit_ghosts,
+        fastjet.GhostedAreaSpec(5.0)
+    )
+
+    jet_definition = fastjet.JetDefinition(
+        fastjet.antikt_algorithm,
+        R
+    )
+
+    out = {
+        "pt": [],
+        "eta": [],
+        "phi": [],
+        "area": [],
+        "rho": [],
+        "layer_pt": [],
+    }
+
+    for iev, event in enumerate(cluster_events):
+
+        pseudojet_data = []
+
+        for icl, cluster in enumerate(event):
+
+            pt = float(cluster["pt"])
+
+            if pt <= 0:
+                continue
+
+            eta = float(cluster["eta"])
+            phi = float(cluster["phi"])
+
+            px = float(pt * np.cos(phi))
+            py = float(pt * np.sin(phi))
+            pz = float(pt * np.sinh(eta))
+            E = float(np.sqrt(px**2 + py**2 + pz**2))
+
+            pj = fastjet.PseudoJet(px, py, pz, E)
+            pj.set_user_index(icl)
+
+            pseudojet_data.append(pj)
+
+        if len(pseudojet_data) == 0:
+
+            out["pt"].append([])
+            out["eta"].append([])
+            out["phi"].append([])
+            out["area"].append([])
+            out["rho"].append(0.0)
+            out["layer_pt"].append([])
+
+            continue
+
+        cs = fastjet.ClusterSequenceArea(
+            pseudojet_data,
+            jet_definition,
+            area_def
+        )
+
+        jets = cs.inclusive_jets()
+
+        pts = []
+        etas = []
+        phis = []
+        areas = []
+        layer_pts = []
+        pt_over_area = []
+
+        for jet in jets:
+
+            jet_pt = float(jet.pt())
+            jet_area = float(jet.area())
+
+            pts.append(jet_pt)
+            etas.append(float(jet.eta()))
+            phis.append(float(jet.phi()))
+            areas.append(jet_area)
+
+            if jet_pt > 0.01 and jet_area > 0:
+                pt_over_area.append(jet_pt / jet_area)
+
+            jet_layer_pt = None
+
+            for constituent in jet.constituents():
+
+                idx = constituent.user_index()
+
+                # Skip the ghost particles used to calculate the jet area
+                if idx < 0:
+                    continue
+
+                cl_layer_pt = np.array(
+                    event[idx]["layer_pt"],
+                    dtype=float
+                )
+
+                if jet_layer_pt is None:
+                    jet_layer_pt = cl_layer_pt.copy()
+                else:
+                    jet_layer_pt += cl_layer_pt
+
+            if jet_layer_pt is None:
+                jet_layer_pt = np.zeros(52)
+
+            layer_pts.append(jet_layer_pt.tolist())
+
+        if len(pt_over_area) > 0:
+            rho_event = float(np.median(pt_over_area))
+        else:
+            rho_event = 0.0
+
+        out["pt"].append(pts)
+        out["eta"].append(etas)
+        out["phi"].append(phis)
+        out["area"].append(areas)
+        out["rho"].append(rho_event)
+        out["layer_pt"].append(layer_pts)
+
+    return ak.Array(out)
+    
+    
+
+
 
 
 def apply_matching(events, gen, args, deltaR=0.2):

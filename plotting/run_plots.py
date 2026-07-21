@@ -420,94 +420,201 @@ class PerformancePlotter:
 
 
 
-    def plot_profile(self, datasets, x_var_key, y_var_key, filename, mode='mean', title="", gen_n=1, save_dir=None):
+    def plot_profile(self, datasets, x_var_key, y_var_key, filename,
+                     mode='mean', title="", gen_n=1, save_dir=None):
+
         x_conf = PLOT_VARS[x_var_key]
         y_conf = PLOT_VARS[y_var_key]
-        
-        fig, ax = plt.subplots(figsize=(12, 12  ))
-        # DEFAULT_COLORS = ["tab:olive", "tab:cyan", "darkorchid" , "darkorange", "deeppink"]
+
+        fig, ax = plt.subplots(figsize=(12, 12))
 
         bin_edges = np.linspace(x_conf['range'][0], x_conf['range'][1], x_conf['bins'] + 1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+        bin_width = bin_edges[1] - bin_edges[0]
+
+        # Dizionario per salvare i punti del profilo
+        # Prima colonna: x, poi una colonna per ogni dataset/cluster size
+        profile_points = {"x": bin_centers}
 
         for i, ds in enumerate(datasets):
             color = ds.get('color', DEFAULT_COLORS[i % len(DEFAULT_COLORS)])
+
             if y_var_key == "n_clusters":
                 x_vals, y_vals = self._get_ncluster_values(ds, x_var_key, gen_n=gen_n)
             else:
                 x_vals = self._get_values(ds, x_var_key)
                 y_vals = self._get_values(ds, y_var_key)
-            
 
-            # Get counts per bin for error calculation
-            counts, _, _ = binned_statistic(x_vals, y_vals, statistic='count', bins=bin_edges)
+            counts, _, _ = binned_statistic(
+                x_vals, y_vals,
+                statistic='count',
+                bins=bin_edges
+            )
 
             if mode == 'mean':
-                stat, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
-                # Error on mean: sigma / sqrt(N)
-                stds, _, _ = binned_statistic(x_vals, y_vals, statistic=lambda x: np.std(x), bins=bin_edges)
-                y_err = np.divide(stds, np.sqrt(counts), out=np.zeros_like(stds), where=counts>0)
+                stat, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic='mean',
+                    bins=bin_edges
+                )
+
+                stds, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic=lambda x: np.std(x),
+                    bins=bin_edges
+                )
+
+                y_err = np.divide(
+                    stds,
+                    np.sqrt(counts),
+                    out=np.zeros_like(stds),
+                    where=counts > 0
+                )
+
                 ylabel = f"<{y_conf['label']}>"
 
             elif mode == 'resolution':
-                means, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
-                stds, _, _ = binned_statistic(x_vals, y_vals, statistic=lambda x: np.std(x), bins=bin_edges)
-                
+                means, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic='mean',
+                    bins=bin_edges
+                )
+
+                stds, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic=lambda x: np.std(x),
+                    bins=bin_edges
+                )
+
                 if 'pt' in y_var_key:
-                    stat = np.divide(stds, means, out=np.zeros_like(stds), where=means!=0)
+                    stat = np.divide(
+                        stds,
+                        means,
+                        out=np.zeros_like(stds),
+                        where=means != 0
+                    )
                     ylabel = r"$\sigma_{cluster} / \mu_{cluster}$"
                 else:
-                    stat = stds # For angles, resolution is just the width
+                    stat = stds
                     ylabel = r"$\sigma_{cluster}$"
-                
-                # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
+
+                y_err = np.divide(
+                    stat,
+                    np.sqrt(np.maximum(2 * counts - 2, 0)),
+                    out=np.zeros_like(stat),
+                    where=counts > 1
+                )
 
             elif mode == 'rms':
-                means, _, _ = binned_statistic(x_vals, y_vals, statistic='mean', bins=bin_edges)
-                eff_stds, _, _ = binned_statistic(x_vals, y_vals, 
-                                                 statistic=lambda x: self.effrms(x), 
-                                                 bins=bin_edges)
-                
+                means, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic='mean',
+                    bins=bin_edges
+                )
+
+                eff_stds, _, _ = binned_statistic(
+                    x_vals, y_vals,
+                    statistic=lambda x: self.effrms(x),
+                    bins=bin_edges
+                )
+
                 if 'pt' in y_var_key:
-                    stat = np.divide(eff_stds, means, out=np.zeros_like(eff_stds), where=means!=0)
+                    stat = np.divide(
+                        eff_stds,
+                        means,
+                        out=np.zeros_like(eff_stds),
+                        where=means != 0
+                    )
                     ylabel = r"$\sigma^{eff-RMS}_{cluster} / \mu_{cluster}$"
                 else:
-                    stat = eff_stds # For angles, resolution is just the width
+                    stat = eff_stds
                     ylabel = r"$\sigma^{eff-RMS}_{cluster}$"
-                
-                # Statistical Error on Resolution: Resolution / sqrt(2N - 2)
-                y_err = np.divide(stat, np.sqrt(np.maximum(2*counts - 2, 0)), out=np.zeros_like(stat), where=counts>1)
 
-            # Masking in case there are few stats
-            mask = ~np.isnan(stat) & (counts > 2) # Require at least 3 points to plot
-            
+                y_err = np.divide(
+                    stat,
+                    np.sqrt(np.maximum(2 * counts - 2, 0)),
+                    out=np.zeros_like(stat),
+                    where=counts > 1
+                )
+
+            else:
+                raise ValueError(f"Unknown mode: {mode}")
+
+            mask = ~np.isnan(stat) & (counts > 2)
+
+            # Salvataggio dei punti per questo dataset.
+            # Dove non c'è statistica sufficiente mette NaN.
+            col_name = ds["label"].replace(" ", "_")
+            values_to_save = np.full_like(bin_centers, np.nan, dtype=float)
+            values_to_save[mask] = stat[mask]
+            profile_points[col_name] = values_to_save
+
             if np.any(mask):
-                ax.errorbar(bin_centers[mask], stat[mask], yerr=y_err[mask],
-                            xerr=(bin_edges[1]-bin_edges[0])/2,
-                            label=ds['label'], color=color, fmt='o', 
-                            markersize=8)
+                ax.errorbar(
+                    bin_centers[mask],
+                    stat[mask],
+                    yerr=y_err[mask],
+                    xerr=bin_width / 2,
+                    label=ds['label'],
+                    color=color,
+                    fmt='o',
+                    markersize=8
+                )
 
-        hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
+        profile_dir = save_dir if save_dir is not None else os.path.join(
+            self.output_dir,
+            "profile_distributions"
+        )
+        os.makedirs(profile_dir, exist_ok=True)
+
+        save_path = os.path.join(profile_dir, f"{filename}_{mode}.png")
+        save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}.pdf")
+
+        if self.args.tag is not None:
+            save_path = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.pdf")
+
+        # Salva txt solo per phi_cluster resolution vs phi_gen
+        if "Profile_phi_response_vs_phi_gen" in filename and mode == "resolution":
+            txt_path = os.path.join(profile_dir, f"{filename}_{mode}_points.txt")
+
+            if self.args.tag is not None:
+                txt_path = os.path.join(
+                    profile_dir,
+                    f"{filename}_{mode}_{self.args.tag}_points.txt"
+                )
+
+            columns = list(profile_points.keys())
+            data_to_save = np.column_stack([profile_points[col] for col in columns])
+            header = " ".join(columns)
+
+            np.savetxt(
+                txt_path,
+                data_to_save,
+                header=header,
+                fmt="%.8e",
+                comments=""
+            )
+
+            print(f"--- Points Saved: {txt_path}")
+
+        hep.cms.label(
+            "Preliminary",
+            data=True,
+            rlabel=f"{self.args.particles}-{self.args.pileup}",
+            ax=ax
+        )
+
         ax.set_xlabel(x_conf['label'])
         ax.set_ylabel(ylabel)
         ax.grid(linestyle=":")
         ax.legend(title=title, fontsize=15)
-        
 
-        profile_dir = save_dir if save_dir is not None else os.path.join(self.output_dir, "profile_distributions")
-        os.makedirs(profile_dir, exist_ok=True)
-        save_path = os.path.join(profile_dir, f"{filename}_{mode}.png")
-        save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}.pdf")
-        if self.args.tag is not None:
-            save_path     = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.png")
-            save_path_pdf = os.path.join(profile_dir, f"{filename}_{mode}_{self.args.tag}.pdf")
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf, dpi=300)
         plt.close()
+
         print(f"--- Plot Saved: {save_path}")
-
-
 
 
     def plot_distributions_per_bin(self, datasets, var_key, binning_var_key, filename,  title_="", combined=True):

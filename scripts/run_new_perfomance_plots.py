@@ -37,6 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('--distributions_per_decaymode', action='store_true', help='pt/eta/phi distributions per decay mode')
     parser.add_argument('--response_per_decaymode',   action='store_true', help='Response plots per decay mode')
     parser.add_argument('--profile_per_decaymode',    action='store_true', help='Profile plots per decay mode')
+    
+    # added for distinguish single cluster and antikt jets
+    parser.add_argument("--matching_type",  choices=["gen_cluster", "antikt_jets"], default="gen_cluster", help="Object used for matching.")
 
     args = parser.parse_args()
 
@@ -96,14 +99,21 @@ if __name__ == '__main__':
 
     #set title based on pt cuts
 
-    if args.gen_pt_cut !=0 and args.pt_cut ==0:
-        title= r"$p_T^{gen} >$" + f"{args.gen_pt_cut} GeV"
-    elif args.pt_cut !=0 and args.gen_pt_cut ==0:
-        title= r"$p_T^{cluster} >$" + f"{args.pt_cut} GeV"
-    elif args.pt_cut !=0 and args.gen_pt_cut !=0:
-        title= r"$p_T^{cluster} >$" + f"{args.pt_cut} GeV and " + r"$p_T^{gen} >$"+ f"{args.gen_pt_cut} GeV"
-    else:
-        title=""
+    object_labels = {"gen_cluster": r"Single-cluster matching", "antikt_jets": r"Anti-$k_T$ jet matching",}
+    object_label = object_labels[args.matching_type]
+    
+    title_parts = [object_label]
+
+    if args.gen_pt_cut != 0:
+        title_parts.append(
+            rf"$p_T^{{gen}} > {args.gen_pt_cut:g}\,\mathrm{{GeV}}$"
+        )
+    if args.pt_cut != 0:
+        title_parts.append(
+            rf"$p_T^{{cluster}} > {args.pt_cut:g}\,\mathrm{{GeV}}$"
+        )
+    
+    title = "\n".join(title_parts)
 
 
     # --- Distributions ---
@@ -141,7 +151,7 @@ if __name__ == '__main__':
         for var in TASKS["resp"]:
             if args.matched:
                 data = get_triangle_comparison(matched_events)
-                plotter.plot_1d(data, var, f"Response_Dist_{var}")
+                plotter.plot_1d(data, var, f"Response_Dist_{var}", title)
 
     if args.resolution_plots:
         data = get_triangle_comparison(matched_events)
@@ -170,9 +180,9 @@ if __name__ == '__main__':
         
     if args.efficiency:
         eff_data = get_triangle_comparison(matched_events, total_gen=events_gen)
-        plotter.plot_efficiency(eff_data, PLOT_VARS["pt_eff"])
-        plotter.plot_efficiency(eff_data, PLOT_VARS["abs_eta_eff"])
-        plotter.plot_efficiency(eff_data, PLOT_VARS["phi_eff"])
+        plotter.plot_efficiency(eff_data, PLOT_VARS["pt_eff"], title)
+        plotter.plot_efficiency(eff_data, PLOT_VARS["abs_eta_eff"], title)
+        plotter.plot_efficiency(eff_data, PLOT_VARS["phi_eff"], title)
 
     if args.binned_distributions:
         data = get_triangle_comparison(matched_events)

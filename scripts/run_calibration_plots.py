@@ -252,6 +252,7 @@ def build_residual_bundles(manager, raw_results, tri_key, strategies_to_plot):
             beta    = w[-1]
 
         E_wl = np.sum(layer_np * np.asarray(w_layer), axis=1)
+        #print(f"{strategy}, weights", w_layer)
 
         # For PU200_seq: compute the data residual only once
         # (all seq strategies share the same layer weights)

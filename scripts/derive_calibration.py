@@ -29,12 +29,12 @@ if __name__ == '__main__':
     args_PU200 = copy.deepcopy(args) 
     args_PU200.pileup = "PU200"
     
-    output_dir_PU0 = build_parquet_dir(args_PU0)
-    print("PU0",output_dir_PU0)
+    #output_dir_PU0 = build_parquet_dir(args_PU0)
+    #print("PU0",output_dir_PU0)
     output_dir_PU200 = build_parquet_dir(args_PU200)
     print("PU200",output_dir_PU200)
 
-    results_PU0 = io.load_matching_results(output_dir_PU0)
+    #results_PU0 = io.load_matching_results(output_dir_PU0)
     results_PU200 = io.load_matching_results(output_dir_PU200)
 
     output_dir = build_parquet_dir(args)

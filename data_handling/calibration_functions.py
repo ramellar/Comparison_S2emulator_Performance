@@ -42,7 +42,7 @@ def derive_calibration(cluster, gen, mode,
             gen_np,
             bounds=(lower_bound, upper_bound),
             lsmr_tol='auto',
-            method='bvls'
+            method='bvls'   #Bounded-Variables-Least-Squares algorithm
         )
         return regression.x
 

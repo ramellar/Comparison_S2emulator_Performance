@@ -15,7 +15,7 @@ if __name__ == '__main__':
   parser.add_argument('--base_path', type=str, default='/data_CMS_upgrade/sauvan/HGCAL/2603_internship-pivato/stage2_emulator_ntuples_semiemulator_2Passes/2_July_25_semiEmulator_2Passes/ggfHiggs')
   parser.add_argument('--name_tree',    type=str , default='l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple')
   parser.add_argument('--pt_cut',    type=float, default=0,         help='Provide the cut for the cluster pt')
-  parser.add_argument('--n_files',   type=float, default=10,         help='Provide the cut for the cluster pt')
+  parser.add_argument('--n_files',   type=int, default=10,         help='Provide the cut for the cluster pt')
   parser.add_argument('--job_id', type=int, default=0)
   parser.add_argument('--n_jobs', type=int, default=1)
   parser.add_argument('--tau', action='store_true', help='Enable tau-specific processing')
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
   print(args.base_path)
   
-  events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref = provide_events_performaces(args.n, args.base_path, args.particles, args.pileup, args, args.n_files, args.pt_cut, args.job_id, args.n_jobs)
+  events_gen, events_0p0113, events_0p016, events_0p03, events_0p045, events_Ref = provide_events_performaces(args.n, args.base_path, args.particles, args.pileup, args, args.n_files, args.pt_cut, args.job_id, args.n_jobs)
   events = [events_gen, events_0p0113, events_0p016, events_0p03 , events_0p045, events_Ref]
 
   

@@ -93,3 +93,40 @@ def compute_total_efficiency(size, event_cl, event_gen, args, deltaR=0.2):
     print(f"Total efficiency at particle level: " f"{eff_part*100:.2f} -{err_part_low*100:.2f} +{err_part_up*100:.2f} %")
     print(f"Total efficiency at event level: " f"{eff_ev*100:.2f} -{err_ev_low*100:.2f} +{err_ev_up*100:.2f} %")
     return pair_cluster_matched, pair_gen_masked
+
+
+def compute_efficiencies_from_results(results):
+
+    print("------------------------------------------")
+    print("Total efficiency from saved matching results")
+    print("------------------------------------------\n")
+
+    for key, res in results.items():
+
+        pair_gen = res["pair_gen"]
+        event_gen = res["events_gen_denominator"]
+
+        n_pass_part = len(ak.flatten(pair_gen.pt, axis=-1))
+        n_tot_part  = len(ak.flatten(event_gen.pt, axis=-1))
+
+        n_pass_ev = len(pair_gen)
+        n_tot_ev  = len(event_gen)
+
+        eff_part, err_part_low, err_part_up = get_efficiency_with_error(
+            n_pass_part, n_tot_part
+        )
+
+        eff_ev, err_ev_low, err_ev_up = get_efficiency_with_error(
+            n_pass_ev, n_tot_ev
+        )
+
+        print(f"\n-------------------")
+        print(f"For triangle size {key}")
+        print(
+            f"Total efficiency at particle level: "
+            f"{eff_part*100:.2f} -{err_part_low*100:.2f} +{err_part_up*100:.2f} %"
+        )
+        print(
+            f"Total efficiency at event level: "
+            f"{eff_ev*100:.2f} -{err_ev_low*100:.2f} +{err_ev_up*100:.2f} %"
+        )

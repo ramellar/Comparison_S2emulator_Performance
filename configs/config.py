@@ -42,7 +42,7 @@ CALIB_CONFIGS = {
 # If "None" then the same method type will be applied to PU0 and PU200
 # If fixed string, then that method will be applied for the layer weights
 
-# PU0_CONFIG_FOR_SEQ=None
+#PU0_CONFIG_FOR_SEQ=None
 PU0_CONFIG_FOR_SEQ="bounds_0_20"
 
 # COMPARISONS = {
@@ -94,17 +94,15 @@ PU0_CONFIG_FOR_SEQ="bounds_0_20"
 #Final configuration for photons
 
 COMPARISONS = {
-    "PU200_seq_b_nb":           {"strategy": "PU200_seq", "wl": "bounds", "eta": "no_bounds", "offset": 0},
-    "PU200_bounds_offset2p8":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.8},
-    # "PU200_bounds_offset2p4":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.4},
-    # "PU200_no_bounds":   {"strategy": "PU200",     "all": "no_bounds", "offset": 2.8},
-    # "PU200_all_no_bounds_no_layer1":          {"strategy": "PU200",     "all": "no_bounds_no_layer1", "offset": 0},
-    # "PU200_all_no_bounds_no_layer1_offset2p4":          {"strategy": "PU200",     "all": "no_bounds_no_layer1","offset": 2.4}
+    "PU200_no_bounds":{"strategy": "PU200", "all": "no_bounds", "offset": 0},
+    "PU200_bounds":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 0},
+    "PU200_no_bounds_os_2p875":{"strategy": "PU200", "all": "no_bounds", "offset": 2.875},
+    "PU200_bounds_os_2p875":   {"strategy": "PU200",     "all": "bounds_0_20", "offset": 2.875}
 }
 
 #only used in derive_calibrations
-# STRATEGIES = ["PU0"]
-STRATEGIES = ["PU0","PU200_seq", "PU200"]
+STRATEGIES = ["PU200"]
+# STRATEGIES = ["PU0","PU200_seq", "PU200"]
 
 #----------------------------
 # PLOTTING
@@ -129,8 +127,8 @@ PLOT_VARS = {
     "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 200],"is_log": True},
     "eta": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 40,"range": [-2.9, 2.9], "is_log": True},
     "abs_eta": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": True},
-    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": True},
-    "delta_r": {"branch": "delta_r","label": r"$\Delta R$(cluster,gen)","bins": 40,"range": [0,0.3],"is_log": True},
+    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [0, 2 * np.pi],"is_log": True},
+    "delta_r": {"branch": "delta_r","label": r"$\Delta R$(cluster,gen)","bins": 40,"range": [0,0.25],"is_log": True},
     "n_clusters": {"branch": "pt","label": r"$N_{clusters}$", "bins": 20, "range": [0, 20], "is_log": True},
     "gen_decayMode": {"branch": "gen_decayMode","label": "gen decayMode","bins": 6,"range": (-0.5, 5.5)},
 
@@ -139,17 +137,17 @@ PLOT_VARS = {
     "abs_eta_calib": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": False},
     "phi_calib": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": False},
 
-    "pt_response": {"branch": "pt","label": r"$p_T^{cluster}$/$p_T^{gen}$","bins": 25,"range": [0, 2.5],"is_log": False},
-    "eta_response": {"branch": "eta","label": r"$\eta^{cluster}-\eta^{gen}$","bins": 20,"range": [-0.1, 0.1], "is_log": False},
-    "phi_response": {"branch": "phi","label": r"$\phi^{cluster}-\phi^{gen}$","bins": 20,"range": [-0.1, 0.1],"is_log": False},
+    "pt_response": {"branch": "pt","label": r"$p_T^{cluster}$/$p_T^{gen}$","bins": 25,"range": [0, 3.5],"is_log": False},
+    "eta_response": {"branch": "eta","label": r"$\eta^{cluster}-\eta^{gen}$","bins": 20,"range": [-0.2, 0.2], "is_log": False},
+    "phi_response": {"branch": "phi","label": r"$\phi^{cluster}-\phi^{gen}$","bins": 20,"range": [-0.2, 0.2],"is_log": False},
 
     "pt_gen": {"branch": "pt", "label": r"$p_T^{gen}$ [GeV]", "bins": 10, "range": [20, 200], "is_log": False},
     "eta_gen": {"branch": "eta","label": r"$\eta^{gen}$","bins": 10,"range": [-2.9, 2.9], "is_log": False},
     "abs_eta_gen": {"branch": "eta","label": r"|$\eta^{gen}$|","bins": 10,"range": [1.6, 2.9], "is_log": False},
-    "phi_gen": {"branch": "phi","label": r"$\phi^{gen}$","bins": 30,"range": [-3.14, 3.14],"is_log": False},
+    "phi_gen": {"branch": "phi","label": r"$\phi^{gen}$","bins": 10,"range": [-3.14, 3.14],"is_log": False},
 
     "pt_eff": {"branch": "pt", "label": r"$p_T^{gen}$ [GeV]", "bins": 10,  "range":[20, 200], "is_log": False},
     "eta_eff": {"branch": "eta","label": r"$\eta^{gen}$", "bins": 10, "range": [-2.9, 2.9], "is_log": False},
-    "abs_eta_eff": {"branch": "eta","label": r"|$\eta^{gen}$|", "bins": 30, "range": [1.6, 2.9], "is_log": False},
+    "abs_eta_eff": {"branch": "eta","label": r"|$\eta^{gen}$|", "bins": 10, "range": [1.6, 2.9], "is_log": False},
     "phi_eff": {"branch": "phi","label": r"$\phi^{gen}$", "bins": 10, "range": [-3.14, 3.14], "is_log": False}
 }
