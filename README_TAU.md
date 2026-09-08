@@ -1,13 +1,13 @@
-# Tau workflow: comandi raggruppati per parser
+# Tau workflow: commands grouped by parser
 
-Questa guida raccoglie i comandi per il workflow `TauTau` del repository. I
-comandi vanno eseguiti dalla directory principale del progetto:
+This guide collects the commands for the repository's `TauTau` workflow. Run
+the commands from the project root directory:
 
 ```bash
 cd /home/llr/cms/pivato/Comparison_S2emulator_Performance
 ```
 
-Il workflow usa normalmente:
+The workflow normally follows this sequence:
 
 ```text
 ROOT ntuples -> load_data --tau -> Parquet -> matching_test
@@ -15,31 +15,31 @@ ROOT ntuples -> load_data --tau -> Parquet -> matching_test
              -> run_new_perfomance_plots
 ```
 
-## 0. Ambiente
+## 0. Environment
 
-Attivare l'ambiente Conda usato dagli script:
+Activate the Conda environment used by the scripts:
 
 ```bash
 conda activate s2_emulator
 export PYTHONPATH="$PWD:${PYTHONPATH:-}"
 ```
 
-Per i file ROOT su EOS serve anche un proxy valido:
+Accessing ROOT files on EOS also requires a valid proxy:
 
 ```bash
 export X509_USER_PROXY=/percorso/al/proxy.pem
 voms-proxy-info -all
 ```
 
-I percorsi di input e output sono definiti in `configs/config.py`, in
-particolare `PARQUET_BASE`.
+Input and output paths are defined in `configs/config.py`, especially
+`PARQUET_BASE`.
 
 ## 1. Parser `scripts.load_data`
 
-Carica gli ntuple ROOT, seleziona i tau hadronici nell'endcap e salva i dati in
-Parquet. Per il workflow Tau e' obbligatorio il flag `--tau`.
+Loads ROOT ntuples, selects hadronic taus in the endcap, and saves the data as
+Parquet. The `--tau` flag is required for the Tau workflow.
 
-### Comando locale di test
+### Local test command
 
 ```bash
 python3 -m scripts.load_data \
@@ -53,46 +53,46 @@ python3 -m scripts.load_data \
   --tau
 ```
 
-### Opzioni del parser
+### Parser options
 
-| Opzione | Default | Funzione |
+| Option | Default | Purpose |
 |---|---:|---|
-| `-n` | `1` | Numero di eventi da leggere |
-| `--particles` | `photons` | Nome del sample; per Tau usare `TauTau` |
-| `--pileup` | `PU0` | Scenario di pileup, normalmente `PU200` |
-| `--base_path` | path locale configurato nello script | Directory contenente i ROOT |
-| `--name_tree` | `l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple` | Nome del TTree |
-| `--pt_cut` | `0` | Soglia pT dei cluster |
-| `--n_files` | `10` | Numero di file ROOT disponibili |
-| `--job_id` | `0` | Indice del job |
-| `--n_jobs` | `1` | Numero totale di job |
-| `--tau` | disattivo | Abilita la selezione e le variabili Tau |
+| `-n` | `1` | Number of events to read |
+| `--particles` | `photons` | Sample name; use `TauTau` for taus |
+| `--pileup` | `PU0` | Pileup scenario, normally `PU200` |
+| `--base_path` | Path configured in the script | Directory containing ROOT files |
+| `--name_tree` | `l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple` | TTree name |
+| `--pt_cut` | `0` | Cluster pT threshold |
+| `--n_files` | `10` | Number of available ROOT files |
+| `--job_id` | `0` | Job index |
+| `--n_jobs` | `1` | Total number of jobs |
+| `--tau` | disabled | Enables Tau selection and variables |
 
-Ogni job scrive i file in:
+Each job writes its files to:
 
 ```text
 <PARQUET_BASE>/TauTau_PU200_new_branch/single_jobs/
 ```
 
-### Caricamento su HTCondor
+### HTCondor submission
 
-`submit_load.sub` e' gia' impostato per `TauTau`, `PU200`, `10` job e il flag
-`--tau`:
+`submit_load.sub` is already configured for `TauTau`, `PU200`, `10` jobs, and
+the `--tau` flag:
 
 ```bash
 condor_submit submit_load.sub
 ```
 
-Prima dell'invio controllare `ProxyPath`, `--n`, `--n_files`, `--n_jobs` e il
-numero della `queue`. Il wrapper `run_load_data.sh` interpreta il primo
-argomento come proxy; se si usa il wrapper direttamente:
+Before submitting, check `ProxyPath`, `--n`, `--n_files`, `--n_jobs`, and the
+`queue` count. The `run_load_data.sh` wrapper treats its first argument as the
+proxy path; to run the wrapper directly:
 
 ```bash
 ./run_load_data.sh "$X509_USER_PROXY" \
   -n 100 --particles TauTau --pileup PU200 --n_files 1 --tau
 ```
 
-Per recuperare job falliti, aggiornare gli ID in `recovery.sub` e lanciare:
+To recover failed jobs, update the IDs in `recovery.sub` and run:
 
 ```bash
 condor_submit recovery.sub
@@ -100,7 +100,7 @@ condor_submit recovery.sub
 
 ## 2. Parser `data_handling.stich_parquets`
 
-Unisce i Parquet prodotti dai job di caricamento in file completi.
+Merges the Parquet files produced by the loading jobs into complete files.
 
 ```bash
 python3 -m data_handling.stich_parquets \
@@ -110,15 +110,15 @@ python3 -m data_handling.stich_parquets \
   --n_jobs 10
 ```
 
-Opzioni principali: `-n`, `--particles`, `--pileup`, `--base_path`,
-`--name_tree`, `--pt_cut`, `--n_files`, `--job_id`, `--n_jobs`.
+Main options are `-n`, `--particles`, `--pileup`, `--base_path`,
+`--name_tree`, `--pt_cut`, `--n_files`, `--job_id`, and `--n_jobs`.
 
 ## 3. Parser `scripts.matching_test`
 
-Esegue il matching tra tau generati e cluster, oppure ricostruisce prima i jet
-anti-$k_t$ e usa quelli per il matching.
+Matches generated taus to clusters, or first reconstructs anti-$k_t$ jets and
+uses those for matching.
 
-### Matching locale
+### Local matching
 
 ```bash
 python3 -m scripts.matching_test \
@@ -129,7 +129,7 @@ python3 -m scripts.matching_test \
   --deltaR 0.2
 ```
 
-### Matching diviso in job
+### Matching split across jobs
 
 ```bash
 python3 -m scripts.matching_test \
@@ -142,24 +142,24 @@ python3 -m scripts.matching_test \
   --n_events 99900
 ```
 
-| Opzione | Default | Funzione |
+| Option | Default | Purpose |
 |---|---:|---|
-| `--particles` | `photons` | Sample di input |
-| `--pileup` | `PU0` | Pileup di input |
-| `--pt_cut` | `0` | Soglia pT cluster |
-| `--gen_pt_cut` | `0` | Soglia pT del tau generato |
-| `--deltaR` | `0.2` | Distanza massima per il matching |
-| `--matching_type` | `gen_cluster` | `gen_cluster` oppure `antikt_jets` |
-| `--total_efficiency` | disattivo | Calcola l'efficienza integrata |
-| `--only_efficiency` | disattivo | Usa risultati di matching gia' salvati |
-| `--job_id` | `0` | Indice del job |
-| `--n_jobs` | `10` | Numero totale di job |
-| `--n_events` | tutti | Limita gli eventi prima della divisione |
+| `--particles` | `photons` | Input sample |
+| `--pileup` | `PU0` | Input pileup |
+| `--pt_cut` | `0` | Cluster pT threshold |
+| `--gen_pt_cut` | `0` | Generated-tau pT threshold |
+| `--deltaR` | `0.2` | Maximum matching distance |
+| `--matching_type` | `gen_cluster` | Either `gen_cluster` or `antikt_jets` |
+| `--total_efficiency` | disabled | Computes the integrated efficiency |
+| `--only_efficiency` | disabled | Uses already-saved matching results |
+| `--job_id` | `0` | Job index |
+| `--n_jobs` | `10` | Total number of jobs |
+| `--n_events` | all | Limits the events before splitting |
 
-### Matching su HTCondor
+### Matching on HTCondor
 
-`submit_matching.sub` e' configurato per `TauTau`, `PU200`, anti-$k_t$, `20`
-job e `gen_pt_cut=20`:
+`submit_matching.sub` is configured for `TauTau`, `PU200`, anti-$k_t$, `20` jobs,
+and `gen_pt_cut=20`:
 
 ```bash
 condor_submit submit_matching.sub
@@ -167,8 +167,7 @@ condor_submit submit_matching.sub
 
 ## 4. Parser `data_handling.stitch_matching_parquets`
 
-Dopo che tutti i job di matching sono terminati, unisce i risultati presenti in
-`parts/`:
+After all matching jobs have finished, merges the results stored in `parts/`:
 
 ```bash
 python3 -m data_handling.stitch_matching_parquets \
@@ -177,22 +176,22 @@ python3 -m data_handling.stitch_matching_parquets \
   --gen_pt_cut 20.0
 ```
 
-Per sostituire file gia' presenti:
+To replace files that already exist:
 
 ```bash
 python3 -m data_handling.stitch_matching_parquets \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 --overwrite
 ```
 
-Opzioni: `--particles`, `--pileup`, `--pt_cut`, `--gen_pt_cut` e
+Options are `--particles`, `--pileup`, `--pt_cut`, `--gen_pt_cut`, and
 `--overwrite`.
 
 ## 5. Parser `scripts.apply_calib`
 
-Applica la calibrazione Tau ai cluster matched. I file di matching devono
-essere gia' stati uniti.
+Applies Tau calibration to matched clusters. The matching files must already
+have been merged.
 
-### Calibrazione offset
+### Offset calibration
 
 ```bash
 python3 -m scripts.apply_calib \
@@ -202,7 +201,7 @@ python3 -m scripts.apply_calib \
   --calibration offset
 ```
 
-### Calibrazione offset + MC
+### Offset + MC calibration
 
 ```bash
 python3 -m scripts.apply_calib \
@@ -212,16 +211,17 @@ python3 -m scripts.apply_calib \
   --calibration MC
 ```
 
-Il parser accetta `--particles`, `--pileup`, `--pt_cut`, `--gen_pt_cut` e
-`--calibration {offset,MC}`. Lo script aggiunge `pt_corrected` ai Parquet
-`pair_cluster_*_matched.parquet` e salva i fit Tau nella stessa directory.
+The parser accepts `--particles`, `--pileup`, `--pt_cut`, `--gen_pt_cut`, and
+`--calibration {offset,MC}`. The script adds `pt_corrected` to the
+`pair_cluster_*_matched.parquet` files and saves the Tau fits in the same
+directory.
 
 ## 6. Parser `scripts.run_new_perfomance_plots`
 
-Genera i plot usando i risultati raw, offset o MC. Per i risultati prodotti da
-`apply_calib.py` usare `--pt_type offset` oppure `--pt_type mc`.
+Generates plots using raw, offset, or MC results. For results produced by
+`apply_calib.py`, use `--pt_type offset` or `--pt_type mc`.
 
-### Plot di base
+### Basic plots
 
 ```bash
 python3 -m scripts.run_new_perfomance_plots \
@@ -230,53 +230,53 @@ python3 -m scripts.run_new_perfomance_plots \
   --matched --resolution_plots --pt_type offset
 ```
 
-### Plot utili per Tau
+### Useful Tau plots
 
 ```bash
-# Distribuzioni pT/eta/phi per decay mode
+# pT/eta/phi distributions by decay mode
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --distributions_per_decaymode --pt_type offset
 
-# Risposta per decay mode
+# Response by decay mode
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --response_per_decaymode --pt_type offset
 
-# Profili per decay mode
+# Profiles by decay mode
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --profile_per_decaymode --pt_type offset
 
-# Molteplicita' di cluster per decay mode
+# Cluster multiplicity by decay mode
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --mult_decaymode --pt_type raw
 
-# Diagnostica anti-kT e calibrazione beta(|eta|)
+# Anti-kT diagnostics and beta(|eta|) calibration
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --diagnostic --pt_type offset
 ```
 
-Plot di efficienza e distribuzioni generiche usano rispettivamente
-`--efficiency`, `--distribution`, `--scale_distribution`, `--two_d_dist`,
-`--binned_distributions` e `--n_clusters_plots`. I dataset selezionabili sono
-`--matched`, `--events` e `--filtered_events`.
+Efficiency and general-distribution plots use `--efficiency`, `--distribution`,
+`--scale_distribution`, `--two_d_dist`, `--binned_distributions`, and
+`--n_clusters_plots`, respectively. The selectable datasets are `--matched`,
+`--events`, and `--filtered_events`.
 
-Le opzioni complete si possono vedere con:
+View all options with:
 
 ```bash
 python3 -m scripts.run_new_perfomance_plots --help
 ```
 
-Nota: questo script usa `--pt_type` con underscore; `run_calibration_plots`
-usa invece `--pt-type` con trattino.
+Note: this script uses `--pt_type` with an underscore; `run_calibration_plots`
+uses `--pt-type` with a hyphen instead.
 
 ## 7. Parser `scripts.run_calibration_plots`
 
-Confronta le strategie di calibrazione definite in `configs/config.py`. Prima
-selezionare le configurazioni in `COMPARISONS`.
+Compares the calibration strategies defined in `configs/config.py`. Select the
+configurations in `COMPARISONS` first.
 
 ```bash
 python3 -m scripts.run_calibration_plots \
@@ -290,10 +290,10 @@ python3 -m scripts.run_calibration_plots \
   --tag TauTau_PU200
 ```
 
-Per tutti i triangoli usare `--all_triangles`. I plot disponibili sono
-`--distribution`, `--scale_distribution`, `--resolution_plots`,
-`--binned_distributions`, `--weights`, `--eta_residual` e `--weight_table`.
-Le strategie si limitano con, ad esempio:
+Use `--all_triangles` for all triangles. Available plots are `--distribution`,
+`--scale_distribution`, `--resolution_plots`, `--binned_distributions`,
+`--weights`, `--eta_residual`, and `--weight_table`. Limit the strategies, for
+example, with:
 
 ```bash
 python3 -m scripts.run_calibration_plots \
@@ -302,7 +302,7 @@ python3 -m scripts.run_calibration_plots \
   --strategies raw PU200_bounds --tag TauTau_comparison
 ```
 
-Per l'elenco completo dei parser:
+For the complete parser options:
 
 ```bash
 python3 -m scripts.run_calibration_plots --help
@@ -310,8 +310,8 @@ python3 -m scripts.run_calibration_plots --help
 
 ## 8. Parser `scripts.derive_calibration`
 
-Questo parser deriva i coefficienti delle calibrazioni generiche definite in
-`CALIB_CONFIGS` e `STRATEGIES` in `configs/config.py`.
+This parser derives the coefficients for the generic calibrations defined by
+`CALIB_CONFIGS` and `STRATEGIES` in `configs/config.py`.
 
 ```bash
 python3 -m scripts.derive_calibration \
@@ -322,42 +322,41 @@ python3 -m scripts.derive_calibration \
   --offset 0
 ```
 
-Opzioni: `--particles`, `--pileup`, `--tag`, `--gen_pt_cut`, `--pt_cut` e
+Options are `--particles`, `--pileup`, `--tag`, `--gen_pt_cut`, `--pt_cut`, and
 `--offset`.
 
-Per la calibrazione Tau descritta nella sezione 5 usare invece
-`scripts.apply_calib`, che implementa direttamente le calibrazioni `offset` e
-`MC` sui risultati matched.
+For the Tau calibration described in section 5, use `scripts.apply_calib`
+instead; it directly implements the `offset` and `MC` calibrations on matched
+results.
 
-## Ordine consigliato completo
+## Recommended complete order
 
 ```bash
-# 1. Caricamento locale o condor
+# 1. Local or Condor loading
 condor_submit submit_load.sub
 
-# 2. Merge dei Parquet di caricamento
+# 2. Merge the loading Parquet files
 python3 -m data_handling.stich_parquets \
   --particles TauTau --pileup PU200 --n_files 333 --n_jobs 10
 
-# 3. Matching locale oppure condor
+# 3. Local or Condor matching
 condor_submit submit_matching.sub
 
-# 4. Merge dei risultati di matching
+# 4. Merge the matching results
 python3 -m data_handling.stitch_matching_parquets \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0
 
-# 5. Calibrazione
+# 5. Calibration
 python3 -m scripts.apply_calib \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 --calibration offset
 
-# 6. Plot sui pT corretti
+# 6. Plot corrected pT
 python3 -m scripts.run_new_perfomance_plots \
   --particles TauTau --pileup PU200 --gen_pt_cut 20.0 \
   --matched --resolution_plots --pt_type offset
 ```
 
-Per verificare rapidamente la sintassi di ogni parser senza eseguire la
-pipeline:
+To quickly check the syntax of every parser without running the pipeline:
 
 ```bash
 python3 -m scripts.load_data --help
