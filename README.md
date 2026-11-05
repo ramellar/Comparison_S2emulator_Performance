@@ -198,6 +198,9 @@ The primary plotting allows for algorithm and triangle-size comparison. The synt
 python3 -m scripts.run_new_performance_plots --particles Photon --pileup PU0
 ```
 
+Use `--pt-type corrected` when the input jets use corrected $p_T$; otherwise
+the default `--pt-type raw` is shown in every plot legend.
+
 - bare events are the events after loading them with condor
 -  filtered events are a subset con the bare events containing the events where at least 1 cluster was reconstructed
 - matched events are a subset of the filtered events containing the events where a cluster and a gen particle were matched

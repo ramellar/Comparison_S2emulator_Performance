@@ -1,0 +1,88 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,booktabs,geometry,hyperref}
+\geometry{margin=2.3cm}
+\hypersetup{colorlinks=true,urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{7pt}
+\title{Come vengono calcolati gli errori sulle y\\nei profile plots}
+\author{Comparison\_S2emulator\_Performance}
+\date{5 ottobre 2026}
+\begin{document}
+\maketitle
+
+\section{Cosa rappresenta un punto del profilo}
+Ogni punto riassume la distribuzione dei valori di y dentro un bin di x, separatamente per ciascun dataset. Per esempio, nel profilo \texttt{pt\_response} in funzione di \texttt{pt\_gen}, si raccolgono le risposte $p_T^{\rm reco}/p_T^{\rm gen}$ delle entries il cui $p_T^{\rm gen}$ cade nel bin.
+
+Con $N$ entries e valori $y_1,\ldots,y_N$, il codice calcola
+\[
+\mu=\frac{1}{N}\sum_{i=1}^{N}y_i,\qquad
+\sigma=\sqrt{\frac{1}{N}\sum_{i=1}^{N}(y_i-\mu)^2}.
+\]
+La deviazione standard usa \texttt{np.std} con il default \texttt{ddof=0}: la varianza viene divisa per $N$, non per $N-1$. $N$ conta le entries utilizzate nel bin; non coincide necessariamente con il numero di eventi.
+
+\section{Modalità mean: precisione della media}
+Il punto è la media $Y=\mu$ e la barra verticale è
+\[
+\boxed{\Delta Y=\frac{\sigma}{\sqrt{N}}}.
+\]
+La dispersione delle singole risposte è $\sigma$; l'incertezza statistica stimata della media è $\sigma/\sqrt{N}$. Perciò la barra non mostra l'intera larghezza della distribuzione. A dispersione costante, quadruplicare le entries dimezza la barra.
+
+Questa interpretazione presuppone entries indipendenti. Se più oggetti dello stesso evento sono correlati, la formula implementata non include tale correlazione.
+
+\section{Modalità resolution: precisione della larghezza}
+Per le variabili eta e phi il punto è $Y=\sigma$. Per una chiave y che contiene \texttt{pt}, come \texttt{pt\_response}, il punto è la risoluzione relativa $Y=\sigma/\mu$. In entrambi i casi il codice assegna
+\[
+\boxed{\Delta Y=\frac{Y}{\sqrt{2(N-1)}}}.
+\]
+La formula per l'incertezza della deviazione standard è un'approssimazione motivata da una distribuzione gaussiana e da un campione sufficientemente grande. Non è una formula esatta per qualsiasi distribuzione; inoltre il codice la applica alla deviazione standard calcolata con \texttt{ddof=0}.
+
+Per il rapporto $R=\sigma/\mu$, la formula implementata considera soltanto la variazione di $\sigma$ e tratta $\mu$ come nota. Una propagazione completa al primo ordine avrebbe anche i termini della media e della covarianza:
+\[
+\operatorname{Var}(R)\simeq
+\frac{\operatorname{Var}(\sigma)}{\mu^2}
++\frac{\sigma^2}{\mu^4}\operatorname{Var}(\mu)
+-\frac{2\sigma}{\mu^3}\operatorname{Cov}(\sigma,\mu).
+\]
+Gli ultimi due termini non vengono calcolati dal codice attuale.
+
+\section{Modalità rms: larghezza efficace del nucleo}
+Nonostante il nome della modalità, la quantità usata è l'eff-RMS, non la radice della media di $y_i^2$. L'idea è cercare il più stretto intervallo che contiene circa il 68\% della distribuzione e prenderne metà della larghezza. Questo indicatore è meno sensibile alle code rispetto a $\sigma$.
+
+Il punto è $Y=\sigma_{\rm eff}$ per eta e phi, oppure $Y=\sigma_{\rm eff}/\mu$ per le chiavi che contengono \texttt{pt}. La barra è ancora
+\[
+\boxed{\Delta Y=\frac{Y}{\sqrt{2(N-1)}}}.
+\]
+Questa è una stima approssimata: il codice riutilizza la formula della deviazione standard, senza derivare l'incertezza specifica dell'eff-RMS.
+
+\textbf{Dettaglio dell'implementazione.} La funzione ordina i valori finiti, pone $m=\lceil0.68N_{\rm finiti}\rceil$ e minimizza $y_{(i+m)}-y_{(i)}$. Gli estremi così scelti includono $m+1$ valori, contando entrambi gli estremi. La descrizione ``68\%'' è quindi nominale, con una differenza discreta che conta soprattutto per campioni piccoli. Se $m\geq N_{\rm finiti}$, restituisce NaN. Il conteggio usato nella barra è invece quello del bin, senza un ricalcolo specifico dopo questo filtro dei valori finiti.
+
+Una possibile stima più adatta è il bootstrap: ricampionare con reinserimento le entries del bin, ricalcolare la quantità molte volte e misurarne la dispersione. Per $\sigma_{\rm eff}/\mu$, ricalcolare sia numeratore sia denominatore in ogni replica include anche la loro variazione congiunta. In presenza di correlazioni fra oggetti dello stesso evento, il ricampionamento dovrebbe essere fatto per evento. Questo procedimento non è implementato nei profili attuali.
+
+\section{Esempio numerico}
+Supponiamo che un bin abbia $N=100$, $\mu=0.90$, $\sigma=0.20$ e $\sigma_{\rm eff}=0.15$. Per un profilo \texttt{pt\_response} si ottiene:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Modalità & Punto & Errore verticale\\
+\midrule
+\texttt{mean} & $0.90$ & $0.20/\sqrt{100}=0.020$\\
+\texttt{resolution} & $0.20/0.90\simeq0.222$ & $0.222/\sqrt{198}\simeq0.0158$\\
+\texttt{rms} & $0.15/0.90\simeq0.167$ & $0.167/\sqrt{198}\simeq0.0118$\\
+\bottomrule
+\end{tabular}
+\end{center}
+Le tre barre si riferiscono a tre quantità diverse: media, risoluzione relativa ed eff-RMS relativo. Una barra più piccola non basta, da sola, a indicare una migliore risoluzione: bisogna guardare anche il valore del punto.
+
+\section{Regole comuni e riferimenti al codice}
+\begin{itemize}
+\item Si mostrano soltanto i bin con $N>2$ e valore del punto non NaN. Per l'eff-RMS questo non garantisce che tutti i bin con tre entries producano un punto valido.
+\item Le barre sono simmetriche e descrivono stime di incertezza statistica. Non comprendono contributi sistematici e non sono intervalli di confidenza esatti garantiti al 68\%.
+\item Le barre orizzontali sono metà della larghezza del bin: indicano il binning, non una stima dell'incertezza su x.
+\item I profili separati per decay mode applicano le stesse formule ai dataset selezionati per ciascun decay mode.
+\end{itemize}
+
+Riferimenti nella versione del codice esaminata: \texttt{plotting/run\_plots.py}, funzioni \texttt{plot\_profile}, \texttt{effrms} e \texttt{plot\_profile\_per\_decaymode}. Il profilo dei residui in \texttt{plot\_eta\_residual} usa anch'esso $\sigma/\sqrt{N}$ per la media.
+\end{document}

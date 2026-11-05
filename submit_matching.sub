@@ -1,0 +1,26 @@
+# HTCondor submission for matching_test.py split over independent event chunks.
+universe = vanilla
+executable = run_matching_test.sh
+
+# Keep this number equal to the value in 'queue 20' below.
+arguments = --particles $(Part) --pileup $(PU) --gen_pt_cut 20.0 --matching_type antikt_jets --job_id $(Process) --n_jobs 20 --n_events 99900
+
+# The wrapper runs from the shared project area; transfer these for provenance
+# and to match the existing load-data submission setup.
+transfer_input_files = scripts/, data_handling/, configs/
+
+request_memory = 8G
+request_cpus = 1
+
+# Anti-kt over a full chunk can exceed the short queue walltime.
+T3Queue = long
+WNTag = el9
+include : /opt/exp_soft/cms/t3/t3queue |
+
+output = logs/matching_$(Part)_$(PU)_$(Process).out
+error  = logs/matching_$(Part)_$(PU)_$(Process).err
+log    = logs/matching_$(Part)_$(PU)_$(Process).log
+
+queue 20 Part,PU from (
+  TauTau, PU200
+)

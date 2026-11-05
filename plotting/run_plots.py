@@ -10,11 +10,12 @@ from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 
 
+
 def get_triangle_comparison(data_source, total_gen=None):
     bundle = []
     for tri_key in EMU_CONFIG.keys():
         content = data_source[tri_key]
-        entry = {'label': f"Tri {tri_key}"}
+        entry = {'label': "Ref" if tri_key == "Ref" else f"Tri {tri_key}"}
         
         if isinstance(content, dict):
             # For matched/filtered data
@@ -42,8 +43,23 @@ class PerformancePlotter:
         """
         self.args = args
         self.output_dir = output_dir
+        self.pt_type = getattr(args, "pt_type", "raw")
+        self.object_name = "jet" if getattr(args, "matching_type", "gen_cluster") == "antikt_jets" else "cluster"
         os.makedirs(output_dir, exist_ok=True)
         hep.style.use(hep.style.CMS)
+
+    def _legend_title(self, title=""):
+        """Add the selected jet-pT definition to every plot legend."""
+        pt_labels = {
+            "raw": f"{self.object_name.capitalize()} $p_T$: raw",
+            "offset": f"{self.object_name.capitalize()} $p_T$: offset corrected",
+            "mc": f"{self.object_name.capitalize()} $p_T$: offset + MC corrected",
+        }
+        pt_label = pt_labels[self.pt_type]
+        return f"{pt_label}\n{title}" if title else pt_label
+
+    def _object_label(self, label):
+        return label.replace("cluster", self.object_name)
 
 
 
@@ -147,12 +163,12 @@ class PerformancePlotter:
                 ax.hist(slice_data, bins=ncl_conf['bins'], range=ncl_conf['range'], 
                         color=color, histtype='stepfilled', alpha=0.2)
 
-            bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
+            bin_label = self._object_label(f"{low:.1f} < {bin_conf['label']} < {high:.1f}")
             cuts = []
             if getattr(self.args, 'gen_pt_cut', 0) > 0:
                 cuts.append(fr"$p_T^{{\mathrm{{gen}}}} > {self.args.gen_pt_cut}$ GeV")
             if getattr(self.args, 'pt_cut', 0) > 0:
-                cuts.append(fr"$p_T^{{\mathrm{{cluster}}}} > {self.args.pt_cut}$ GeV")
+                cuts.append(self._object_label(fr"$p_T^{{\mathrm{{cluster}}}} > {self.args.pt_cut}$ GeV"))
 
             if title=="":
                 full_title = bin_label + ("\n" + " & ".join(cuts) if cuts else "")
@@ -160,12 +176,12 @@ class PerformancePlotter:
                 full_title = title + "\n" + bin_label + ("\n" + " & ".join(cuts) if cuts else "")
 
             ax.set_yscale('log')
-            ax.set_xlabel(r"$N_{clusters}$")
+            ax.set_xlabel(self._object_label(r"$N_{clusters}$"))
             ax.set_ylabel("Counts")
             ax.grid(linestyle=":")
-            ax.legend(title=full_title, fontsize=16, title_fontsize=15)
+            ax.legend(title=self._legend_title(full_title), fontsize=16, title_fontsize=15)
             
-            hep.cms.label("Preliminary", data=True, 
+            hep.cms.label("Private work", data=True,
                           rlabel=f"{self.args.pileup} {self.args.particles} - {gen_n} gen part.", ax=ax)
             
             save_name = f"NClusters_{binning_var_key}_bin{j}_gen{gen_n}.png"
@@ -195,6 +211,54 @@ class PerformancePlotter:
     
 
 
+    def plot_gen_tau_pt_spectrum(self, events_gen, filename, title=""):
+        """Plot the generator-level tau pT spectrum."""
+        conf = PLOT_VARS["pt_gen"]
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        values = self._extract_array(events_gen, conf["branch"])
+        ax.hist(
+            values,
+            bins=40,
+            range=conf["range"],
+            color=DEFAULT_COLORS[0],
+            label="gen tau particles",
+            histtype='step',
+            linewidth=2.5,
+        )
+        ax.hist(
+            values,
+            bins=40,
+            range=conf["range"],
+            color=DEFAULT_COLORS[0],
+            alpha=0.2,
+            histtype='stepfilled',
+        )
+
+        hep.cms.label("Private work", data=True,
+                      rlabel=f"{self.args.pileup} {self.args.particles}", ax=ax)
+
+        ax.set_xlabel(self._object_label(conf["label"]))
+        ax.set_ylabel("Counts")
+        if conf["is_log"]:
+            ax.set_yscale('log')
+        ax.grid(linestyle=":")
+        legend_title = "pT distribution of gentau particles"
+        if title:
+            legend_title = f"{legend_title}\n{title}"
+        ax.legend(title=legend_title, frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='lower right')
+        plt.tight_layout()
+
+        save_path = os.path.join(self.output_dir, f"{filename}.png")
+        save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+        if self.args.tag is not None:
+            save_path = os.path.join(self.output_dir, f"{filename}_{self.args.tag}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}_{self.args.tag}.pdf")
+
+        plt.savefig(save_path, dpi=300)
+        plt.savefig(save_path_pdf)
+        plt.close()
+        print(f"--- Plot Saved: {save_path}")
 
     def plot_1d(self, datasets, var_key, filename, title="", gen_n=None):
         # This now handles BOTH distributions AND responses
@@ -217,18 +281,18 @@ class PerformancePlotter:
                     alpha=0.2, histtype='stepfilled')
 
         if gen_n is not None:
-            hep.cms.label("Preliminary", data=True, 
+            hep.cms.label("Private work", data=True,
                         rlabel=f"{self.args.pileup} {self.args.particles}- {gen_n} gen part.", ax=ax)
         else:
-            hep.cms.label("Preliminary", data=True, 
+            hep.cms.label("Private work", data=True,
                         rlabel=f"{self.args.pileup} {self.args.particles}", ax=ax)
         
-        ax.set_xlabel(conf["label"])
+        ax.set_xlabel(self._object_label(conf["label"]))
         ax.set_ylabel("Counts")
         if conf["is_log"] == True :
             ax.set_yscale('log')
         ax.grid(linestyle=":")
-        ax.legend(title=title, frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='lower right')
+        ax.legend(title=self._legend_title(title), frameon=True, facecolor='white', edgecolor='black', fontsize=16, title_fontsize=18, loc='lower right')
         plt.tight_layout()
         save_path = os.path.join(self.output_dir, f"{filename}.png")
         save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
@@ -275,12 +339,12 @@ class PerformancePlotter:
         
         fig.colorbar(h[3], ax=ax, label='Counts')
         tag = dataset['label'].replace("Tri ", "").replace(" ", "_").replace("p", ".")
-        ax.legend(title=title, fontsize=16)
+        ax.legend(title=self._legend_title(title), fontsize=16)
         ax.grid(linestyle=":")
-        hep.cms.label("Preliminary", data=True, rlabel=f"{tag}-{self.args.particles}-{self.args.pileup}", ax=ax)
+        hep.cms.label("Private work", data=True, rlabel=f"{tag}-{self.args.particles}-{self.args.pileup}", ax=ax)
 
-        ax.set_xlabel(x_conf['label'])
-        ax.set_ylabel(y_conf['label'])
+        ax.set_xlabel(self._object_label(x_conf['label']))
+        ax.set_ylabel(self._object_label(y_conf['label']))
         
         plt.tight_layout()
         
@@ -376,10 +440,10 @@ class PerformancePlotter:
 
         # ax.set_ylim(0, 1.1)
         ax.set_ylabel("Efficiency")
-        ax.set_xlabel(x_conf['label'])
-        ax.legend(title=title)
+        ax.set_xlabel(self._object_label(x_conf['label']))
+        ax.legend(title=self._legend_title(title))
         ax.grid(linestyle=":")
-        hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
+        hep.cms.label("Private work", data=True, rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
         plt.tight_layout()
         save_path = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}.png")
         save_path_pdf = os.path.join(self.output_dir, f"Efficiency_vs_{x_var_key}.pdf")
@@ -390,6 +454,220 @@ class PerformancePlotter:
         plt.savefig(save_path_pdf)
         plt.close()
         print(f"--- Plot Saved: {save_path}")
+
+    def plot_taucalib_beta_eta(self, matching_results, title=""):
+        """Plot saved beta(|eta|) points and their tau-calibration cubic fits."""
+        fig, ax = plt.subplots(figsize=(10, 8))
+        eta_grid = np.linspace(1.6, 2.9, 300)
+        has_fit = False
+
+        for i, (tri_key, result) in enumerate(matching_results.items()):
+            fit_records = result.get("taucalib_fit")
+            if fit_records is None:
+                continue
+
+            color = DEFAULT_COLORS[i % len(DEFAULT_COLORS)]
+            for record_index, fit in enumerate(fit_records):
+                eta = ak.to_numpy(fit["eta_bin_center"])
+                beta = ak.to_numpy(fit["beta"])
+                beta_error = ak.to_numpy(fit["beta_error"])
+                valid = np.isfinite(eta) & np.isfinite(beta) & np.isfinite(beta_error)
+                if not np.any(valid):
+                    continue
+
+                label = ("Ref" if tri_key == "Ref" else f"Tri {tri_key}") if record_index == 0 else "_nolegend_"
+                ax.errorbar(
+                    eta[valid], beta[valid], yerr=beta_error[valid], fmt="o",
+                    color=color, markersize=5, capsize=2, label=label,
+                )
+
+                coefficients = [float(fit[f"p{order}"]) for order in range(4)]
+                beta_fit = sum(
+                    coefficient * eta_grid ** order
+                    for order, coefficient in enumerate(coefficients)
+                )
+                ax.plot(eta_grid, beta_fit, color=color, linewidth=2, alpha=0.8)
+                has_fit = True
+
+        if not has_fit:
+            plt.close(fig)
+            raise ValueError(
+                "No taucalib_fit data found. Run scripts.apply_calib first."
+            )
+
+        ax.set_xlabel(self._object_label(r"$|\eta^{\mathrm{gen}}|$"))
+        ax.set_ylabel(r"$\beta(|\eta|)$")
+        ax.grid(linestyle=":")
+        ax.legend(title=self._legend_title(title), fontsize=13, title_fontsize=14)
+        hep.cms.label(
+            "Private work", data=True,
+            rlabel=f"{self.args.pileup} {self.args.particles}", ax=ax,
+        )
+        plt.tight_layout()
+
+        filename = "Taucalib_Beta_vs_AbsEta"
+        if self.args.tag is not None:
+            filename = f"{filename}_{self.args.tag}"
+        save_path = os.path.join(self.output_dir, f"{filename}.png")
+        plt.savefig(save_path, dpi=300)
+        plt.savefig(os.path.join(self.output_dir, f"{filename}.pdf"))
+        plt.close(fig)
+        print(f"--- Plot Saved: {save_path}")
+
+    def plot_antikt_diagnostics(self, diagnostics, title=""):
+        """Save normalized rho and jet-area distributions for all triangles."""
+        for field, xlabel in (("rho", r"$\rho$ [GeV]"), ("area", r"Jet area")):
+            fig, ax = plt.subplots(figsize=(10, 8))
+            has_values = False
+
+            for index, (tri_key, values) in enumerate(diagnostics.items()):
+                data = ak.to_numpy(ak.flatten(values[field], axis=None))
+                data = data[np.isfinite(data)]
+                if len(data) == 0:
+                    continue
+
+                ax.hist(data, bins=np.linspace(0, 1, 31), histtype="step", linewidth=2, density=True, color=DEFAULT_COLORS[index % len(DEFAULT_COLORS)], label="Ref" if tri_key == "Ref" else f"Tri {tri_key}")
+                ax.hist(data, bins=np.linspace(0, 1, 31), histtype='stepfilled', alpha=0.2, density=True, color=DEFAULT_COLORS[index % len(DEFAULT_COLORS)])
+                has_values = True
+
+            if not has_values:
+                plt.close(fig)
+                raise ValueError(f"No finite {field} values found in anti-kT diagnostics.")
+
+            ax.set_xlabel(self._object_label(xlabel), fontsize=16)
+            ax.set_ylabel("Normalized jets" if field == "area" else "Normalized events", fontsize=16)
+            plot_title = (
+                r"Anti-$k_{\mathrm{T}}$ jet-area distribution"
+                if field == "area"
+                else r"Event $\rho$ distribution"
+            )
+            ax.set_title(plot_title, fontsize=18)
+            ax.tick_params(axis="both", labelsize=14)
+            ax.grid(linestyle=":")
+            ax.legend(title=self._legend_title(title), fontsize=11, title_fontsize=12)
+            hep.cms.label(
+                "Private work", data=True,
+                rlabel=f"{self.args.pileup} {self.args.particles}", ax=ax,
+            )
+            plt.tight_layout()
+
+            diagnostic_dir = os.path.join(f"plots_{self.args.pileup}", "antikt_diagnostics")
+            os.makedirs(diagnostic_dir, exist_ok=True)
+            filename = f"{field}_all_triangle_sizes"
+            if self.args.tag is not None:
+                filename = f"{filename}_{self.args.tag}"
+            save_path = os.path.join(diagnostic_dir, f"{filename}.png")
+            plt.savefig(save_path, dpi=300)
+            plt.savefig(os.path.join(diagnostic_dir, f"{filename}.pdf"))
+            plt.close(fig)
+            print(f"--- Plot Saved: {save_path}")
+            
+    
+    
+    def plot_taucalib_mc_response_2d(self, response_maps, title=""):
+        """Plot MC response interpolation versus offset-corrected pT and |eta|."""
+    
+        import ROOT
+    
+        for key, data in response_maps.items():
+            pt_offset = ak.to_numpy(data.interpolation_pt)
+            abs_eta = ak.to_numpy(data.abs_gen_eta_center)
+            response = ak.to_numpy(data.response)
+            n_jets = ak.to_numpy(data.n_jets)
+    
+            valid = (
+                np.isfinite(pt_offset)
+                & np.isfinite(abs_eta)
+                & np.isfinite(response)
+                & (n_jets > 0)
+                & (response > 0)
+            )
+    
+            if not np.any(valid):
+                raise ValueError(
+                    f"No valid MC response-map points found for triangle {key}."
+                )
+    
+            # Ricrea l'interpolazione dai punti salvati.
+            graph = ROOT.TGraph2D(
+                int(np.count_nonzero(valid)),
+                np.asarray(pt_offset[valid], dtype=np.float64),
+                np.asarray(abs_eta[valid], dtype=np.float64),
+                np.asarray(response[valid], dtype=np.float64),
+            )
+    
+            # Griglia densa per la superficie colorata.
+            eta_grid = np.linspace(1.6, 2.9, 250)
+            pt_grid = np.linspace(
+                np.min(pt_offset[valid]),
+                np.max(pt_offset[valid]),
+                300,
+            )
+    
+            response_grid = np.array([
+                [
+                    graph.Interpolate(float(pt), float(eta))
+                    for eta in eta_grid
+                ]
+                for pt in pt_grid
+            ])
+    
+            fig, ax = plt.subplots(figsize=(12, 8))
+    
+            mesh = ax.pcolormesh(
+                eta_grid,
+                pt_grid,
+                response_grid,
+                shading="auto",
+                cmap="jet",
+                vmin=0,
+                vmax=1.25,
+            )
+    
+            # Punti originali usati per costruire il TGraph2D.
+            ax.scatter(
+                abs_eta[valid],
+                pt_offset[valid],
+                color="black",
+                s=45,
+                zorder=3,
+            )
+    
+            fig.colorbar(
+                mesh,
+                ax=ax,
+                label=(
+                    f"{self.object_name.capitalize()} Response "
+                    r"($p_T^{\mathrm{offset}} / p_T^{\mathrm{gen}}$)"
+                ),
+            )
+    
+            ax.set_xlabel(self._object_label(r"$|\eta^{\mathrm{gen}}|$"))
+            ax.set_ylabel(f"Offset-corrected {self.object_name} $p_T$ [GeV]")
+            ax.set_title(f"Triangle {key}\n{title}")
+            ax.grid(linestyle=":")
+    
+            hep.cms.label(
+                "Private work",
+                data=True,
+                rlabel=f"{self.args.pileup} {self.args.particles}",
+                ax=ax,
+            )
+    
+            plt.tight_layout()
+    
+            filename = f"MC_response_2D_{key}"
+            if self.args.tag is not None:
+                filename = f"{filename}_{self.args.tag}"
+    
+            save_path = os.path.join(self.output_dir, f"{filename}.png")
+            save_path_pdf = os.path.join(self.output_dir, f"{filename}.pdf")
+    
+            plt.savefig(save_path, dpi=300)
+            plt.savefig(save_path_pdf)
+            plt.close(fig)
+    
+            print(f"--- Plot Saved: {save_path}")
 
 
 
@@ -599,16 +877,16 @@ class PerformancePlotter:
             print(f"--- Points Saved: {txt_path}")
 
         hep.cms.label(
-            "Preliminary",
+            "Private work",
             data=True,
             rlabel=f"{self.args.particles}-{self.args.pileup}",
             ax=ax
         )
 
-        ax.set_xlabel(x_conf['label'])
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(self._object_label(x_conf['label']))
+        ax.set_ylabel(self._object_label(ylabel))
         ax.grid(linestyle=":")
-        ax.legend(title=title, fontsize=15)
+        ax.legend(title=self._legend_title(title), fontsize=15)
 
         plt.savefig(save_path, dpi=300)
         plt.savefig(save_path_pdf, dpi=300)
@@ -661,17 +939,17 @@ class PerformancePlotter:
                     ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
                             color=color, histtype='stepfilled', alpha=0.2)
 
-                bin_label = f"{low:.2f} < {bin_conf['label']} < {high:.2f}"
-                ax.set_xlabel(var_conf['label'], fontsize=13)
+                bin_label = self._object_label(f"{low:.2f} < {bin_conf['label']} < {high:.2f}")
+                ax.set_xlabel(self._object_label(var_conf['label']), fontsize=13)
                 ax.set_ylabel("Counts", fontsize=13)
-                ax.legend(title=bin_label + title_, fontsize=11, loc='upper left', title_fontsize=11)
+                ax.legend(title=self._legend_title(bin_label + title_), fontsize=11, loc='upper left', title_fontsize=11)
                 ax.grid(linestyle=":", alpha=0.6)
 
             # Hide unused subplots
             for j in range(n_bins, len(axes)):
                 axes[j].set_visible(False)
                 
-            fig.suptitle(f"{var_conf['label']} per {bin_conf['label']} bin  |  {self.args.particles} {self.args.pileup}",
+            fig.suptitle(f"{self._object_label(var_conf['label'])} per {self._object_label(bin_conf['label'])} bin  |  {self.args.particles} {self.args.pileup}",
                          fontsize=16, y=1.01)
             fig.tight_layout()
 
@@ -709,11 +987,11 @@ class PerformancePlotter:
                     ax.hist(slice_data, bins=var_conf['bins'], range=var_conf['range'],
                             color=color, histtype='stepfilled', alpha=0.2)
 
-                bin_label = f"{low:.1f} < {bin_conf['label']} < {high:.1f}"
-                hep.cms.label("Preliminary", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=ax)
-                ax.set_xlabel(var_conf['label'])
+                bin_label = self._object_label(f"{low:.1f} < {bin_conf['label']} < {high:.1f}")
+                hep.cms.label("Private work", data=True, rlabel=f"{self.args.particles} {self.args.pileup}", ax=ax)
+                ax.set_xlabel(self._object_label(var_conf['label']))
                 ax.set_ylabel("Counts")
-                ax.legend(title=bin_label, fontsize=18, loc='upper left', title_fontsize=18)
+                ax.legend(title=self._legend_title(bin_label), fontsize=18, loc='upper left', title_fontsize=18)
                 ax.grid(linestyle=":", alpha=0.6)
 
                 save_dir = os.path.join(self.output_dir, "bin_distributions")                
@@ -806,18 +1084,18 @@ class PerformancePlotter:
             )
 
         hep.cms.label(
-            "Preliminary",
+            "Private work",
             data=True,
             rlabel=f"{self.args.particles}-{self.args.pileup}",
             ax=ax,
         )
 
         ax.set_ylabel("Normalized events", fontsize=18)
-        ax.legend(title=title, fontsize=13)
+        ax.legend(title=self._legend_title(title), fontsize=13)
         ax.grid(axis="y", linestyle=":", alpha=0.6)
 
         rax.axhline(1.0, color="black", linestyle="--", linewidth=1)
-        rax.set_xlabel("gen decayMode", fontsize=18)
+        rax.set_xlabel(self._object_label("gen decayMode"), fontsize=18)
         rax.set_ylabel("Ratio / Ref", fontsize=14)
         rax.set_xticks(valid_dm)
         rax.set_xlim(-0.5, 5.5)
@@ -850,17 +1128,17 @@ class PerformancePlotter:
                 ax_raw.hist(dm_vals, bins=bins, histtype="step", linewidth=2.5, color=color, label=ds["label"],)
 
             hep.cms.label(
-                "Preliminary",
+                "Private work",
                 data=True,
                 rlabel=f"{self.args.particles}-{self.args.pileup}",
                 ax=ax_raw,
             )
 
-            ax_raw.set_xlabel("gen decayMode", fontsize=18)
+            ax_raw.set_xlabel(self._object_label("gen decayMode"), fontsize=18)
             ax_raw.set_ylabel("Events", fontsize=18)
             ax_raw.set_xticks(valid_dm)
             ax_raw.set_xlim(-0.5, 5.5)
-            ax_raw.legend(title=title, fontsize=13)
+            ax_raw.legend(title=self._legend_title(title), fontsize=13)
             ax_raw.grid(axis="y", linestyle=":", alpha=0.6)
 
             plt.tight_layout()
@@ -932,15 +1210,15 @@ class PerformancePlotter:
             ax.set_title(f"DecayMode = {dm}", fontsize=18)
             ax.grid(linestyle=":", alpha=0.6)
 
-        fig.supxlabel(var_conf["label"], fontsize=22)
+        fig.supxlabel(self._object_label(var_conf["label"]), fontsize=22)
         fig.supylabel("Normalized entries", fontsize=22)
 
         handles, labels = axes[0].get_legend_handles_labels()
         if labels:
-            fig.legend(handles, labels, loc="upper right", fontsize=14)
+            fig.legend(handles, labels, title=self._legend_title(), loc="upper right", fontsize=14)
 
         hep.cms.label(
-            "Preliminary",
+            "Private work",
             data=True,
             rlabel=f"{self.args.particles} {self.args.pileup}",
             ax=axes[0],
@@ -1046,15 +1324,15 @@ class PerformancePlotter:
             ax.set_title(f"DecayMode = {dm}", fontsize=18)
             ax.grid(linestyle=":", alpha=0.6)
 
-        fig.supxlabel(conf["label"], fontsize=22)
+        fig.supxlabel(self._object_label(conf["label"]), fontsize=22)
         fig.supylabel("Normalized counts", fontsize=22)
 
         handles, labels = axes[0].get_legend_handles_labels()
         if labels:
-            fig.legend(handles, labels, loc="upper right", fontsize=14)
+            fig.legend(handles, labels, title=self._legend_title(), loc="upper right", fontsize=14)
 
         hep.cms.label(
-            "Preliminary",
+            "Private work",
             data=True,
             rlabel=f"{self.args.pileup} {self.args.particles}",
             ax=axes[0],
@@ -1162,15 +1440,15 @@ class PerformancePlotter:
     
             ax.set_title(f"Decay Mode {dm}", fontsize=16)
             ax.grid(linestyle=":")
-            ax.legend(title=f"{title}" if title else "", fontsize=11)
+            ax.legend(title=self._legend_title(title), fontsize=11)
     
         # assi condivisi
         for ax in axes:
-            ax.set_xlabel(x_conf['label'], fontsize=13)
+            ax.set_xlabel(self._object_label(x_conf['label']), fontsize=13)
         for ax in axes:
-            ax.set_ylabel(ylabel, fontsize=13)
+            ax.set_ylabel(self._object_label(ylabel), fontsize=13)
     
-        hep.cms.label("Preliminary", data=True,
+        hep.cms.label("Private work", data=True,
                       rlabel=f"{self.args.particles}-{self.args.pileup}",
                       ax=axes[0])
     
@@ -1242,15 +1520,15 @@ class PerformancePlotter:
                     histtype="step", linewidth=2.2, color=color,
                     label=f"{ds['label']} (N={len(slice_data)})", weights=weights)
 
-        hep.cms.label("Preliminary", data=True,
+        hep.cms.label("Private work", data=True,
                       rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
 
         eta_label = rf"${eta_low:.2f} < |\eta^{{gen}}| < {eta_high:.2f}$,  DM={dm}"
-        ax.set_xlabel(conf["label"], fontsize=16)
+        ax.set_xlabel(self._object_label(conf["label"]), fontsize=16)
         ax.set_ylabel("Normalized entries", fontsize=16)
         ax.set_title(eta_label, fontsize=16)
         ax.grid(linestyle=":", alpha=0.6)
-        ax.legend(title=title, fontsize=12)
+        ax.legend(title=self._legend_title(title), fontsize=12)
 
         save_dir = os.path.join(self.output_dir, "decaymode_distributions", "anomaly_investigation")
         os.makedirs(save_dir, exist_ok=True)
@@ -1299,12 +1577,12 @@ class PerformancePlotter:
         ax.set_ylim(-20, 20)
         ax.axhline(1.0, color='gray', linestyle='--', linewidth=1, label='w=1')
         ax.axvline(12.5, color='gray', linestyle=':', linewidth=1)  # separator before alpha/beta
-        ax.set_xlabel("Layer index")
+        ax.set_xlabel(self._object_label("Layer index"))
         ax.set_ylabel("Weight value")
         ax.grid(linestyle=":")
-        ax.legend(title=title, fontsize=13, title_fontsize=14,
+        ax.legend(title=self._legend_title(title), fontsize=13, title_fontsize=14,
                 frameon=True, facecolor='white', edgecolor='black')
-        hep.cms.label("Preliminary", data=True,
+        hep.cms.label("Private work", data=True,
                     rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
         plt.tight_layout()
         save_path     = os.path.join(self.output_dir, f"{filename}.png")
@@ -1316,6 +1594,8 @@ class PerformancePlotter:
         plt.savefig(save_path_pdf)
         plt.close()
         print(f"--- Plot Saved: {save_path}")
+        
+        
     def plot_weight_table(self, table_data, offsets, row_labels, filename, args, title=""):
         """
         Render a matplotlib table comparing weight values across different offsets.
@@ -1453,13 +1733,13 @@ class PerformancePlotter:
             )
 
         ax.axhline(0, color='gray', linestyle=':', linewidth=1)
-        ax.set_xlabel(r"$|\eta^{cluster}|$")
+        ax.set_xlabel(self._object_label(r"$|\eta^{cluster}|$"))
         # ax.set_ylabel(r"$E_{calib} - \sum w_l E_l^{raw}$  [GeV]")
         ax.set_ylabel(r"$\sum w_l E_l^{raw} - E_{calib}$  [GeV]")
         ax.grid(linestyle=":")
-        ax.legend(title=title, fontsize=12, title_fontsize=13,
+        ax.legend(title=self._legend_title(title), fontsize=12, title_fontsize=13,
                 frameon=True, facecolor='white', edgecolor='black')
-        hep.cms.label("Preliminary", data=True,
+        hep.cms.label("Private work", data=True,
                     rlabel=f"{self.args.particles}-{self.args.pileup}", ax=ax)
         plt.tight_layout()
         save_path     = os.path.join(self.output_dir, f"{filename}.png")

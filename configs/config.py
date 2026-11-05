@@ -124,10 +124,10 @@ DEFAULT_COLORS = [
 ]
 
 PLOT_VARS = {
-    "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 200],"is_log": True},
+    "pt": {"branch": "pt","label": r"$p_T^{cluster}$ [GeV]","bins": 40,"range": [0, 350],"is_log": True},
     "eta": {"branch": "eta","label": r"$\eta^{cluster}$","bins": 40,"range": [-2.9, 2.9], "is_log": True},
     "abs_eta": {"branch": "eta","label": r"|$\eta^{cluster}$|","bins": 40,"range": [1.6, 2.9], "is_log": True},
-    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [0, 2 * np.pi],"is_log": True},
+    "phi": {"branch": "phi","label": r"$\phi^{cluster}$","bins": 40,"range": [-np.pi, np.pi],"is_log": True},
     "delta_r": {"branch": "delta_r","label": r"$\Delta R$(cluster,gen)","bins": 40,"range": [0,0.25],"is_log": True},
     "n_clusters": {"branch": "pt","label": r"$N_{clusters}$", "bins": 20, "range": [0, 20], "is_log": True},
     "gen_decayMode": {"branch": "gen_decayMode","label": "gen decayMode","bins": 6,"range": (-0.5, 5.5)},

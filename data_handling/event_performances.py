@@ -2,12 +2,17 @@
 import numpy as np
 import awkward as ak
 import uproot
+import ROOT
 from tqdm import tqdm
+import warnings
 from data_handling.taureco import taureco_function
 from data_handling.taureco import vis_filter_function
 import subprocess
 import os
 import fastjet
+from scipy.optimize import curve_fit
+
+
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
@@ -17,6 +22,8 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 1, l
     print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
     if iteration == total: 
         print()
+
+
 
 
 def provide_events_performaces( n, base_path, particle, pileup, args, n_files=300 , thr=0.0, job_id=0, n_jobs=10, name_tree="l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"):
@@ -75,7 +82,7 @@ def provide_events_performaces( n, base_path, particle, pileup, args, n_files=30
         "gen_phi",
         "gen_pt",
         "gen_energy",
-        "gen_charge",   # xxx
+        "gen_charge",   # NOT USED!
         "gen_pdgid",
         "gen_status",
         "gen_daughters",
@@ -169,14 +176,12 @@ def provide_events_performaces( n, base_path, particle, pileup, args, n_files=30
             "gen_decayMode": gdecaymode[gen_mask]
         })
         
-        
+        #Mask for events with at least one gen particle
         event_mask = ak.num(filtered_gen.pt) > 0
         filtered_gen = filtered_gen[event_mask]   
             
         #I would like to add the "event" branch also to filtered_tau_vis but it has already been used (I'm not sure they are the same ones)
-        
         #If I want to remove the events with pair production I can just set a mask on flag_pp (0 -> events with no pp; 1 -> events with pp)
-        
         #flag_vis_prod is an array that flags all the events where the reconstructed invariant mass from gentau_products_*
         #collection differs from the one from gentau_vis_* more than a fixed parameter
 
@@ -202,7 +207,6 @@ def provide_events_performaces( n, base_path, particle, pileup, args, n_files=30
         })
 
         event_mask = ak.num(filtered_gen.pt) > 0
-
         filtered_gen = filtered_gen[event_mask]
         
 
@@ -289,16 +293,9 @@ def provide_events_performaces( n, base_path, particle, pileup, args, n_files=30
 
 
 def perform_antikt(cluster_events, R=0.4):
-
-    area_def = fastjet.AreaDefinition(
-        fastjet.active_area_explicit_ghosts,
-        fastjet.GhostedAreaSpec(5.0)
-    )
-
-    jet_definition = fastjet.JetDefinition(
-        fastjet.antikt_algorithm,
-        R
-    )
+    
+    area_def = fastjet.AreaDefinition( fastjet.active_area_explicit_ghosts, fastjet.GhostedAreaSpec(5.0))
+    jet_definition = fastjet.JetDefinition(fastjet.antikt_algorithm, R)
 
     out = {
         "pt": [],
@@ -314,12 +311,10 @@ def perform_antikt(cluster_events, R=0.4):
         pseudojet_data = []
 
         for icl, cluster in enumerate(event):
-
             pt = float(cluster["pt"])
-
+            
             if pt <= 0:
                 continue
-
             eta = float(cluster["eta"])
             phi = float(cluster["phi"])
 
@@ -330,20 +325,17 @@ def perform_antikt(cluster_events, R=0.4):
 
             pj = fastjet.PseudoJet(px, py, pz, E)
             pj.set_user_index(icl)
-
             pseudojet_data.append(pj)
 
         if len(pseudojet_data) == 0:
-
             out["pt"].append([])
             out["eta"].append([])
             out["phi"].append([])
             out["area"].append([])
             out["rho"].append(0.0)
             out["layer_pt"].append([])
-
             continue
-
+        
         cs = fastjet.ClusterSequenceArea(
             pseudojet_data,
             jet_definition,
@@ -360,13 +352,12 @@ def perform_antikt(cluster_events, R=0.4):
         pt_over_area = []
 
         for jet in jets:
-
             jet_pt = float(jet.pt())
             jet_area = float(jet.area())
 
             pts.append(jet_pt)
             etas.append(float(jet.eta()))
-            phis.append(float(jet.phi()))
+            phis.append((float(jet.phi()) + np.pi) % (2 * np.pi) - np.pi)
             areas.append(jet_area)
 
             if jet_pt > 0.01 and jet_area > 0:
@@ -375,7 +366,6 @@ def perform_antikt(cluster_events, R=0.4):
             jet_layer_pt = None
 
             for constituent in jet.constituents():
-
                 idx = constituent.user_index()
 
                 # Skip the ghost particles used to calculate the jet area
@@ -438,10 +428,30 @@ def apply_matching(events, gen, args, deltaR=0.2):
         filtered_events = filtered_events[mask_gen]
 
     # Building structured arrays
+    
+    missing_density_fields = {"area", "rho"} - set(ak.fields(filtered_events))
+    if missing_density_fields:
+        warnings.warn(
+            "Single-cluster inputs do not provide rho and/or area; missing fields "
+            "are set to zero. Matching can proceed, but area-based calibration "
+            "cannot be derived from these fallback values.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+
+    area = getattr(filtered_events, "area", ak.zeros_like(filtered_events.pt))
+    event_rho = getattr(
+        filtered_events,
+        "rho",
+        ak.zeros_like(ak.num(filtered_events.pt)),
+    )
+    rho_per_jet = ak.broadcast_arrays(event_rho, filtered_events.pt)[0]
     clusters = ak.zip({
         "eta": getattr(filtered_events, "eta"),
         "phi": getattr(filtered_events, "phi"),
         "pt": getattr(filtered_events, "pt"),
+        "area": area,
+        "rho": rho_per_jet
     })
 
     layer_pt = getattr(filtered_events, "layer_pt")
@@ -526,9 +536,13 @@ def apply_matching(events, gen, args, deltaR=0.2):
         "eta": flatten_pair_cluster_masked.eta ,
         "phi": flatten_pair_cluster_masked.phi,
         "pt": flatten_pair_cluster_masked.pt,
+        "area": flatten_pair_cluster_masked.area,
+        "rho": flatten_pair_cluster_masked.rho,
         "gen_flag": flatten_pair_gen_masked.gen_flag,
         "delta_r": delta_r_flat,
     })
+    
+    cluster_matched = ak.with_field(cluster_matched, flatten_pair_cluster_masked.layer_pt, "layer_pt",)
 
     layer_pt=flatten_pair_cluster_masked.layer_pt
     cluster_matched = ak.with_field(cluster_matched, layer_pt, "layer_pt")
@@ -558,6 +572,8 @@ def apply_matching(events, gen, args, deltaR=0.2):
         'pt': ak.unflatten(best_cluster_one_matched.pt,1),
         'gen_flag': ak.unflatten(best_cluster_one_matched.gen_flag,1),
         'delta_r': ak.unflatten(best_cluster_one_matched.delta_r,1),
+        "area": ak.unflatten(best_cluster_one_matched.area, 1),
+        "rho": ak.unflatten(best_cluster_one_matched.rho, 1),
     })
 
     layer_pt_wrapped = ak.unflatten(layer_pt_2, 1)
@@ -598,3 +614,201 @@ def apply_matching(events, gen, args, deltaR=0.2):
     pair_gen_masked_highest_pt = ak.concatenate([best_gen_one_matched, best_gen_two_matched], axis=0)
 
     return pair_cluster_masked_highest_pt, pair_gen_masked_highest_pt, clusters, genparts
+
+
+
+
+
+def taucalib_function_offset(pair_cluster, pair_gen, eta_min=1.6, eta_max=2.9, n_eta_bins=19):
+    """Fit beta(|eta|), apply it, and return corrected jets plus fit data."""
+    n_matches = ak.num(pair_cluster.pt, axis=1)
+    pt_raw = ak.to_numpy(ak.flatten(pair_cluster.pt, axis=None))
+    pt_gen = ak.to_numpy(ak.flatten(pair_gen.pt, axis=None))
+    eta = np.abs(ak.to_numpy(ak.flatten(pair_gen.eta, axis=None)))
+    rho = ak.to_numpy(ak.flatten(pair_cluster.rho, axis=None))
+    area = ak.to_numpy(ak.flatten(pair_cluster.area, axis=None))
+
+    valid = (
+        np.isfinite(pt_raw) & np.isfinite(pt_gen) & np.isfinite(eta)
+        & np.isfinite(rho) & np.isfinite(area) & (pt_raw > 0) & (rho * area > 0)
+    )
+    beta = np.full(len(pt_raw), np.nan)
+    beta[valid] = (pt_raw[valid] - pt_gen[valid]) / (rho[valid] * area[valid])
+
+    eta_edges = np.linspace(eta_min, eta_max, n_eta_bins + 1)
+    eta_centers = (eta_edges[:-1] + eta_edges[1:]) / 2
+    beta_values = np.full(n_eta_bins, np.nan)
+    beta_errors = np.full(n_eta_bins, np.nan)
+    n_jets = np.zeros(n_eta_bins, dtype=np.int64)
+
+    for index, (low, high) in enumerate(zip(eta_edges[:-1], eta_edges[1:])):
+        values = beta[valid & (eta >= low) & (eta < high)]
+        n_jets[index] = len(values)
+        if len(values) >= 4:
+            beta_values[index] = np.median(values)
+            beta_errors[index] = 1.2533 * np.std(values, ddof=1) / np.sqrt(len(values))
+
+    fit_mask = np.isfinite(beta_values) & np.isfinite(beta_errors) & (beta_errors > 0)
+    if np.count_nonzero(fit_mask) < 4:
+        raise ValueError("At least four populated eta bins are needed for the cubic beta fit.")
+
+    def poly3(x, p0, p1, p2, p3):
+        return p0 + p1 * x + p2 * x**2 + p3 * x**3
+
+    coefficients, covariance = curve_fit(
+        poly3, eta_centers[fit_mask], beta_values[fit_mask],
+        sigma=beta_errors[fit_mask], absolute_sigma=True,
+    )
+    coefficient_errors = np.sqrt(np.diag(covariance))
+
+    apply_mask = valid & (eta >= eta_min) & (eta < eta_max)
+    beta_eta = np.full(len(pt_raw), np.nan)
+    beta_eta[apply_mask] = poly3(eta[apply_mask], *coefficients)
+    pt_corrected = pt_raw.copy()
+    pt_corrected[apply_mask] -= rho[apply_mask] * area[apply_mask] * beta_eta[apply_mask]
+    c_offset = np.ones(len(pt_raw))
+    c_offset[apply_mask] = pt_corrected[apply_mask] / pt_raw[apply_mask]
+
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(pt_raw, n_matches), "pt_raw")
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(pt_corrected, n_matches), "pt_corrected")
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(beta_eta, n_matches), "beta_eta")
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(c_offset, n_matches), "C_offset")
+
+    taucalib_fit = {
+        "eta_bin_low": eta_edges[:-1],
+        "eta_bin_high": eta_edges[1:],
+        "eta_bin_center": eta_centers,
+        "beta": beta_values,
+        "beta_error": beta_errors,
+        "n_jets": n_jets,
+        **{f"p{i}": float(value) for i, value in enumerate(coefficients)},
+        **{f"p{i}_error": float(value) for i, value in enumerate(coefficient_errors)},
+    }
+    return pair_cluster, taucalib_fit
+
+
+
+
+
+def taucalib_function_MC(pair_cluster, pair_gen, eta_min=1.6, eta_max=2.9, n_eta_bins=19, n_pt_bins=10, pt_min=0.0, pt_max=200.0,):
+    
+    if "pt_corrected" not in ak.fields(pair_cluster):
+        raise ValueError("pair_cluster must contain 'pt_corrected' from the offset calibration.")
+    
+    n_matches = ak.num(pair_cluster.pt, axis=1)
+    pt_raw = ak.to_numpy(ak.flatten(pair_cluster.pt, axis=None))
+    pt_gen = ak.to_numpy(ak.flatten(pair_gen.pt, axis=None))
+    pt_corrected = ak.to_numpy(ak.flatten(pair_cluster.pt_corrected, axis=None))
+    eta = np.abs(ak.to_numpy(ak.flatten(pair_gen.eta, axis=None)))
+    rho = ak.to_numpy(ak.flatten(pair_cluster.rho, axis=None))
+    area = ak.to_numpy(ak.flatten(pair_cluster.area, axis=None))
+
+    if not (len(pt_corrected) == len(pt_gen) == len(eta)):
+        raise ValueError("pair_cluster and pair_gen must have the same number of matched entries.")
+    
+    valid = (
+        np.isfinite(pt_corrected)
+        & np.isfinite(pt_gen)
+        & np.isfinite(eta)
+        & (pt_corrected > 0)
+        & (pt_gen > 0)
+        & (eta >= eta_min)
+        & (eta < eta_max)
+    )
+    
+    if not np.any(valid):
+        raise ValueError("No valid matched jets are available for the MC response map.")
+    
+    tprof = ROOT.TProfile2D(
+        "taucalib_mc_profile",
+        "Jet response;gen jet p_{T};|gen jet #eta|",
+        n_pt_bins,
+        pt_min,
+        pt_max,
+        n_eta_bins,
+        eta_min,
+        eta_max,
+        0.0,
+        2.0,
+    )    
+    
+    
+    for gen_pt_i, gen_eta_i, pt_corr_i in zip(pt_gen[valid], eta[valid], pt_corrected[valid]):
+        tprof.Fill(float(gen_pt_i), float(gen_eta_i), float(pt_corr_i / gen_pt_i))
+
+    pt_centers = np.array(
+        [tprof.GetXaxis().GetBinCenter(i) for i in range(1, n_pt_bins + 1)]
+    )
+    eta_centers = np.array(
+        [tprof.GetYaxis().GetBinCenter(i) for i in range(1, n_eta_bins + 1)]
+    )
+    response_map = np.empty((n_pt_bins, n_eta_bins), dtype=float)
+    entries_map = np.empty((n_pt_bins, n_eta_bins), dtype=np.int64)
+    graph_pt, graph_eta, graph_response = [], [], []   
+    
+    for i_pt in range(1, n_pt_bins + 1):
+        for i_eta in range(1, n_eta_bins + 1):
+            response = float(tprof.GetBinContent(i_pt, i_eta))
+            entries = int(tprof.GetBinEntries(tprof.GetBin(i_pt, i_eta)))
+            response_map[i_pt - 1, i_eta - 1] = response
+            entries_map[i_pt - 1, i_eta - 1] = entries
+            if entries > 0 and np.isfinite(response) and response > 0:
+                # This intentional x-coordinate reproduces the supplied code:
+                # x = average response * generated-pT-bin centre.
+                graph_pt.append(response * pt_centers[i_pt - 1])
+                graph_eta.append(eta_centers[i_eta - 1])
+                graph_response.append(response)
+                
+    if len(graph_pt) < 3:
+        raise ValueError("At least three populated response-map bins are needed for MC interpolation.")                
+
+    tgraph = ROOT.TGraph2D(
+        len(graph_pt),
+        np.asarray(graph_pt, dtype=np.float64),
+        np.asarray(graph_eta, dtype=np.float64),
+        np.asarray(graph_response, dtype=np.float64),
+    )
+     
+    response_mc = np.ones(len(pt_corrected), dtype=float)
+    for index in np.flatnonzero(valid):
+        interpolated = float(tgraph.Interpolate(float(pt_corrected[index]), float(eta[index])))
+        # Retain the program's protection outside the interpolation support.
+        response_mc[index] = interpolated if np.isfinite(interpolated) and interpolated > 0 else 1.0
+    
+    pt_corr_tot = pt_corrected.copy()
+    pt_corr_tot[valid] = pt_corrected[valid] / response_mc[valid]
+    c_mc = np.ones(len(pt_corrected), dtype=float)
+    c_mc[valid] = 1.0 / response_mc[valid]
+
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(pt_corr_tot, n_matches), "pt_corr_tot")
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(response_mc, n_matches), "response_MC")
+    pair_cluster = ak.with_field(pair_cluster, ak.unflatten(c_mc, n_matches), "C_MC")
+
+    # Flattened bin data are convenient for pcolormesh/scatter and are an
+    # independent awkward array, as requested for the 2D response plot.
+    grid_pt, grid_eta = np.meshgrid(pt_centers, eta_centers, indexing="ij")
+    response_2d_data = ak.Array(
+        {
+            "gen_pt_center": grid_pt.ravel(),
+            "abs_gen_eta_center": grid_eta.ravel(),
+            "response": response_map.ravel(),
+            "n_jets": entries_map.ravel(),
+            "interpolation_pt": (grid_pt * response_map).ravel(),
+        }
+    )
+
+    taucalib_fit = {
+        "pt_bin_low": np.linspace(pt_min, pt_max, n_pt_bins + 1)[:-1],
+        "pt_bin_high": np.linspace(pt_min, pt_max, n_pt_bins + 1)[1:],
+        "pt_bin_center": pt_centers,
+        "eta_bin_low": np.linspace(eta_min, eta_max, n_eta_bins + 1)[:-1],
+        "eta_bin_high": np.linspace(eta_min, eta_max, n_eta_bins + 1)[1:],
+        "eta_bin_center": eta_centers,
+        "response_map": response_map,
+        "n_jets_map": entries_map,
+        "graph_pt": np.asarray(graph_pt),
+        "graph_abs_gen_eta": np.asarray(graph_eta),
+        "graph_response": np.asarray(graph_response)
+    }          
+    return pair_cluster, taucalib_fit, response_2d_data
+    

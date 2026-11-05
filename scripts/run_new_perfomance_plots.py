@@ -17,6 +17,8 @@ if __name__ == '__main__':
     parser.add_argument('--pileup',    type=str, default='PU0',     help='Choose the pileup - PU0 or PU200')
     parser.add_argument('--pt_cut',    type=float, default=0,         help='Provide the cut for the cluster pt')
     parser.add_argument('--gen_pt_cut',    type=float, default=0,         help='Provide the cut for the gen pt')
+    parser.add_argument('--pt_type', choices=['raw', 'offset', "mc"], default='raw', help='Use raw pT or the pt_corrected field saved by scripts.apply_calib')
+    
     #Object to plot
     parser.add_argument('--matched',     action='store_true', help='Plot matched events')
     parser.add_argument('--events',     action='store_true', help='Plot matched events')
@@ -25,12 +27,17 @@ if __name__ == '__main__':
 
     # Plotting arguments
     parser.add_argument('--distribution',     action='store_true', help='Plot the distributions')
+    parser.add_argument('--custom_tau_plot', action='store_true', help='Plot a custom histogram with explicit tau labels in the legend')
+    parser.add_argument('--tau_labels', type=str, default=None, help='Comma-separated custom labels for the tau samples, e.g. "Tau 0p0113,Tau 0p03"')
     parser.add_argument('--scale_distribution',     action='store_true', help='Plot the response distribution')
     parser.add_argument('--resolution_plots',     action='store_true', help='Plot the response distribution')
     parser.add_argument('--two_d_dist',     action='store_true', help='Plot 2D distribution')
     parser.add_argument('--efficiency',     action='store_true', help='Plot the efficiency')
     parser.add_argument('--binned_distributions',     action='store_true', help='Plot binned distributions')
     parser.add_argument('--n_clusters_plots',     action='store_true', help='Plot binned distributions')
+    parser.add_argument('--beta-eta-plot', action='store_true', help='Plot the saved tau-calibration beta(|eta|) points and cubic fit')
+    parser.add_argument('--diagnostic', action='store_true', help='Plot beta(|eta|) with fit, plus anti-kT rho and area distributions')
+    parser.add_argument("--mc-response-2d", action="store_true", help="Plot the saved offset-pT vs |eta| MC response map.")
     
     #added for decaymode plots
     parser.add_argument('--mult_decaymode',           action='store_true', help='Multiplicity of clusters per decay mode')
@@ -42,16 +49,27 @@ if __name__ == '__main__':
     parser.add_argument("--matching_type",  choices=["gen_cluster", "antikt_jets"], default="gen_cluster", help="Object used for matching.")
 
     args = parser.parse_args()
+    
+    matching_object = {"gen_cluster": "_cluster", "antikt_jets": "_jet"}[args.matching_type]
+
+    if (args.beta_eta_plot or args.diagnostic) and not args.matched:
+        parser.error('--beta-eta-plot and --diagnostic require --matched')
+    if args.custom_tau_plot and not args.events:
+        parser.error('--custom_tau_plot requires --events')
+    if args.efficiency and not args.matched:
+        parser.error('--efficiency requires --matched')
 
     parquet_dir= build_parquet_dir(args)
     parquet_dir_bare_events= f"{PARQUET_BASE}{args.particles}_{args.pileup}_new_branch/"
         
 
     output_dir= build_plotting_dir(args)
+    matching_dir = {"gen_cluster": "single_clusters", "antikt_jets": "antikt_jets"}[args.matching_type]
+    output_dir = os.path.join(output_dir, matching_dir, f"pt_{args.pt_type}")
 
     #Load events 
     if args.matched:
-        matched_events= f.load_matching_results(parquet_dir)
+        matched_events= f.load_matching_results(parquet_dir, pt_type=args.pt_type, matching_object=matching_object)
         
         
 
@@ -76,7 +94,11 @@ if __name__ == '__main__':
     #print(ak.min(ak.flatten(matched_events["0p0113"]["pair_gen"].pt, axis=-1)))
         
     if args.events:
-        events, events_gen= f.load_events(parquet_dir_bare_events)
+        if args.custom_tau_plot and not args.distribution and not args.two_d_dist:
+            events = {}
+            events_gen = ak.from_parquet(parquet_dir_bare_events + "events_gen.parquet")
+        else:
+            events, events_gen = f.load_events(parquet_dir_bare_events)
         TASKS = {
             "dist": ["pt", "eta", "abs_eta", "phi", "pt_gen"],
             "corr": [("eta", "phi"),("pt", "eta"), ("abs_eta", "phi")]
@@ -88,7 +110,7 @@ if __name__ == '__main__':
                 events[key] = events[key][event_mask]
                 
     if args.filtered_events:
-        filtered_events= f.load_filtered_events(parquet_dir)
+        filtered_events= f.load_filtered_events(parquet_dir, matching_object=matching_object)
         TASKS = {
             "dist": ["pt", "eta", "abs_eta", "phi"],
             "corr": [("eta", "phi"),("pt", "eta")],
@@ -115,12 +137,26 @@ if __name__ == '__main__':
     
     title = "\n".join(title_parts)
 
+    if args.custom_tau_plot:
+        plotter.plot_gen_tau_pt_spectrum(
+            events_gen,
+            "Custom_tau_event_distribution_pt_gen",
+            title="",
+        )
+
+    if args.beta_eta_plot or args.diagnostic:
+        plotter.plot_taucalib_beta_eta(matched_events, title=title)
+
+    if args.diagnostic:
+        diagnostics = f.load_antikt_diagnostics(parquet_dir, matching_object=matching_object)
+        plotter.plot_antikt_diagnostics(diagnostics, title=title)
+        
+    if args.mc_response_2d:
+        mc_response_maps = f.load_taucalib_mc_response(parquet_dir)
+        plotter.plot_taucalib_mc_response_2d(mc_response_maps, title=title)
 
     # --- Distributions ---
     if args.distribution:
-        if args.matched:
-            data = get_triangle_comparison(matched_events)
-            plotter.plot_1d(data, "delta_r", f"Matched_Dist_delta_r", title)
 
         for var in TASKS["dist"]:
             if args.matched:
@@ -151,7 +187,7 @@ if __name__ == '__main__':
         for var in TASKS["resp"]:
             if args.matched:
                 data = get_triangle_comparison(matched_events)
-                plotter.plot_1d(data, var, f"Response_Dist_{var}", title)
+                plotter.plot_1d(data, var, f"Response_Dist_{var}_{args.pt_type}", title)
 
     if args.resolution_plots:
         data = get_triangle_comparison(matched_events)
@@ -167,19 +203,21 @@ if __name__ == '__main__':
         for x_var in x_variables:
             for y_var in y_variables:
                 plotter.plot_profile(data, x_var, y_var, 
-                                    filename=f"Profile_{y_var}_vs_{x_var}", 
+                                    filename=f"Profile_{y_var}_vs_{x_var}_{args.pt_type}",
                                     mode='mean', title=title)
                 plotter.plot_profile(data, x_var, y_var, 
-                                    filename=f"Profile_{y_var}_vs_{x_var}", 
+                                    filename=f"Profile_{y_var}_vs_{x_var}_{args.pt_type}",
                                     mode='resolution', title=title)
                 plotter.plot_profile(data, x_var, y_var, 
-                                    filename=f"Profile_{y_var}_vs_{x_var}", 
+                                    filename=f"Profile_{y_var}_vs_{x_var}_{args.pt_type}",
                                     mode='rms', title=title)
                                     
 
         
     if args.efficiency:
-        eff_data = get_triangle_comparison(matched_events, total_gen=events_gen)
+        eff_data = get_triangle_comparison(matched_events)
+        for dataset, key in zip(eff_data, EMU_CONFIG):
+            dataset['total_gen'] = matched_events[key]['events_gen_denominator']
         plotter.plot_efficiency(eff_data, PLOT_VARS["pt_eff"], title)
         plotter.plot_efficiency(eff_data, PLOT_VARS["abs_eta_eff"], title)
         plotter.plot_efficiency(eff_data, PLOT_VARS["phi_eff"], title)

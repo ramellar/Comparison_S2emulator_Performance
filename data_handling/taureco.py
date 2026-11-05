@@ -183,6 +183,8 @@ def taureco_function(pt, eta, phi, energy, id, status, daughters, gpt, geta, gph
     return m_reco, best_match_idx, mask_clean #, pt, eta, phi, energy, status, id, daughters, gpt, geta, gphi, gid, genergy, gstatus, gdaughters
 
 
+
+
 def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gdecaymode, gvis_pt, gvis_eta, gvis_phi, gvis_energy, gvis_mass, gprod_pt, gprod_eta, gprod_phi, gprod_energy, gprod_mass, gprod_id):
     
     #Applying the filter to gentau_vis_* and gentau_products_* to correctly sort the particles
@@ -251,4 +253,7 @@ def vis_filter_function(filter0, filter1, m_reco, best_match_idx, mask_clean, gd
 
 
 
-# I removed some outputs from both the functions cause maybe they are useless -> If I'll need them it's easy to add them back.
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!  I removed some outputs from both the functions cause maybe they are useless -> If I'll need them it's easy to add them back.  !!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+

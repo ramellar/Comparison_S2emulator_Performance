@@ -422,6 +422,8 @@ def parse_args():
                         help='Cluster pT cut in GeV')
     parser.add_argument('--gen_pt_cut', type=float, default=0,
                         help='Gen pT cut in GeV')
+    parser.add_argument('--pt-type', choices=['raw', 'corrected'], default='raw',
+                        help='Jet pT definition displayed in every plot legend')
     parser.add_argument('--offset',     type=float, default=0,
                         help='Offset for the eta correction')
 
