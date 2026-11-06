@@ -23,8 +23,8 @@ if __name__ == "__main__":
 
     for key in EMU_CONFIG:
         # Load only the two matched raw files needed for the calibration.
-        cluster = ak.from_parquet(os.path.join(parquet_dir, f"pair_cluster_{key}_matched.parquet"))
-        gen = ak.from_parquet(os.path.join(parquet_dir, f"pair_gen_masked_{key}.parquet"))
+        cluster = ak.from_parquet(os.path.join(parquet_dir, f"pair_cluster_{key}_matched_jet.parquet"))
+        gen = ak.from_parquet(os.path.join(parquet_dir, f"pair_gen_masked_{key}_jet.parquet"))
 
         calibrated, fit = taucalib_function_offset(cluster, gen)
         
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         # Write back the matched array, keeping pt raw and adding pt_corrected.
         ak.to_parquet(
             calibrated,
-            os.path.join(parquet_dir, f"pair_cluster_{key}_matched.parquet"),
+            os.path.join(parquet_dir, f"pair_cluster_{key}_matched_jet.parquet"),
         )
 
         # Awkward array with beta(|eta|) points and the cubic-fit parameters.
